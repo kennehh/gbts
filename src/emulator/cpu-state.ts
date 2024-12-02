@@ -1,23 +1,3 @@
-export enum Register8Bit {
-    A = 0,
-    F = 1,
-    B = 2,
-    C = 3,
-    D = 4,
-    E = 5,
-    H = 6,
-    L = 7,
-}
-
-export enum Register16Bit {
-    AF = 0,
-    BC = 2,
-    DE = 4,
-    HL = 6,
-    SP = 8,
-    PC = 10,
-}
-
 export enum RegisterFlag {
     Zero = 1 << 7,
     Subtract = 1 << 6,
@@ -25,156 +5,131 @@ export enum RegisterFlag {
     Carry = 1 << 4,
 }
 
+export enum InterruptFlag {
+    None = 0,
+    VBlank = 1 << 0,
+    LCDStat = 1 << 1,
+    Timer = 1 << 2,
+    Serial = 1 << 3,
+    Joypad = 1 << 4,
+}
+
+export enum CpuStatus {
+    Running,
+    Halted,
+    Stopped,
+}
+
 export default class CpuState {
-    private static readonly REGISTER_SIZE = 16;
-    private registerBuffer: ArrayBuffer;
-    private registerView: DataView;
+    private static readonly SERIALIZED_SIZE = 15;
 
-    halted: boolean = false;
-    stalled: boolean = false
+    status: CpuStatus = CpuStatus.Running;
     haltBugTriggered: boolean = false;
+    ime: boolean = false;
 
-    constructor() {
-        this.registerBuffer = new ArrayBuffer(CpuState.REGISTER_SIZE);
-        this.registerView = new DataView(this.registerBuffer);
-    }
+    currentInstructionCycles: number = 0;
+    totalCycles: number = 0;
+
+    #a: number = 0;
+    #b: number = 0;
+    #c: number = 0;
+    #d: number = 0;
+    #e: number = 0;
+    #f: number = 0;
+    #h: number = 0;
+    #l: number = 0;
+
+    #pc: number = 0;
+    #sp: number = 0;
+
+    #ie: InterruptFlag = InterruptFlag.None;
+    #if: InterruptFlag = InterruptFlag.None;
+
 
     reset() {
-        new Uint8Array(this.registerBuffer).fill(0);
-        this.halted = false;
-        this.stalled = false;
+        this.a = 0;
+        this.b = 0;
+        this.c = 0;
+        this.d = 0;
+        this.e = 0;
+        this.f = 0;
+        this.h = 0;
+        this.l = 0;
+
+        this.sp = 0;
+        this.pc = 0;
+
+        this.status = CpuStatus.Running;
         this.haltBugTriggered = false;
     }
 
-    readRegister8Bit(reg: Register8Bit) {
-        return this.registerView.getUint8(reg);
-    }
+    get a() { return this.#a; }
+    set a(value: number) { this.#a = value & 0xFF; }
+    get b() { return this.#b; }
+    set b(value: number) { this.#b = value & 0xFF; }
+    get c() { return this.#c; }
+    set c(value: number) { this.#c = value & 0xFF; }
+    get d() { return this.#d; }
+    set d(value: number) { this.#d = value & 0xFF; }
+    get e() { return this.#e; }
+    set e(value: number) { this.#e = value & 0xFF; }
+    get f() { return this.#f & 0xFF; }
+    set f(value: number) { this.#f = value & 0xFF; }
+    get h() { return this.#h; }
+    set h(value: number) { this.#h = value & 0xFF; }
+    get l() { return this.#l; }
+    set l(value: number) { this.#l = value & 0xFF; }
 
-    writeRegister8Bit(reg: Register8Bit, value: number) {
-        this.registerView.setUint8(reg, value);
-    }
-
-    readRegister16Bit(reg: Register16Bit) {
-        return this.registerView.getUint16(reg, false);
-    }
-
-    writeRegister16Bit(reg: Register16Bit, value: number) {
-        this.registerView.setUint16(reg, value, false);
-    }
-
-    get a() {
-        return this.readRegister8Bit(Register8Bit.A);
-    }
-
-    set a(value: number) {
-        this.writeRegister8Bit(Register8Bit.A, value);
-    }
-
-    get f() {
-        return this.readRegister8Bit(Register8Bit.F);
-    }
-
-    set f(value: number) {
-        this.writeRegister8Bit(Register8Bit.F, value);
-    }
-
-    get b() {
-        return this.readRegister8Bit(Register8Bit.B);
-    }
-
-    set b(value: number) {
-        this.writeRegister8Bit(Register8Bit.B, value);
-    }
-
-    get c() {
-        return this.readRegister8Bit(Register8Bit.C);
-    }
-
-    set c(value: number) {
-        this.writeRegister8Bit(Register8Bit.C, value);
-    }
-
-    get d() {
-        return this.readRegister8Bit(Register8Bit.D);
-    }
-
-    set d(value: number) {
-        this.writeRegister8Bit(Register8Bit.D, value);
-    }
-
-    get e() {
-        return this.readRegister8Bit(Register8Bit.E);
-    }
-
-    set e(value: number) {
-        this.writeRegister8Bit(Register8Bit.E, value);
-    }
-
-    get h() {
-        return this.readRegister8Bit(Register8Bit.H);
-    }
-
-    set h(value: number) {
-        this.writeRegister8Bit(Register8Bit.H, value);
-    }
-
-    get l() {
-        return this.readRegister8Bit(Register8Bit.L);
-    }
-
-    set l(value: number) {
-        this.writeRegister8Bit(Register8Bit.L, value);
-    }
-
-    get sp() {
-        return this.readRegister16Bit(Register16Bit.SP);
-    }
-
-    set sp(value: number) {
-        this.writeRegister16Bit(Register16Bit.SP, value);
-    }
-
-    get pc() {
-        return this.readRegister16Bit(Register16Bit.PC);
-    }
-
-    set pc(value: number) {
-        this.writeRegister16Bit(Register16Bit.PC, value);
-    }
-
-    get af() {
-        return this.readRegister16Bit(Register16Bit.AF);
-    }
-
+    get af() { return (this.a << 8) | this.f; }
     set af(value: number) {
-        this.writeRegister16Bit(Register16Bit.AF, value);
+        this.a = value >> 8;
+        this.f = value & 0xFF;
     }
 
-    get bc() {
-        return this.readRegister16Bit(Register16Bit.BC);
-    }
-
+    get bc() { return (this.b << 8) | this.c; }
     set bc(value: number) {
-        this.writeRegister16Bit(Register16Bit.BC, value);
+        this.b = value >> 8;
+        this.c = value & 0xFF;
     }
 
-    get de() {
-        return this.readRegister16Bit(Register16Bit.DE);
-    }
-
+    get de() { return (this.d << 8) | this.e; }
     set de(value: number) {
-        this.writeRegister16Bit(Register16Bit.DE, value);
+        this.d = value >> 8;
+        this.e = value & 0xFF;
     }
 
-    get hl() {
-        return this.readRegister16Bit(Register16Bit.HL);
-    }
-
+    get hl() { return (this.h << 8) | this.l; }
     set hl(value: number) {
-        this.writeRegister16Bit(Register16Bit.HL, value);
+        this.h = value >> 8;
+        this.l = value & 0xFF;
     }
 
-    setFlag(flag: RegisterFlag, value: boolean) {
+    get sp() { return this.#sp; }
+    set sp(value: number) { this.#sp = value & 0xFFFF; }
+    get pc() { return this.#pc; }
+    set pc(value: number) { this.#pc = value & 0xFFFF; }
+
+    get currentInterrupt() {
+        return (this.#ie & this.#if & 0x1f) as InterruptFlag;
+    }
+
+    get currentInterruptVector() {
+        return 0x40 | (this.currentInterrupt as number) << 3;
+    }
+
+    get anyInterruptRequested() {
+        return this.currentInterrupt !== InterruptFlag.None;
+    }
+
+    requestInterrupt(interrupt: InterruptFlag) {
+        this.#if |= interrupt;
+    }
+
+    clearInterrupt(interrupt: InterruptFlag) {
+        this.#if &= ~interrupt;
+    }
+
+    updateFlag(flag: RegisterFlag, value: boolean) {
         if (value) {
             this.f |= flag;
         } else {
@@ -182,24 +137,75 @@ export default class CpuState {
         }
     }
 
-    getFlag(flag: RegisterFlag) {
+    setFlag(flag: RegisterFlag) {
+        this.f |= flag;
+    }
+
+    clearFlag(flag: RegisterFlag) {
+        this.f &= ~flag;
+    }
+
+    toggleFlag(flag: RegisterFlag) {
+        this.f ^= flag;
+    }
+
+    hasFlag(flag: RegisterFlag) {
         return (this.f & flag) === flag;
     }
 
-    serialize() {
-        return new Uint8Array(this.registerBuffer);
+    serialize(): Uint8Array {
+        const buffer = new Uint8Array(CpuState.SERIALIZED_SIZE);
+        const view = new DataView(buffer.buffer);
+
+        view.setUint8(0, this.a);
+        view.setUint8(1, this.b);
+        view.setUint8(2, this.c);
+        view.setUint8(3, this.d);
+        view.setUint8(4, this.e);
+        view.setUint8(5, this.f);
+        view.setUint8(6, this.h);
+        view.setUint8(7, this.l);
+
+        view.setUint16(8, this.sp, true);
+        view.setUint16(10, this.pc, true);
+        
+        // view.setUint8(12, this.halted ? 1 : 0);
+        // view.setUint8(13, this.stopped ? 1 : 0);
+        view.setUint8(14, this.haltBugTriggered ? 1 : 0);
+
+        return buffer;
     }
 
     deserialize(data: Uint8Array) {
-        new Uint8Array(this.registerBuffer).set(data);
+        if (data.length !== CpuState.SERIALIZED_SIZE) {
+            throw new Error(`Invalid data size: ${data.length}`);
+        }
+
+        const view = new DataView(data.buffer);
+
+        this.a = view.getUint8(0);
+        this.b = view.getUint8(1);
+        this.c = view.getUint8(2);
+        this.d = view.getUint8(3);
+        this.e = view.getUint8(4);
+        this.f = view.getUint8(5);
+        this.h = view.getUint8(6);
+        this.l = view.getUint8(7);
+
+        this.sp = view.getUint16(8, true);
+        this.pc = view.getUint16(10, true);
+        
+        // this.halted = view.getUint8(12) === 1;
+        // this.stopped = view.getUint8(13) === 1;
+        this.haltBugTriggered = view.getUint8(14) === 1;
     }
 
     toString() {
         const flags = [
-            this.getFlag(RegisterFlag.Zero) ? 'Z' : '-',
-            this.getFlag(RegisterFlag.Subtract) ? 'N' : '-',
-            this.getFlag(RegisterFlag.HalfCarry) ? 'H' : '-',
-            this.getFlag(RegisterFlag.Carry) ? 'C' : '-'
+            this.hasFlag(RegisterFlag.Zero) ? 'Z' : '-',
+            this.hasFlag(RegisterFlag.Subtract) ? 'N' : '-',
+            this.hasFlag(RegisterFlag.HalfCarry) ? 'H' : '-',
+            this.hasFlag(RegisterFlag.Carry) ? 'C' : '-'
         ].join('');
 
         const getRegString = (value: number) => value.toString(16).padStart(4, '0');
@@ -211,8 +217,8 @@ export default class CpuState {
                `SP=${getRegString(this.sp)} ` +
                `PC=${getRegString(this.pc)} ` +
                `FLAGS=${flags} ` + 
-               `HALTED=${this.halted} ` +
-               `STALLED=${this.stalled} ` +
+            //    `HALTED=${this.halted} ` +
+            //    `STALLED=${this.stopped} ` +
                `HALT_BUG=${this.haltBugTriggered} `;
     }
 
@@ -225,13 +231,13 @@ export default class CpuState {
             sp: this.sp,
             pc: this.pc,
             flags: {
-                z: this.getFlag(RegisterFlag.Zero),
-                n: this.getFlag(RegisterFlag.Subtract),
-                h: this.getFlag(RegisterFlag.HalfCarry),
-                c: this.getFlag(RegisterFlag.Carry),
+                z: this.hasFlag(RegisterFlag.Zero),
+                n: this.hasFlag(RegisterFlag.Subtract),
+                h: this.hasFlag(RegisterFlag.HalfCarry),
+                c: this.hasFlag(RegisterFlag.Carry),
             },
-            halted: this.halted,
-            stalled: this.stalled,
+            // halted: this.halted,
+            // stalled: this.stopped,
             haltBugTriggered: this.haltBugTriggered,
         };
     }

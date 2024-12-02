@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pretest": "npx vite-node tests/utils/generate-opcode-tests.ts",
+    "test": "vitest"
   },
   "devDependencies": {
+    "@types/node": "^22.10.1",
     "typescript": "~5.6.2",
     "vite": "^5.4.10",
     "vitest": "^2.1.5"
