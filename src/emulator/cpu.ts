@@ -1,5 +1,5 @@
-import Mmu from "./memory";
-import CpuState, { CpuStatus, RegisterFlag } from "./cpu-state";
+import { Mmu } from "./memory";
+import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
 import Ppu from "./ppu";
 import Timer from "./timer";
 
@@ -38,9 +38,9 @@ export default class Cpu {
     #ppu: Ppu;
     #timer: Timer;
 
-    constructor() {
+    constructor(mmu: Mmu) {
+        this.#mmu = mmu;
         this.#state = new CpuState();
-        this.#mmu = new Mmu();
         this.#ppu = new Ppu();
         this.#timer = new Timer();
     }
@@ -100,7 +100,7 @@ export default class Cpu {
             case 0x14: this.inc_8(Operand8Bit.D); break;
             case 0x15: this.dec_8(Operand8Bit.D); break;
             case 0x16: this.ld_8_8(Operand8Bit.D, Operand8Bit.Immediate); break;
-            case 0x17: this.rla(); break;
+            case 0x17: this.rl_a(); break;
             case 0x18: this.jr_i8(); break;
             case 0x19: this.add_hl_r16(Operand16Bit.DE); break;
             case 0x1a: this.ld_8_8(Operand8Bit.A, Operand8Bit.IndirectDE); break;
@@ -159,6 +159,10 @@ export default class Cpu {
 
             case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87: // add a, r
                 this.add_a(opcode & 0x07);
+                break;
+
+            case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F: // adc a, r
+                this.adc_a(opcode & 0x07);
                 break;
 
             case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97: // sub a, r
@@ -368,7 +372,10 @@ export default class Cpu {
             case Operand8Bit.IndirectBC: return this.readMemory8Bit(this.state.bc);
             case Operand8Bit.IndirectDE: return this.readMemory8Bit(this.state.de);
             case Operand8Bit.IndirectC: return this.readMemory8Bit(0xFF00 + this.state.c);
-            default: throw new Error(`Invalid operand: ${operand}`);
+            case Operand8Bit.Immediate: return this.readImmediate8Bit();
+            case Operand8Bit.IndirectImmediate8Bit: return this.readMemory8Bit(0xFF00 + this.readImmediate8Bit());
+            case Operand8Bit.IndirectImmediate16Bit: return this.readMemory8Bit(this.readImmediate16Bit());
+            default: throw new Error(`Invalid operand when reading 8 bit value: ${Operand8Bit[operand]}`);
         }
     }
 
@@ -385,7 +392,9 @@ export default class Cpu {
             case Operand8Bit.IndirectBC: this.writeMemory8Bit(this.state.bc, value); break;
             case Operand8Bit.IndirectDE: this.writeMemory8Bit(this.state.de, value); break;
             case Operand8Bit.IndirectC: this.writeMemory8Bit(0xFF00 + this.state.c, value); break;
-            default: throw new Error(`Invalid operand: ${operand}`);            
+            case Operand8Bit.IndirectImmediate8Bit: this.writeMemory8Bit(0xFF00 + this.readImmediate8Bit(), value); break;
+            case Operand8Bit.IndirectImmediate16Bit: this.writeMemory8Bit(this.readImmediate16Bit(), value); break;
+            default: throw new Error(`Invalid operand when writing 8 bit value: ${Operand8Bit[operand]}`);            
         }
     }
 
@@ -404,7 +413,7 @@ export default class Cpu {
             case Operand16Bit.SP: return this.state.sp;
             case Operand16Bit.Immediate: return this.readImmediate16Bit();
             case Operand16Bit.IndirectImmediate: return this.readMemory16Bit(this.readImmediate16Bit());
-            default: throw new Error(`Invalid operand: ${operand}`);
+            default: throw new Error(`Invalid operand when reading 16 bit value: ${Operand16Bit[operand]}`);
         }
     }
 
@@ -417,18 +426,22 @@ export default class Cpu {
             case Operand16Bit.PC: this.state.pc = value; break;
             case Operand16Bit.SP: this.state.sp = value; break;
             case Operand16Bit.IndirectImmediate: this.writeMemory16Bit(this.readImmediate16Bit(), value); break;
-            default: throw new Error(`Invalid operand: ${operand}`);
+            default: throw new Error(`Invalid operand when writing 16 bit value: ${Operand16Bit[operand]}`);
         }
     }
     
     private checkInterrupts() {
-        // Check for interrupts
+        // TODO: Check for interrupts
     }
 
     private readImmediate8Bit() {
         const val = this.readMemory8Bit(this.state.pc);
         this.state.pc++;
         return val;
+    }
+
+    private readImmediate8BitSigned() {
+        return this.readImmediate8Bit() << 24 >> 24;
     }
 
     private readImmediate16Bit() {
@@ -648,18 +661,18 @@ export default class Cpu {
         this.state.updateFlag(RegisterFlag.Carry, result < 0);
     }
 
-    private rla() {
-        this.state.a = this.rl_base(this.state.a, false);
+    private rl_a() {
+        this.state.a = this.rl_base(this.state.a, true);
     }
 
     private rl(operand: Operand8Bit) {
-        const result = this.rl_base(this.readValue8Bit(operand), true);
+        const result = this.rl_base(this.readValue8Bit(operand), false);
         this.writeValue8Bit(operand, result);
     }
 
     private rl_base(value: number, clearZero: boolean) {
         const cy = this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
-        const result = (value << 1) | cy;
+        const result = ((value << 1) | cy) & 0xFF;
 
         this.state.updateFlag(RegisterFlag.Carry, (value & 0x80) !== 0);
         this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
@@ -670,17 +683,17 @@ export default class Cpu {
     }
 
     private rlc_a() {
-        this.state.a = this.rlc_base(this.state.a, false);
+        this.state.a = this.rlc_base(this.state.a, true);
     }
 
     private rlc(operand: Operand8Bit) {
-        const result = this.rlc_base(this.readValue8Bit(operand), true);
+        const result = this.rlc_base(this.readValue8Bit(operand), false);
         this.writeValue8Bit(operand, result);
     }
 
     private rlc_base(value: number, clearZero: boolean) {
         const bit7 = value >> 7;
-        const result = (value << 1) | bit7;
+        const result = ((value << 1) | bit7) & 0xff;
 
         this.state.updateFlag(RegisterFlag.Carry, bit7 !== 0);
         this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
@@ -691,17 +704,17 @@ export default class Cpu {
     }
 
     private rr_a() {
-        this.state.a = this.rr_base(this.state.a, false);
+        this.state.a = this.rr_base(this.state.a, true);
     }
 
     private rr(operand: Operand8Bit) {
-        const result = this.rr_base(this.readValue8Bit(operand), true);
+        const result = this.rr_base(this.readValue8Bit(operand), false);
         this.writeValue8Bit(operand, result);
     }
 
     private rr_base(value: number, clearZero: boolean) {
         const cy = this.state.hasFlag(RegisterFlag.Carry) ? 0x80 : 0;
-        const result = (value >> 1) | cy;
+        const result = ((value >> 1) | cy) & 0xff;
 
         this.state.updateFlag(RegisterFlag.Carry, (value & 0x01) !== 0);
         this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
@@ -712,17 +725,17 @@ export default class Cpu {
     }
 
     private rrc_a() {
-        this.state.a = this.rrc_base(this.state.a, false);
+        this.state.a = this.rrc_base(this.state.a, true);
     }
 
     private rrc(operand: Operand8Bit) {
-        const result = this.rrc_base(this.readValue8Bit(operand), true);
+        const result = this.rrc_base(this.readValue8Bit(operand), false);
         this.writeValue8Bit(operand, result);
     }
 
     private rrc_base(value: number, clearZero: boolean) {
         const bit0 = value & 0x01;
-        const result = (value >> 1) | (bit0 << 7);
+        const result = ((value >> 1) | (bit0 << 7)) & 0xff;
 
         this.state.updateFlag(RegisterFlag.Carry, bit0 !== 0);
         this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
@@ -899,7 +912,7 @@ export default class Cpu {
     // Jump Instructions
 
     private jr_i8() {
-        const increment = this.readImmediate8Bit();
+        const increment = this.readImmediate8BitSigned();
         this.state.pc = this.readValue16Bit(Operand16Bit.PC) + increment;
         this.tickMCycle();
     }
@@ -916,6 +929,7 @@ export default class Cpu {
 
     private jp_i16() {
         this.state.pc = this.readImmediate16Bit();
+        this.tickMCycle();
     }
 
     private jp_i16_cond(flag: RegisterFlag, condition: boolean) {
@@ -998,7 +1012,7 @@ export default class Cpu {
         // https://stackoverflow.com/questions/57958631/game-boy-half-carry-flag-and-16-bit-instructions-especially-opcode-0xe8
         // TL; DR: For ADD SP,n, the H-flag is set when carry occurs from bit 3 to bit 4.
 
-        const value = (this.readImmediate8Bit() << 24 >> 24); // sign extend
+        const value = this.readImmediate8BitSigned();
         const result = this.state.sp + value;
         const carryResult = (this.state.sp & 0xFF) + (value & 0xFF);
         const halfCarryResult = (this.state.sp & 0x0F) + (value & 0x0F);

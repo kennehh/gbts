@@ -20,7 +20,7 @@ export enum CpuStatus {
     Stopped,
 }
 
-export default class CpuState {
+export class CpuState {
     private static readonly SERIALIZED_SIZE = 15;
 
     status: CpuStatus = CpuStatus.Running;
