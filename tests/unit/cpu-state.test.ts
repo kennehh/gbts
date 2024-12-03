@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CpuState, RegisterFlag } from '../../src/emulator/cpu-state';
 
-describe('CpuState', () => {
+describe.concurrent('CpuState', () => {
     let state: CpuState;
 
     beforeEach(() => {

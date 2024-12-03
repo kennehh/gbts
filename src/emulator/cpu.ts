@@ -1,4 +1,4 @@
-import { Mmu } from "./memory";
+import { Mmu } from "./mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
 import Ppu from "./ppu";
 import Timer from "./timer";
@@ -33,33 +33,12 @@ enum Operand16Bit {
     
 
 export default class Cpu {
-    #state: CpuState;
-    #mmu: Mmu;
-    #ppu: Ppu;
-    #timer: Timer;
-
-    constructor(mmu: Mmu) {
-        this.#mmu = mmu;
-        this.#state = new CpuState();
-        this.#ppu = new Ppu();
-        this.#timer = new Timer();
-    }
-
-    get state() {
-        return this.#state;
-    }
-
-    get mmu() {
-        return this.#mmu;
-    }
-
-    get ppu() {
-        return this.#ppu;
-    }
-
-    get timer() {
-        return this.#timer;
-    }
+    constructor(
+        readonly mmu: Mmu,
+        readonly state: CpuState = new CpuState(),
+        readonly ppu: Ppu = new Ppu(),
+        readonly timer: Timer = new Timer()
+    ) {}
 
     reset() {
         this.state.reset();

@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
 import { CpuStatus, RegisterFlag } from '../../src/emulator/cpu-state';
 import Cpu from '../../src/emulator/cpu';
-import { Mmu } from '../../src/emulator/memory';
+import { Mmu } from '../../src/emulator/mmu';
 
 const testDataDirectory = 'tests/__fixtures__/opcodeTestData';
 
@@ -161,7 +161,7 @@ const testFiles = readdirSync(testDataDirectory)
     }));
 
 testFiles.forEach(({ opcode, tests }) => {
-    describe.concurrent(`0x${opcode}`, () => {
+    describe(`0x${opcode}`, () => {
         it(`executes all test cases (${tests.length} cases)`, () => {
             const cpu = new Cpu(new MmuMock());
             

@@ -1,7 +1,4 @@
-export interface Memory {
-    read(address: number): number;
-    write(address: number, value: number): void;
-}
+import Ppu from "./ppu";
 
 export interface Mmu {
     read(address: number): number;
@@ -12,14 +9,11 @@ export interface Mmu {
 }
 
 export class GameBoyMmu implements Mmu {
-    private buffer: ArrayBuffer;
-    private view: DataView;
-
-    private static readonly MEMORY_SIZE = 0x10000;
+    private ppu: Ppu;
+    private timer: Ppu;
 
     constructor() {
-        this.buffer = new ArrayBuffer(GameBoyMmu.MEMORY_SIZE);
-        this.view = new DataView(this.buffer);
+
     }
 
     loadBootRom(rom: Uint8Array): void {
