@@ -1,7 +1,7 @@
-import { IMmu, Mmu } from "./mmu";
+import { IMmu } from "./mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
-import { IPpu, Ppu } from "./ppu";
-import { ITimer, Timer } from "./timer";
+import { IPpu } from "./ppu";
+import { ITimer } from "./timer";
 import { InterruptManager } from "./interrupt-manager";
 
 enum Operand8Bit {

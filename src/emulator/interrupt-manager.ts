@@ -9,10 +9,26 @@ export enum InterruptFlag {
 
 export class InterruptManager {
     ime: boolean = false;
-    #ie: InterruptFlag = InterruptFlag.None;
-    #if: InterruptFlag = InterruptFlag.None;
+    private _ie: InterruptFlag = InterruptFlag.None;
+    private _if: InterruptFlag = InterruptFlag.None;
 
     constructor() {}
+
+    get ie(): number {
+        return this._ie;
+    }
+
+    set ie(value: number) {
+        this._ie = value & 0x1f;
+    }
+
+    get if(): number {
+        return this._if;
+    }
+
+    set if(value: number) {
+        this._if = value & 0x1f;
+    }
 
     get currentInterrupt(): InterruptFlag {
         return (this.ie & this.if & 0x1f) as InterruptFlag;
@@ -26,27 +42,11 @@ export class InterruptManager {
         return this.currentInterrupt !== InterruptFlag.None;
     }
 
-    get ie(): number {
-        return this.#ie;
-    }
-
-    set ie(value: number) {
-        this.#ie = value & 0x1f;
-    }
-
-    get if(): number {
-        return this.#if;
-    }
-
-    set if(value: number) {
-        this.#if = value & 0x1f;
-    }
-
     requestInterrupt(interrupt: InterruptFlag) {
-        this.#if |= interrupt;
+        this._if |= interrupt;
     }
 
     clearInterrupt(interrupt: InterruptFlag) {
-        this.#if &= ~interrupt;
+        this._if &= ~interrupt;
     }
 }

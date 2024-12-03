@@ -20,17 +20,17 @@ export class CpuState {
     currentInstructionCycles: number = 0;
     totalCycles: number = 0;
 
-    #a: number = 0;
-    #b: number = 0;
-    #c: number = 0;
-    #d: number = 0;
-    #e: number = 0;
-    #f: number = 0;
-    #h: number = 0;
-    #l: number = 0;
+    private _a: number = 0;
+    private _b: number = 0;
+    private _c: number = 0;
+    private _d: number = 0;
+    private _e: number = 0;
+    private _f: number = 0;
+    private _h: number = 0;
+    private _l: number = 0;
 
-    #pc: number = 0;
-    #sp: number = 0;
+    private _pc: number = 0;
+    private _sp: number = 0;
 
     reset() {
         this.a = 0;
@@ -49,22 +49,22 @@ export class CpuState {
         this.haltBugTriggered = false;
     }
 
-    get a() { return this.#a; }
-    set a(value: number) { this.#a = value & 0xFF; }
-    get b() { return this.#b; }
-    set b(value: number) { this.#b = value & 0xFF; }
-    get c() { return this.#c; }
-    set c(value: number) { this.#c = value & 0xFF; }
-    get d() { return this.#d; }
-    set d(value: number) { this.#d = value & 0xFF; }
-    get e() { return this.#e; }
-    set e(value: number) { this.#e = value & 0xFF; }
-    get f() { return this.#f & 0xFF; }
-    set f(value: number) { this.#f = value & 0xFF; }
-    get h() { return this.#h; }
-    set h(value: number) { this.#h = value & 0xFF; }
-    get l() { return this.#l; }
-    set l(value: number) { this.#l = value & 0xFF; }
+    get a() { return this._a; }
+    set a(value: number) { this._a = value & 0xFF; }
+    get b() { return this._b; }
+    set b(value: number) { this._b = value & 0xFF; }
+    get c() { return this._c; }
+    set c(value: number) { this._c = value & 0xFF; }
+    get d() { return this._d; }
+    set d(value: number) { this._d = value & 0xFF; }
+    get e() { return this._e; }
+    set e(value: number) { this._e = value & 0xFF; }
+    get f() { return this._f & 0xFF; }
+    set f(value: number) { this._f = value & 0xFF; }
+    get h() { return this._h; }
+    set h(value: number) { this._h = value & 0xFF; }
+    get l() { return this._l; }
+    set l(value: number) { this._l = value & 0xFF; }
 
     get af() { return (this.a << 8) | this.f; }
     set af(value: number) {
@@ -90,10 +90,10 @@ export class CpuState {
         this.l = value & 0xFF;
     }
 
-    get sp() { return this.#sp; }
-    set sp(value: number) { this.#sp = value & 0xFFFF; }
-    get pc() { return this.#pc; }
-    set pc(value: number) { this.#pc = value & 0xFFFF; }
+    get sp() { return this._sp; }
+    set sp(value: number) { this._sp = value & 0xFFFF; }
+    get pc() { return this._pc; }
+    set pc(value: number) { this._pc = value & 0xFFFF; }
 
     updateFlag(flag: RegisterFlag, value: boolean) {
         if (value) {

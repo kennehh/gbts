@@ -7,6 +7,7 @@ import { IMmu } from '../../src/emulator/mmu';
 import { IPpu } from '../../src/emulator/ppu';
 import { ITimer } from '../../src/emulator/timer';
 import { InterruptManager } from '../../src/emulator/interrupt-manager';
+import { ICartridge } from '../../src/emulator/cartridge';
 
 const testDataDirectory = 'tests/__fixtures__/opcodeTestData';
 
@@ -46,7 +47,7 @@ class MmuMock implements IMmu {
     loadBootRom(rom: Uint8Array): void {
         throw new Error("Method not implemented.");
     }
-    loadCartridge(rom: Uint8Array): void {
+    loadCartridge(cart: ICartridge): void {
         throw new Error("Method not implemented.");
     }
 
@@ -64,11 +65,33 @@ class MmuMock implements IMmu {
 }
 
 class TimerMock implements ITimer {
+    readRegister(address: number): number {
+        return 0xff;
+    }
+    writeRegister(address: number, value: number): void {
+    }
     tick() {
     }
 }
 
 class PpuMock implements IPpu {
+    readRegister(address: number): number {
+        return 0xff;
+    }
+    writeRegister(address: number, value: number): void {
+    }
+    dmaTransfer(data: Uint8Array): void {
+    }
+    readVram(address: number): number {
+        return 0xff;
+    }
+    writeVram(address: number, value: number): void {
+    }
+    readOam(address: number): number {
+        return 0xff;
+    }
+    writeOam(address: number, value: number): void {
+    }
     tick() {
     }
 }

@@ -1,14 +1,14 @@
 import { Cpu } from "./cpu";
 import { InterruptManager } from "./interrupt-manager";
-import { Mmu } from "./mmu";
-import { Ppu } from "./ppu";
-import { Timer } from "./timer";
+import { IMmu, Mmu } from "./mmu";
+import { IPpu, Ppu } from "./ppu";
+import { ITimer, Timer } from "./timer";
 
 export class GameBoy {
     readonly cpu: Cpu;
-    readonly mmu: Mmu;
-    readonly ppu: Ppu;
-    readonly timer: Timer;
+    readonly mmu: IMmu;
+    readonly ppu: IPpu;
+    readonly timer: ITimer;
     readonly interruptManager: InterruptManager;
 
     constructor() {
