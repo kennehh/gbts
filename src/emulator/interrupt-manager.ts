@@ -7,6 +7,11 @@ export enum InterruptFlag {
     Joypad = 1 << 4,
 }
 
+export type InterruptWithVector = {
+    interrupt: InterruptFlag;
+    vector: number;
+};
+
 export class InterruptManager {
     ime: boolean = false;
     private _ie: InterruptFlag = InterruptFlag.None;
@@ -31,11 +36,20 @@ export class InterruptManager {
     }
 
     get currentInterrupt(): InterruptFlag {
-        return (this.ie & this.if & 0x1f) as InterruptFlag;
+        const activeInterrupts = this.if & this.ie & 0x1f;
+        return activeInterrupts & -activeInterrupts;
     }
 
-    get currentInterruptVector(): number {
-        return 0x40 | (this.currentInterrupt as number) << 3;
+    get currentInterruptWithVector(): InterruptWithVector | null {
+        const interrupt = this.currentInterrupt;
+        switch (interrupt) {
+            case InterruptFlag.VBlank:  return { interrupt: interrupt, vector: 0x40 };
+            case InterruptFlag.LCDStat: return { interrupt: interrupt, vector: 0x48 };
+            case InterruptFlag.Timer:   return { interrupt: interrupt, vector: 0x50 };
+            case InterruptFlag.Serial:  return { interrupt: interrupt, vector: 0x58 };
+            case InterruptFlag.Joypad:  return { interrupt: interrupt, vector: 0x60 };
+            default: return null;
+        }
     }
 
     get anyInterruptRequested(): boolean {

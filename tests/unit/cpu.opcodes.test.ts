@@ -43,6 +43,9 @@ class MmuMock implements IMmu {
         this.buffer = new ArrayBuffer(MmuMock.MEMORY_SIZE);
         this.view = new DataView(this.buffer);
     }
+    get bootRomLoaded(): boolean {
+        return false;
+    }
 
     loadBootRom(rom: Uint8Array): void {
         throw new Error("Method not implemented.");
@@ -187,32 +190,33 @@ function assertCpuState(cpu: Cpu, mmu: IMmu, cycles: number, test: CpuTest): voi
     }
 }
 
-// Pre-load all test data
-const testFiles = readdirSync(testDataDirectory)
-    .filter(file => path.extname(file) === '.json')
-    .map(file => ({
-        opcode: path.basename(file, '.json'),
-        tests: JSON.parse(readFileSync(path.join(testDataDirectory, file), 'utf-8')) as CpuTest[]
-    }));
+describe ('Cpu', () => {
+    const testFiles = readdirSync(testDataDirectory)
+        .filter(file => path.extname(file) === '.json')
+        .map(file => ({
+            opcode: path.basename(file, '.json'),
+            tests: JSON.parse(readFileSync(path.join(testDataDirectory, file), 'utf-8')) as CpuTest[]
+        }));
 
-const timer = new TimerMock();
-const ppu = new PpuMock();
-const interruptManager = new InterruptManager();
+    const timer = new TimerMock();
+    const ppu = new PpuMock();
+    const interruptManager = new InterruptManager();
 
-testFiles.forEach(({ opcode, tests }) => {
-    describe(`0x${opcode}`, () => {
-        it(`executes all test cases (${tests.length} cases)`, () => {
-            const mmu = new MmuMock();
-            const cpu = new Cpu(interruptManager, timer, ppu, mmu);
-            
-            tests.forEach((test, index) => {
-                try {
-                    setupInitialValues(cpu, mmu, test.initial);
-                    const cycles = cpu.step();
-                    assertCpuState(cpu, mmu, cycles, test);
-                } catch (error) {
-                    throw new Error(`Failed at test case ${test.name} (${index + 1}):\n\n${error.message}`);
-                }
+    testFiles.forEach(({ opcode, tests }) => {
+        describe(`0x${opcode}`, () => {
+            it(`executes all test cases (${tests.length} cases)`, () => {
+                const mmu = new MmuMock();
+                const cpu = new Cpu(interruptManager, timer, ppu, mmu);
+                
+                tests.forEach((test, index) => {
+                    try {
+                        setupInitialValues(cpu, mmu, test.initial);
+                        const cycles = cpu.step();
+                        assertCpuState(cpu, mmu, cycles, test);
+                    } catch (error) {
+                        throw new Error(`Failed at test case ${test.name} (${index + 1}):\n\n${error.message}`);
+                    }
+                });
             });
         });
     });

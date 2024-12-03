@@ -1,5 +1,6 @@
-import { CartridgeHeader } from "./cartridge-header";
-import Mapper from "./mappers/mapper";
+import { CartridgeHeader, CartridgeMapperType } from "./cartridge-header";
+import { IMapper, Mapper } from "./mappers/mapper";
+import { NoMbc } from "./mappers/no-mbc";
 
 export interface ICartridge {
     readRom(address: number): number;
@@ -40,7 +41,7 @@ export class EmptyCartridge implements ICartridge {
 
 export class Cartridge implements ICartridge {
     readonly header: CartridgeHeader;
-    readonly mapper: Mapper;
+    readonly mapper: IMapper;
     readonly rom: Uint8Array;
 
     constructor(rom: Uint8Array) {
@@ -61,8 +62,8 @@ export class Cartridge implements ICartridge {
     writeRam(address: number, value: number) {
         this.mapper.writeRam(address, value);
     }
-    
+
     reset() {
-        this.mapper.reset();
+        //this.mapper.reset();
     }
 }

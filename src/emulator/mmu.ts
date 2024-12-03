@@ -4,6 +4,7 @@ import { IPpu } from "./ppu";
 import { ITimer } from "./timer";
 
 export interface IMmu {
+    get bootRomLoaded(): boolean;
     read(address: number): number;
     write(address: number, value: number): void;
     reset(): void;
@@ -95,7 +96,7 @@ export class Mmu implements IMmu {
             // Serial Transfer
             if (address >= 0xff01 && address <= 0xff02) {
                 // TODO: Implement serial transfer
-                this.ioRegisters[address & 0x7F];
+                return this.ioRegisters[address & 0x7F];
             }
 
             // Timer and Divider Registers
@@ -145,7 +146,7 @@ export class Mmu implements IMmu {
                 return this.ioRegisters[address & 0x7F];
             }
             
-            console.warn(`Attempted to read from unused memory area at address ${address}`);
+            // console.warn(`Attempted to read from unused memory area at address ${address}`);
             return 0;
         }
 
@@ -191,7 +192,7 @@ export class Mmu implements IMmu {
 
         // Working RAM shadow
         if (address <= 0xfdff) {
-            console.warn(`Attempted to write to working RAM shadow at address ${address}`);
+            // console.warn(`Attempted to write to working RAM shadow at address ${address}`);
             this.wram[address & 0x1FFF] = value;
         }
 
@@ -203,7 +204,7 @@ export class Mmu implements IMmu {
 
         // Unused memory area
         if (address <= 0xfeff) {
-            console.warn(`Attempted to write to unused memory area at address ${address}`);
+            // console.warn(`Attempted to write to unused memory area at address ${address}`);
             return;
         }
 
@@ -285,7 +286,7 @@ export class Mmu implements IMmu {
                 return;
             }
             
-            console.warn(`Attempted to write to unused memory area at address ${address}`);
+            // console.warn(`Attempted to write to unused memory area at address ${address}`);
             return;
         }
 

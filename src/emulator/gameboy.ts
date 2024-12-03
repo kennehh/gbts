@@ -1,3 +1,4 @@
+import { Cartridge } from "./cartridge";
 import { Cpu } from "./cpu";
 import { InterruptManager } from "./interrupt-manager";
 import { IMmu, Mmu } from "./mmu";
@@ -18,5 +19,15 @@ export class GameBoy {
         this.ppu = new Ppu(this.interruptManager);
         this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu);
         this.cpu = new Cpu(this.interruptManager, this.timer, this.ppu, this.mmu);
+    }
+
+    step() {
+        this.cpu.step();
+    }
+
+    loadRom(rom: Uint8Array) {
+        const cart = new Cartridge(rom);
+        this.mmu.loadCartridge(cart);
+        this.cpu.state.reset(this.mmu.bootRomLoaded);
     }
 }

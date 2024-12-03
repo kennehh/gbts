@@ -1,6 +1,8 @@
-import Mapper from "./mapper";
+import { IMapper } from "./mapper";
 
-export class NoMbc extends Mapper {
+export class NoMbc implements IMapper {
+    constructor(private rom: Uint8Array) {}
+
     readRom(address: number): number {
         return this.rom[address];
     }

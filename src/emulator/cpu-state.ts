@@ -32,18 +32,22 @@ export class CpuState {
     private _pc: number = 0;
     private _sp: number = 0;
 
-    reset() {
-        this.a = 0;
-        this.b = 0;
-        this.c = 0;
-        this.d = 0;
-        this.e = 0;
-        this.f = 0;
-        this.h = 0;
-        this.l = 0;
-
-        this.sp = 0;
-        this.pc = 0;
+    reset(bootRomLoaded: boolean = false) {
+        if (!bootRomLoaded) {
+            this.af = 0x01b0;
+            this.bc = 0x0013;
+            this.de = 0x00d8;
+            this.hl = 0x014d;
+            this.pc = 0x0100;
+            this.sp = 0xfffe;
+        } else {
+            this.af = 0;
+            this.bc = 0;
+            this.de = 0;
+            this.hl = 0;
+            this.pc = 0;
+            this.sp = 0;
+        }
 
         this.status = CpuStatus.Running;
         this.haltBugTriggered = false;

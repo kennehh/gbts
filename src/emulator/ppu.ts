@@ -15,25 +15,28 @@ export class Ppu implements IPpu {
     constructor(private interruptManager: InterruptManager) {
     }
     dmaTransfer(data: Uint8Array): void {
-        throw new Error("Method not implemented.");
+        // TODO: Implement DMA transfer
     }
     readRegister(address: number): number {
-        throw new Error("Method not implemented.");
+        // TODO: Implement PPU register read
+        return 0xFF;
     }
     writeRegister(address: number, value: number): void {
-        throw new Error("Method not implemented.");
+        // TODO: Implement PPU register write
     }
     readVram(address: number): number {
-        throw new Error("Method not implemented.");
+        // TODO: Implement VRAM read
+        return 0xFF;
     }
     writeVram(address: number, value: number): void {
-        throw new Error("Method not implemented.");
+        // TODO: Implement VRAM write
     }
     readOam(address: number): number {
-        throw new Error("Method not implemented.");
+        // TODO: Implement OAM read
+        return 0xFF;
     }
     writeOam(address: number, value: number): void {
-        throw new Error("Method not implemented.");
+        // TODO: Implement OAM write
     }    
     tick() {
     }

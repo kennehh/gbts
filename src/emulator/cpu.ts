@@ -44,8 +44,16 @@ export class Cpu {
 
     step() {
         this.state.currentInstructionCycles = 0;
-        const opcode = this.readImmediate8Bit();
-        this.execute(opcode);
+
+        if (this.state.status === CpuStatus.Running) {
+            const opcode = this.readImmediate8Bit();
+            this.execute(opcode);
+        } else {
+            this.tickMCycle();
+        }
+
+        this.checkInterrupts();
+
         return this.state.currentInstructionCycles;
     }
 
@@ -238,7 +246,9 @@ export class Cpu {
             case 0xfe: this.cp_a(Operand8Bit.Immediate); break;
             case 0xff: this.rst(0x38); break;
 
-            default: throw new Error(`Unknown opcode: 0x${opcode.toString(16).padStart(2, '0')}`);
+            default:
+                console.warn(`Undefined opcode: 0x${opcode.toString(16)}`);
+                break;
         }
 
     }
@@ -316,7 +326,8 @@ export class Cpu {
             break;
     
           default:
-            throw new Error(`Unknown CB opcode: 0x${cbOpcode.toString(16).padStart(2, '0')}`);
+            console.warn(`Undefined CB opcode: 0x${cbOpcode.toString(16)}`);
+            break;
         }
     }
 
@@ -325,7 +336,7 @@ export class Cpu {
         this.state.totalCycles++;
         this.timer.tick();
         this.ppu.tick();
-        this.checkInterrupts();
+        // this.checkInterrupts();
     }
 
     private tickMCycle() {
@@ -407,7 +418,21 @@ export class Cpu {
     }
     
     private checkInterrupts() {
-        // TODO: Check for interrupts
+        if (this.interruptManager.anyInterruptRequested) {
+            this.state.status = CpuStatus.Running;
+            this.tickMCycle();
+
+            if (this.interruptManager.ime) {
+                const interruptVector = this.interruptManager.currentInterruptWithVector;
+                if (interruptVector !== null) {
+                    this.interruptManager.clearInterrupt(interruptVector.interrupt);
+                    this.interruptManager.ime = false;
+
+                    this.tickMCycle();
+                    this.rst(interruptVector.vector);
+                }
+            }
+        }
     }
 
     private readImmediate8Bit() {
