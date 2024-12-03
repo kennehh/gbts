@@ -5,15 +5,6 @@ export enum RegisterFlag {
     Carry = 1 << 4,
 }
 
-export enum InterruptFlag {
-    None = 0,
-    VBlank = 1 << 0,
-    LCDStat = 1 << 1,
-    Timer = 1 << 2,
-    Serial = 1 << 3,
-    Joypad = 1 << 4,
-}
-
 export enum CpuStatus {
     Running,
     Halted,
@@ -25,7 +16,6 @@ export class CpuState {
 
     status: CpuStatus = CpuStatus.Running;
     haltBugTriggered: boolean = false;
-    ime: boolean = false;
 
     currentInstructionCycles: number = 0;
     totalCycles: number = 0;
@@ -41,10 +31,6 @@ export class CpuState {
 
     #pc: number = 0;
     #sp: number = 0;
-
-    #ie: InterruptFlag = InterruptFlag.None;
-    #if: InterruptFlag = InterruptFlag.None;
-
 
     reset() {
         this.a = 0;
@@ -108,26 +94,6 @@ export class CpuState {
     set sp(value: number) { this.#sp = value & 0xFFFF; }
     get pc() { return this.#pc; }
     set pc(value: number) { this.#pc = value & 0xFFFF; }
-
-    get currentInterrupt() {
-        return (this.#ie & this.#if & 0x1f) as InterruptFlag;
-    }
-
-    get currentInterruptVector() {
-        return 0x40 | (this.currentInterrupt as number) << 3;
-    }
-
-    get anyInterruptRequested() {
-        return this.currentInterrupt !== InterruptFlag.None;
-    }
-
-    requestInterrupt(interrupt: InterruptFlag) {
-        this.#if |= interrupt;
-    }
-
-    clearInterrupt(interrupt: InterruptFlag) {
-        this.#if &= ~interrupt;
-    }
 
     updateFlag(flag: RegisterFlag, value: boolean) {
         if (value) {

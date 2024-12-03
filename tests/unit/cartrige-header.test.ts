@@ -3,12 +3,16 @@ import { CartridgeHeader, CartridgeCgbFlag, CartridgeDestinationCode, CartridgeM
 
 describe('CartridgeHeader', () => {
     // Helper to create a basic ROM array
-    function createMockRom(overrides: { [key: number]: number } = {}): Uint8Array {
+    function createMockRom(overrides: { [key: number]: number } = {}, title: string = ''): Uint8Array {
         const rom = new Uint8Array(0x150).fill(0);
         // Set some default valid values
         rom[0x147] = 0x00; // NoMbc
         rom[0x148] = 0x00; // 32KB ROM
         rom[0x149] = 0x00; // No RAM
+
+        for (let i = 0; i < title.length; i++) {
+            rom[0x134 + i] = title.charCodeAt(i);
+        }
         
         // Apply any overrides
         Object.entries(overrides).forEach(([addr, value]) => {
@@ -19,27 +23,11 @@ describe('CartridgeHeader', () => {
     }
 
     describe('title parsing', () => {
-        it('should parse basic title correctly', () => {
-            const rom = createMockRom();
-            const title = "TESTTITLE";
-            for (let i = 0; i < title.length; i++) {
-                rom[0x134 + i] = title.charCodeAt(i);
-            }
+        it.each(['TEST', 'TEST TEST'])('should parse title correctly', title => {
+            const rom = createMockRom({}, title);
             
             const header = new CartridgeHeader(rom);
-            expect(header.title).toBe("TESTTITLE");
-        });
-
-        it('should handle null-terminated titles', () => {
-            const rom = createMockRom();
-            const title = "TEST";
-            for (let i = 0; i < title.length; i++) {
-                rom[0x134 + i] = title.charCodeAt(i);
-            }
-            rom[0x134 + title.length] = 0;
-            
-            const header = new CartridgeHeader(rom);
-            expect(header.title).toBe("TEST");
+            expect(header.title).toBe(title);
         });
     });
 
@@ -217,26 +205,53 @@ describe('CartridgeHeader', () => {
         });
     });
 
-    describe('header checksum', () => {
-        it('should parse header checksum', () => {
-            const rom = createMockRom({ 0x14D: 0x42 });
+    describe('headerChecksum', () => {
+        it('should validate a correct header checksum', () => {
+            const rom = createMockRom();
+
+            let checksum = 0;
+            for (let i = 0x134; i <= 0x14C; i++) {
+                checksum = (checksum - rom[i] - 1) & 0xFF;
+            }
+            rom[0x14D] = checksum;
+
             const header = new CartridgeHeader(rom);
-            expect(header.headerChecksum).toBe(0x42);
+            expect(header.headerChecksum.value).toBe(checksum);
+            expect(header.headerChecksum.valid).toBe(true);
         });
-    
-        it('should validate header checksum', () => {
-            // Add test with valid checksum calculation
+
+        it('should invalidate an incorrect header checksum', () => {
+            const rom = createMockRom({ 0x14D: 0x00 });
+            const header = new CartridgeHeader(rom);
+            expect(header.headerChecksum.value).toBe(0x00);
+            expect(header.headerChecksum.valid).toBe(false);
         });
     });
-    
-    describe('global checksum', () => {
-        it('should parse global checksum', () => {
-            const rom = createMockRom({ 
-                0x14E: 0x12,
-                0x14F: 0x34 
-            });
+
+    describe('globalChecksum', () => {
+        it('should validate a correct global checksum', () => {
+            const rom = createMockRom({}, 'test');
+
+            let checksum = 0;
+            for (let i = 0; i < rom.length; i++) {
+                if (i === 0x14E || i === 0x14F) {
+                    continue;
+                }
+                checksum = (checksum + rom[i]) & 0xFFFF;
+            }
+            rom[0x14E] = (checksum >> 8) & 0xFF;
+            rom[0x14F] = checksum & 0xFF;
+
             const header = new CartridgeHeader(rom);
-            expect(header.globalChecksum).toBe(0x1234);
+            expect(header.globalChecksum.value).toBe(checksum);
+            expect(header.globalChecksum.valid).toBe(true);
+        });
+
+        it('should invalidate an incorrect global checksum', () => {
+            const rom = createMockRom({ 0x14E: 0x00, 0x14F: 0x00 }, 'test');
+            const header = new CartridgeHeader(rom);
+            expect(header.globalChecksum.value).toBe(0x0000);
+            expect(header.globalChecksum.valid).toBe(false);
         });
     });
 });

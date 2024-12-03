@@ -1,26 +1,24 @@
 import { CartridgeHeader } from "./cartridge-header";
+import Mapper from "./mappers/mapper";
 
 export class Cartridge {
     readonly header: CartridgeHeader;
+    readonly mapper: Mapper;
+    readonly rom: Uint8Array;
 
-    constructor(private rom: Uint8Array) {
+    constructor(rom: Uint8Array) {
+        this.rom = rom;
         this.header = new CartridgeHeader(rom);
+        this.mapper = Mapper.create(this.header, rom);
     }
 
     read(address: number) {
-        return this.rom[address];
+        return this.mapper.readRom(address);
     }
     write(address: number, value: number) {
-        throw new Error("Method not implemented.");
+        this.mapper.writeRom(address, value);
     }
     reset() {
-        throw new Error("Method not implemented.");
+        this.mapper.reset();
     }
-    loadBootRom(rom: Uint8Array) {
-        throw new Error("Method not implemented.");
-    }
-    loadCartridge(rom: Uint8Array) {
-        throw new Error("Method not implemented.");
-    }
-
 }

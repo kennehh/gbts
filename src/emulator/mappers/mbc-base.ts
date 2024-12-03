@@ -1,6 +1,6 @@
 import Mapper from "./mapper";
 
-export class NoMbc extends Mapper {
+export abstract class MbcBase extends Mapper {
     readRom(address: number): number {
         return this.rom[address];
     }

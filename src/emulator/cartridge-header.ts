@@ -1,3 +1,30 @@
+type CartridgeChecksum = {
+    value: number;
+    valid: boolean;
+}
+
+type CartridgeType = {
+    rawValue: number;
+    mapper: CartridgeMapperType;
+    hasRam: boolean;
+    hasBattery: boolean;
+    hasTimer: boolean;
+    hasRumble: boolean;
+    hasSensor: boolean;
+}
+
+type CartridgeLicensee = {
+    oldCode: number;
+    newCode: string | null;
+    name: string;
+}
+
+type CartridgeMemoryConfig = {
+    rawValue: number;
+    size: number;
+    banks: number;
+}
+
 export enum CartridgeCgbFlag {
     NotCgb = 0x00,
     CgbBackwardCompatible = 0x80,
@@ -24,28 +51,6 @@ export enum CartridgeMapperType {
     Huc1
 }
 
-export interface CartridgeType {
-    rawValue: number;
-    mapper: CartridgeMapperType;
-    hasRam: boolean;
-    hasBattery: boolean;
-    hasTimer: boolean;
-    hasRumble: boolean;
-    hasSensor: boolean;
-}
-
-export interface CartridgeLicensee {
-    oldCode: number;
-    newCode: string | null;
-    name: string;
-}
-
-export interface CartridgeMemoryConfig {
-    rawValue: number;
-    size: number;
-    banks: number;
-}
-
 export class CartridgeHeader {
     readonly title: string;
     readonly licensee: CartridgeLicensee;
@@ -56,21 +61,23 @@ export class CartridgeHeader {
     readonly ram: CartridgeMemoryConfig;
     readonly destinationCode: CartridgeDestinationCode;
     readonly maskRomVersion: number;
-    readonly headerChecksum: number;
-    readonly globalChecksum: number;
+    readonly headerChecksum: CartridgeChecksum;
+    readonly globalChecksum: CartridgeChecksum;
+    readonly romSizeDoesNotMatch: boolean;
 
     constructor(rom: Uint8Array) {
         this.title = this.parseTitle(rom);
         this.licensee = this.parseLicensee(rom);
         this.cgbFlag = this.parseCgbFlag(rom);
-        this.isSgb = this.parseSgbFlag(rom);
+        this.isSgb = rom[0x146] === 0x03;
         this.type = this.parseCartridgeType(rom);
         this.destinationCode = this.parseDestinationCode(rom);
         this.rom = this.parseRom(rom);
         this.ram = this.parseRam(rom);
-        this.maskRomVersion = this.parseMaskRomVersion(rom);
+        this.maskRomVersion = rom[0x14C];
         this.headerChecksum = this.parseHeaderChecksum(rom);
         this.globalChecksum = this.parseGlobalChecksum(rom);
+        this.romSizeDoesNotMatch = rom.length !== this.rom.size;
     }
 
     private parseTitle(rom: Uint8Array): string {
@@ -404,19 +411,36 @@ export class CartridgeHeader {
         }
     }
 
-    private parseMaskRomVersion(rom: Uint8Array): number {
-        return rom[0x14C];
+    private parseHeaderChecksum(rom: Uint8Array): CartridgeChecksum {
+        const expected = rom[0x14D];
+
+        // Verify the header checksum
+        let actual = 0;
+        for (let i = 0x134; i <= 0x14C; i++) {
+            actual = (actual - rom[i] - 1) & 0xFF;
+        }
+
+        return {
+            value: expected,
+            valid: expected === actual
+        };
     }
 
-    private parseSgbFlag(rom: Uint8Array): boolean {
-        return rom[0x146] === 0x03;
-    }
+    private parseGlobalChecksum(rom: Uint8Array): CartridgeChecksum {
+        const expected = (rom[0x14E] << 8) | rom[0x14F];
 
-    private parseHeaderChecksum(rom: Uint8Array): number {
-        return rom[0x14D];
-    }
+        // Verify the global checksum
+        let actual = 0;
+        for (let i = 0; i < rom.length; i++) {
+            if (i === 0x14E || i === 0x14F) {
+                continue;
+            }
+            actual = (actual + rom[i]) & 0xFFFF;
+        }
 
-    private parseGlobalChecksum(rom: Uint8Array): number {
-        return (rom[0x14E] << 8) | rom[0x14F];
+        return {
+            value: expected,
+            valid: expected === actual
+        };
     }
 }

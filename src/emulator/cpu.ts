@@ -1,7 +1,8 @@
-import { Mmu } from "./mmu";
+import { IMmu, Mmu } from "./mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
-import Ppu from "./ppu";
-import Timer from "./timer";
+import { IPpu, Ppu } from "./ppu";
+import { ITimer, Timer } from "./timer";
+import { InterruptManager } from "./interrupt-manager";
 
 enum Operand8Bit {
     B = 0,
@@ -30,20 +31,16 @@ enum Operand16Bit {
     Immediate = 6,
     IndirectImmediate = 7
 }
-    
 
-export default class Cpu {
+export class Cpu {
+    readonly state: CpuState = new CpuState();
+
     constructor(
-        readonly mmu: Mmu,
-        readonly state: CpuState = new CpuState(),
-        readonly ppu: Ppu = new Ppu(),
-        readonly timer: Timer = new Timer()
+        private interruptManager: InterruptManager,
+        private timer: ITimer,
+        private ppu: IPpu,
+        private mmu: IMmu
     ) {}
-
-    reset() {
-        this.state.reset();
-        this.mmu.reset();
-    }
 
     step() {
         this.state.currentInstructionCycles = 0;
@@ -454,7 +451,7 @@ export default class Cpu {
     // Instructions
 
     private halt() {
-        if (!this.state.ime && this.state.anyInterruptRequested) {
+        if (!this.interruptManager.ime && this.interruptManager.anyInterruptRequested) {
             this.state.haltBugTriggered = true;
         } else {
             this.state.status = CpuStatus.Halted;
@@ -470,15 +467,15 @@ export default class Cpu {
     }
 
     private di() {
-        this.state.ime = false;
+        this.interruptManager.ime = false;
     }
 
     private ei() {
-        this.state.ime = true;
+        this.interruptManager.ime = true;
     }
 
     private reti() {
-        this.state.ime = true;
+        this.interruptManager.ime = true;
         this.ret();
     }
 
@@ -986,7 +983,6 @@ export default class Cpu {
         return value;
     }
     
-
     private sp_i8() {
         // https://stackoverflow.com/questions/57958631/game-boy-half-carry-flag-and-16-bit-instructions-especially-opcode-0xe8
         // TL; DR: For ADD SP,n, the H-flag is set when carry occurs from bit 3 to bit 4.

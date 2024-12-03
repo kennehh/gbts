@@ -2,8 +2,11 @@ import { describe, it } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
 import { CpuStatus, RegisterFlag } from '../../src/emulator/cpu-state';
-import Cpu from '../../src/emulator/cpu';
-import { Mmu } from '../../src/emulator/mmu';
+import { Cpu } from '../../src/emulator/cpu';
+import { IMmu } from '../../src/emulator/mmu';
+import { IPpu } from '../../src/emulator/ppu';
+import { ITimer } from '../../src/emulator/timer';
+import { InterruptManager } from '../../src/emulator/interrupt-manager';
 
 const testDataDirectory = 'tests/__fixtures__/opcodeTestData';
 
@@ -29,7 +32,7 @@ interface CpuTest {
     cycles: [];
 }
 
-class MmuMock implements Mmu {
+class MmuMock implements IMmu {
     private buffer: ArrayBuffer;
     private view: DataView;
 
@@ -60,8 +63,18 @@ class MmuMock implements Mmu {
     }
 }
 
+class TimerMock implements ITimer {
+    tick() {
+    }
+}
 
-function getDebugState(cpu: Cpu, test: CpuTest): string {
+class PpuMock implements IPpu {
+    tick() {
+    }
+}
+
+
+function getDebugState(cpu: Cpu, mmu: IMmu, test: CpuTest): string {
     const initial = test.initial;
     const final = test.final;
     const current = cpu.state;
@@ -88,7 +101,7 @@ Actual Final State:
   PC: 0x${current.pc.toString(16).padStart(4, '0')}  SP: 0x${current.sp.toString(16).padStart(4, '0')}
 
 Memory Changes:
-${test.initial.ram.map(([addr, val]) => `  [0x${addr.toString(16).padStart(4, '0')}] Initial: 0x${val.toString(16).padStart(2, '0')} Final: 0x${cpu.mmu.read(addr).toString(16).padStart(2, '0')}`).join('\n')}
+${test.initial.ram.map(([addr, val]) => `  [0x${addr.toString(16).padStart(4, '0')}] Initial: 0x${val.toString(16).padStart(2, '0')} Final: 0x${mmu.read(addr).toString(16).padStart(2, '0')}`).join('\n')}
 `;
 }
 
@@ -100,7 +113,7 @@ function getFlagState(value: number): string {
     }).join(' ');
 }
 
-function setupInitialValues(cpu: Cpu, data: CpuTestData): void {
+function setupInitialValues(cpu: Cpu, mmu: IMmu, data: CpuTestData): void {
     cpu.state.a = data.a;
     cpu.state.b = data.b;
     cpu.state.c = data.c;
@@ -111,15 +124,14 @@ function setupInitialValues(cpu: Cpu, data: CpuTestData): void {
     cpu.state.l = data.l;
     cpu.state.pc = data.pc;
     cpu.state.sp = data.sp;
-    cpu.state.ime = data.ime === 1;
     cpu.state.status = CpuStatus.Running;
     
     for (const [address, value] of data.ram) {
-        cpu.mmu.write(address, value);
+        mmu.write(address, value);
     }
 }
 
-function assertCpuState(cpu: Cpu, cycles: number, test: CpuTest): void {
+function assertCpuState(cpu: Cpu, mmu: IMmu, cycles: number, test: CpuTest): void {
     const data = test.final;
     let errorMsg = '';
 
@@ -136,7 +148,7 @@ function assertCpuState(cpu: Cpu, cycles: number, test: CpuTest): void {
 
     // Check RAM values
     for (const [address, expectedValue] of data.ram) {
-        const actual = cpu.mmu.read(address);
+        const actual = mmu.read(address);
         if (actual !== expectedValue) {
             errorMsg += `Memory at 0x${address.toString(16)} mismatch (expected: 0x${expectedValue.toString(16)}, got: 0x${actual.toString(16)})\n`;
         }
@@ -148,11 +160,11 @@ function assertCpuState(cpu: Cpu, cycles: number, test: CpuTest): void {
     }
 
     if (errorMsg) {
-        throw new Error(`${errorMsg}\n${getDebugState(cpu, test)}`);
+        throw new Error(`${errorMsg}\n${getDebugState(cpu, mmu, test)}`);
     }
 }
 
-// Pre-load all test da
+// Pre-load all test data
 const testFiles = readdirSync(testDataDirectory)
     .filter(file => path.extname(file) === '.json')
     .map(file => ({
@@ -160,16 +172,21 @@ const testFiles = readdirSync(testDataDirectory)
         tests: JSON.parse(readFileSync(path.join(testDataDirectory, file), 'utf-8')) as CpuTest[]
     }));
 
+const timer = new TimerMock();
+const ppu = new PpuMock();
+const interruptManager = new InterruptManager();
+
 testFiles.forEach(({ opcode, tests }) => {
     describe(`0x${opcode}`, () => {
         it(`executes all test cases (${tests.length} cases)`, () => {
-            const cpu = new Cpu(new MmuMock());
+            const mmu = new MmuMock();
+            const cpu = new Cpu(interruptManager, timer, ppu, mmu);
             
             tests.forEach((test, index) => {
                 try {
-                    setupInitialValues(cpu, test.initial);
+                    setupInitialValues(cpu, mmu, test.initial);
                     const cycles = cpu.step();
-                    assertCpuState(cpu, cycles, test);
+                    assertCpuState(cpu, mmu, cycles, test);
                 } catch (error) {
                     throw new Error(`Failed at test case ${test.name} (${index + 1}):\n\n${error.message}`);
                 }

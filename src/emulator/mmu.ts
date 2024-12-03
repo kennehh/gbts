@@ -1,6 +1,8 @@
-import Ppu from "./ppu";
+import { InterruptManager } from "./interrupt-manager";
+import { Ppu } from "./ppu";
+import { Timer } from "./timer";
 
-export interface Mmu {
+export interface IMmu {
     read(address: number): number;
     write(address: number, value: number): void;
     reset(): void;
@@ -8,11 +10,12 @@ export interface Mmu {
     loadCartridge(rom: Uint8Array): void;
 }
 
-export class GameBoyMmu implements Mmu {
-    private ppu: Ppu;
-    private timer: Ppu;
-
-    constructor() {
+export class Mmu implements IMmu {
+    constructor(
+        readonly interruptManager: InterruptManager,
+        readonly timer: Timer,
+        readonly ppu: Ppu,
+    ) {
 
     }
 
@@ -24,14 +27,13 @@ export class GameBoyMmu implements Mmu {
     }
 
     reset() {
-        new Uint8Array(this.buffer).fill(0);
+
     }
 
-    read(address: number) {
-        return this.view.getUint8(address);
+    read(address: number): number {
+        return 0;
     }
 
     write(address: number, value: number) {
-        this.view.setUint8(address, value);
     }
 }
