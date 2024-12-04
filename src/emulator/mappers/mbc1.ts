@@ -13,7 +13,7 @@ export class Mbc1 extends MbcBase {
     }
 
     protected get currentRamBank(): number {
-        return this._currentRamBank;
+        return this.bankingMode ? this._currentRamBank : 0;
     }
 
     protected get ramEnabled(): boolean {
@@ -21,33 +21,40 @@ export class Mbc1 extends MbcBase {
     }
 
     override writeRom(address: number, value: number): void {
-        if (address <= 0x1fff) {
-            this._ramEnabled = (value & 0x0F) === 0x0A;
-        } else if (address <= 0x3fff) {
-            const bankNumber = value & 0x1F;
-            this.currentLowerRomBank = bankNumber === 0 ? 1 : bankNumber;
-        } else if (address <= 0x5fff) {
-            if (this.rom.length >= 1024 * 1024) {
-                // 1MB ROM
-                this.currentUpperRomBank = value & 0x03;
-            } else if (this.ram.length >= 32 * 1024) {
-                // 32KB RAM
-                this._currentRamBank = value & 0x03;
-            }
-        } else if (address <= 0x7fff) {
-            if (this.ram.length > 8 * 1024 || this.rom.length > 512 * 1024) {
-                // 8KB RAM or 512KB ROM
-                // 00 = Simple Banking Mode (default): 0000–3FFF and A000–BFFF locked to bank 0 of ROM/ RAM
-                // 01 = RAM Banking Mode / Advanced ROM Banking Mode: 0000–3FFF and A000–BFFF can be bank-switched via the 4000–5FFF bank register
-                this.bankingMode = (value & 0x01) === 0x01;
-            }
-        } else {
-            throw new Error(`Invalid MBC1 ROM address: ${address.toString(16)}`);
+        switch (address >> 12) {
+            case 0x0:
+            case 0x1:
+                // RAM Enable
+                this._ramEnabled = (value & 0x0F) === 0x0A;
+                break;
+            case 0x2:
+            case 0x3:
+                const bankNumber = value & 0x1F; 
+                this.currentLowerRomBank = bankNumber === 0 ? 1 : bankNumber;
+                break;
+            case 0x4:
+            case 0x5:
+                if (this.rom.length >= (1024 * 1024)) {
+                    this.currentUpperRomBank = value & 0x03;
+                } else if (this.cartHeader.ram.size >= (32 * 1024)) {
+                    this._currentRamBank = value & 0x03;
+                }
+                break;
+            case 0x6:
+            case 0x7:
+                if (this.cartHeader.ram.size > (8 * 1024) || this.cartHeader.rom.size > (512 * 1024)) {
+                    // 00 = Simple Banking Mode (default): 0000–3FFF and A000–BFFF locked to bank 0 of ROM/ RAM
+                    // 01 = RAM Banking Mode / Advanced ROM Banking Mode: 0000–3FFF and A000–BFFF can be bank-switched via the 4000–5FFF bank register
+                    this.bankingMode = (value & 0x01) === 0x01;
+                }
+                break;
+            default:
+                throw new Error(`Invalid MBC1 ROM address: ${address.toString(16)}`);
         }
     }
 
     override readFixedRomBank(address: number): number {
-        if (this.bankingMode && this.rom.length >= 1024 * 1024) {
+        if (this.bankingMode && this.cartHeader.rom.size >= (1024 * 1024)) {
             // 1MB ROM
             const bank = this.currentUpperRomBank << 5;
             const bankOffset = bank * MbcBase.ROM_BANK_SIZE;
@@ -56,5 +63,4 @@ export class Mbc1 extends MbcBase {
 
          return this.rom[address];
     }
-    
 }

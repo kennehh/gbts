@@ -1,22 +1,15 @@
-import { CartridgeHeader, CartridgeMapperType } from "../cartridge-header";
-import { Mbc1 } from "./mbc1";
-import { NoMbc } from "./no-mbc";
+import { CartridgeHeader } from "../cartridge-header";
 
-export interface IMapper {
-    readRom(address: number): number;
-    writeRom(address: number, value: number): void;
-    readRam(address: number): number;
-    writeRam(address: number, value: number): void;
-}
+export abstract class Mapper {
+    protected ram: Uint8Array;
 
-export class Mapper {
-    private constructor() {}
-
-    static create(cartHeader: CartridgeHeader, rom: Uint8Array): IMapper {
-        switch (cartHeader.type.mapper) {
-            case CartridgeMapperType.NoMbc: return new NoMbc(rom);
-            case CartridgeMapperType.Mbc1: return new Mbc1(rom, cartHeader.ram.size);
-            default: throw new Error(`Unsupported mapper type: ${CartridgeMapperType[cartHeader.type.mapper]}`);
-        }
+    constructor(protected cartHeader: CartridgeHeader, protected rom: Uint8Array) {
+        this.ram = new Uint8Array(cartHeader.ram.size);
     }
+
+    abstract readRom(address: number): number;
+    abstract writeRom(address: number, value: number): void
+    abstract readRam(address: number): number;
+    abstract writeRam(address: number, value: number): void;
 }
+

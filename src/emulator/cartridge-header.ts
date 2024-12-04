@@ -143,11 +143,16 @@ export class CartridgeHeader {
 
     private parseRom(rom: Uint8Array): CartridgeMemoryConfig {
         const value = rom[0x148];
-        if (value <= 0x08) {
-            return { rawValue: value, size: 32 * 1024 * (1 << value), banks: 2 * (1 << value) };
-        }
-
         switch (value) {
+            case 0x00: return { rawValue: value, size: 32 * 1024, banks: 2 };
+            case 0x01: return { rawValue: value, size: 64 * 1024, banks: 4 };
+            case 0x02: return { rawValue: value, size: 128 * 1024, banks: 8 };
+            case 0x03: return { rawValue: value, size: 256 * 1024, banks: 16 };
+            case 0x04: return { rawValue: value, size: 512 * 1024, banks: 32 };
+            case 0x05: return { rawValue: value, size: 1024 * 1024, banks: 64 };
+            case 0x06: return { rawValue: value, size: 2048 * 1024, banks: 128 };
+            case 0x07: return { rawValue: value, size: 4096 * 1024, banks: 256 };
+            case 0x08: return { rawValue: value, size: 8192 * 1024, banks: 512 };
             case 0x52: return { rawValue: value, size: 1152 * 1024, banks: 72 };
             case 0x53: return { rawValue: value, size: 1280 * 1024, banks: 80 };
             case 0x54: return { rawValue: value, size: 1536 * 1024, banks: 96 };

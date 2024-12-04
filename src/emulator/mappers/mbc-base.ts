@@ -1,9 +1,6 @@
-import { IMapper } from "./mapper";
+import { Mapper } from "./mapper";
 
-export abstract class MbcBase implements IMapper {
-    protected rom: Uint8Array;
-    protected ram: Uint8Array;
-
+export abstract class MbcBase extends Mapper {
     protected abstract get currentRomBank(): number;
     protected abstract get currentRamBank(): number;
     protected abstract get ramEnabled(): boolean;
@@ -11,20 +8,11 @@ export abstract class MbcBase implements IMapper {
     protected static readonly ROM_BANK_SIZE = 0x4000;
     protected static readonly RAM_BANK_SIZE = 0x2000;
 
-    constructor(rom: Uint8Array, ramSize: number) {
-        this.rom = rom;
-        this.ram = new Uint8Array(ramSize);
-    }
-
-    get canUseRam(): boolean {
-        return this.ramEnabled && this.ram.length > 0;
-    }
-
     readRom(address: number): number {
         if (address <= 0x3FFF) {
             return this.readFixedRomBank(address);
         } else {
-            return this.readSwitchableRomBank(address, MbcBase.ROM_BANK_SIZE);
+            return this.readSwitchableRomBank(address);
         }
     }
 
@@ -33,14 +21,14 @@ export abstract class MbcBase implements IMapper {
     }
 
     readRam(address: number): number {
-        if (this.canUseRam) {
+        if (this.ramEnabled && this.ram.length > 0) {
             return this.ram[this.getRamAddress(address)];
         }
         return 0xFF;
     }
     
     writeRam(address: number, value: number): void {
-        if (this.canUseRam) {
+        if (this.ramEnabled && this.ram.length > 0) {
             this.ram[this.getRamAddress(address)] = value;
         }
     }
@@ -49,14 +37,14 @@ export abstract class MbcBase implements IMapper {
         return this.rom[address];
     }
 
-    protected readSwitchableRomBank(address: number, bankSize: number): number {
+    protected readSwitchableRomBank(address: number): number {
         const relativeAddress = address - MbcBase.ROM_BANK_SIZE;
-        const bankOffset = this.currentRomBank * bankSize;
-        return this.rom[bankOffset + relativeAddress];
+        const bankOffset = this.currentRomBank * MbcBase.ROM_BANK_SIZE;
+        return this.rom[relativeAddress + bankOffset];
     }
 
     private getRamAddress(address: number): number {
         const bankOffset = this.currentRamBank * MbcBase.RAM_BANK_SIZE;
-        return bankOffset + address;
+        return address + bankOffset;
     }
 }

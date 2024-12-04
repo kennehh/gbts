@@ -1,4 +1,5 @@
 import { InterruptManager } from "./interrupt-manager";
+import { PpuState, PpuStatus } from "./ppu-state";
 
 export interface IPpu {
     tick(): void;
@@ -12,32 +13,94 @@ export interface IPpu {
 }
 
 export class Ppu implements IPpu {
+    readonly state = new PpuState();
+    
+    private vram: Uint8Array = new Uint8Array(0x2000);
+    private oam: Uint8Array = new Uint8Array(0xA0);
+
     constructor(private interruptManager: InterruptManager) {
     }
+
     dmaTransfer(data: Uint8Array): void {
-        // TODO: Implement DMA transfer
+        this.oam.set(data);
     }
+
     readRegister(address: number): number {
-        // TODO: Implement PPU register read
-        return 0xFF;
+        switch (address) {
+            case 0xFF40: return this.state.lcdc;
+            case 0xFF41: return this.state.stat;
+            case 0xFF42: return this.state.scy;
+            case 0xFF43: return this.state.scx;
+            case 0xFF44: return this.state.ly;
+            case 0xFF45: return this.state.lyc;
+            case 0xFF46: return this.state.dma;
+            case 0xFF47: return this.state.bgp;
+            case 0xFF48: return this.state.obp0;
+            case 0xFF49: return this.state.obp1;
+            case 0xFF4A: return this.state.wy;
+            case 0xFF4B: return this.state.wx;
+            default: throw new Error(`Invalid PPU register address: ${address.toString(16)}`);
+        }
     }
+
     writeRegister(address: number, value: number): void {
-        // TODO: Implement PPU register write
+        switch (address) {
+            case 0xFF40: 
+                this.state.lcdc = value;
+                // TODO: Implement LCDC update
+                break;
+            case 0xFF41: this.state.stat = value; break;
+            case 0xFF42: this.state.scy = value; break;
+            case 0xFF43: this.state.scx = value; break;
+            case 0xFF44: break;
+            case 0xFF45: this.state.lyc = value; break;
+            case 0xFF46: this.state.dma = value; break;
+            case 0xFF47: 
+                this.state.bgp = value; 
+                // update palette
+                break;
+            case 0xFF48:
+                this.state.obp0 = value;
+                // update palette
+                break;
+            case 0xFF49:
+                this.state.obp1 = value;
+                // update palette
+                break;
+            case 0xFF4A: this.state.wy = value; break;
+            case 0xFF4B: this.state.wx = value; break;
+            default: throw new Error(`Invalid PPU register address: ${address.toString(16)}`);
+        }
     }
+
     readVram(address: number): number {
-        // TODO: Implement VRAM read
-        return 0xFF;
+        if (this.state.status === PpuStatus.Drawing) {
+            return 0xFF;
+        }
+        return this.vram[address & 0x1FFF];
     }
+
     writeVram(address: number, value: number): void {
-        // TODO: Implement VRAM write
+        if (this.state.status === PpuStatus.Drawing) {
+            return;
+        }
+        this.vram[address & 0x1FFF] = value;
     }
+
     readOam(address: number): number {
-        // TODO: Implement OAM read
-        return 0xFF;
+        if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
+            return 0xFF;
+        }
+        return this.oam[address & 0xFF];
     }
+
     writeOam(address: number, value: number): void {
-        // TODO: Implement OAM write
+        if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
+            return;
+        }
+        this.oam[address & 0xFF] = value;
     }    
+    
     tick() {
     }
 }
