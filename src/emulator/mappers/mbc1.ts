@@ -50,7 +50,7 @@ export class Mbc1 extends MbcBase {
         if (this.bankingMode && this.rom.length >= 1024 * 1024) {
             // 1MB ROM
             const bank = this.currentUpperRomBank << 5;
-            const bankOffset = bank * MbcBase.romBankSize;
+            const bankOffset = bank * MbcBase.ROM_BANK_SIZE;
             return this.rom[bankOffset + address];
         }
 

@@ -2,13 +2,20 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    pool: 'threads',  // Use 'threads' or 'forks'
+    pool: 'threads',
     poolOptions: {
       threads: {
-        singleThread: false,
-        isolate: false
-      }
-    }
+        // execArgv: [
+        //   '--cpu-prof',
+        //   '--cpu-prof-dir=test-runner-profile',
+        //   '--heap-prof',
+        //   '--heap-prof-dir=test-runner-profile'
+        // ],
+    
+        // To generate a single profile
+        // singleFork: true,
+        },
+    },
   }
 });
 

@@ -7,15 +7,15 @@ export interface ITimer {
 }
 
 export class Timer implements ITimer {
-    private static readonly tacClocks = [1024, 16, 64, 256];
-    private static readonly divClock = 256;
+    private static readonly TAC_CLOCKS = [1024, 16, 64, 256];
+    private static readonly DIV_CLOCK = 256;
 
     private _tac: number = 0;
     private tima: number = 0;
     private tma: number = 0;
     private div: number = 0;
 
-    private currentTacClock = Timer.tacClocks[0];
+    private currentTacClock = Timer.TAC_CLOCKS[0];
 
     private divCycles = 0;
     private timaCycles = 0;
@@ -30,7 +30,7 @@ export class Timer implements ITimer {
     private set tac(value: number) {
         this._tac = value;
         this.isTimerEnabled = (value & 0b100) !== 0;
-        this.currentTacClock = Timer.tacClocks[value & 0b11];
+        this.currentTacClock = Timer.TAC_CLOCKS[value & 0b11];
         this.timaCycles = 0;
     }
 
@@ -72,7 +72,7 @@ export class Timer implements ITimer {
     tick() {
         // Update DIV
         this.divCycles++;
-        if (this.divCycles >= Timer.divClock) {
+        if (this.divCycles >= Timer.DIV_CLOCK) {
             this.div = (this.div + 1) & 0xFF;
             this.divCycles = 0;
         }

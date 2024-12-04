@@ -13,7 +13,7 @@ export enum CpuStatus {
 
 export class CpuState {
     private static readonly SERIALIZED_SIZE = 15;
-
+    
     status: CpuStatus = CpuStatus.Running;
     haltBugTriggered: boolean = false;
 

@@ -116,7 +116,7 @@ describe.concurrent('CpuState', () => {
             state.pc = 0x5678;
             state.f = 0xFF;
 
-            state.reset();
+            state.reset(true);
 
             expect(state.a).toBe(0);
             expect(state.bc).toBe(0);

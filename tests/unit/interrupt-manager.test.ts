@@ -32,7 +32,8 @@ describe('InterruptManager', () => {
         const manager = new InterruptManager();
         manager.ie = InterruptFlag.VBlank;
         manager.if = InterruptFlag.VBlank;
-        expect(manager.currentInterruptVector).toBe(0x40);
+        expect(manager.currentInterruptWithVector?.interrupt).toBe(InterruptFlag.VBlank);
+        expect(manager.currentInterruptWithVector?.vector).toBe(0x40);
     });
 
     it('should return true for anyInterruptRequested when an interrupt is requested', () => {

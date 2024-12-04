@@ -18,17 +18,13 @@ export class Mmu implements IMmu {
     private bootRom: Uint8Array | null = null;
     private wram: Uint8Array = new Uint8Array(0x2000);
     private hram: Uint8Array = new Uint8Array(0x7F);
-
-    // TODO: Implement I/O registers, this is just a placeholder
     private ioRegisters: Uint8Array = new Uint8Array(0x80);
 
     constructor(
-        readonly interruptManager: InterruptManager,
-        readonly timer: ITimer,
-        readonly ppu: IPpu,
-    ) {
-
-    }
+        private readonly interruptManager: InterruptManager,
+        private readonly timer: ITimer,
+        private readonly ppu: IPpu,
+    ) {}
 
     get bootRomLoaded(): boolean {
         return this._bootRomLoaded;
@@ -43,276 +39,209 @@ export class Mmu implements IMmu {
         this.cartridge = cart;
     }
 
-    reset() {
-
+    reset(): void {
+        this.wram.fill(0);
+        this.hram.fill(0);
+        this.ioRegisters.fill(0);
+        this._bootRomLoaded = false;
     }
 
     read(address: number): number {
-        address = address & 0xFFFF;
+        address &= 0xFFFF;
+        
+        // Use upper 4 bits for primary switching
+        switch (address >> 12) {
+            // ROM Banks (0x0000 - 0x7FFF)
+            case 0x0: case 0x1: case 0x2: case 0x3:
+            case 0x4: case 0x5: case 0x6: case 0x7:
+                return this.readRomRegion(address);
 
-        // ROM banks 
-        if (address <= 0x7fff) {
-            if (address < 0x100 && this.bootRomLoaded) {
-                return this.bootRom![address];
-            }
-            return this.cartridge.readRom(address);
+            // VRAM (0x8000 - 0x9FFF)
+            case 0x8: case 0x9:
+                return this.ppu.readVram(address);
+
+            // External RAM (0xA000 - 0xBFFF)
+            case 0xa: case 0xb:
+                return this.cartridge.readRam(address);
+
+            // WRAM and Echo (0xC000 - 0xFDFF)
+            case 0xc: case 0xd: case 0xe: 
+                return this.wram[address & 0x1FFF];
+
+            // Special F range
+            case 0xf:
+                if (address <= 0xfdff) {
+                    return this.wram[address & 0x1FFF];
+                }
+                // Handle special F range
+                if (address <= 0xfe9f) {
+                    return this.ppu.readOam(address);
+                }
+                if (address <=  0xfeff) {
+                    return 0xff; // Prohibited area
+                }
+                if (address <= 0xff7f) {
+                    return this.readIoRegion(address);
+                }
+                if (address <= 0xfffe) {
+                    return this.hram[address & 0x7F];
+                }
+                if (address === 0xffff) {
+                    return this.interruptManager.ie;
+                }
+                throw new Error(`Invalid read address: ${address.toString(16)}`);
         }
-
-        // VRAM
-        if (address <= 0x9fff) {
-            return this.ppu.readVram(address);
-        }
-
-        // External RAM
-        if (address <= 0xbfff) {
-            return this.cartridge.readRam(address);
-        }
-
-        // Working RAM
-        if (address <= 0xdfff) {
-            // TODO: CGB mode switchable RAM banks 1-7
-            return this.wram[address & 0x1FFF];
-        }
-
-        // Working RAM shadow   
-        if (address <= 0xfdff) {
-            return this.wram[address & 0x1FFF];
-        }
-
-        // OAM
-        if (address <= 0xfe9f) {
-            return this.ppu.readOam(address);
-        }
-
-        // IO Registers
-        if (address <= 0xff7f) {
-
-            //  Joypad Input
-            if (address === 0xff00) {
-                // TODO: Implement joypad input
-                return this.ioRegisters[address & 0x7F];
-            }
-
-            // Serial Transfer
-            if (address >= 0xff01 && address <= 0xff02) {
-                // TODO: Implement serial transfer
-                return this.ioRegisters[address & 0x7F];
-            }
-
-            // Timer and Divider Registers
-            if (address >= 0xff04 && address <= 0xff07) {
-                return this.timer.readRegister(address);
-            }
-
-            // Interrupts
-            if (address === 0xff0f) {
-                return this.interruptManager.if;
-            }
-
-            // Wave Pattern RAM
-            if (address >= 0xff30 && address <= 0xff3f) {
-                // TODO: Implement sound
-                return this.ioRegisters[address & 0x7F];
-            }
-
-            // LCD Control Registers
-            if (address >= 0xff40 && address <= 0xff4b) {
-                return this.ppu.readRegister(address);
-            }
-
-            // VRAM Bank Select
-            if (address === 0xff4f) {
-                return this.ppu.readRegister(address);
-            }
-
-            // Boot ROM Disable
-            if (address === 0xff50) {
-                return this._bootRomLoaded ? 0 : 0xff;
-            }
-
-            // VRAM DMA Transfer
-            if (address >= 0xff51 && address <= 0xff55) {
-                return this.ppu.readRegister(address);
-            }
-
-            // BG/OBJ Palettes
-            if (address >= 0xff68 && address <= 0xff6b) {
-                return this.ppu.readRegister(address);
-            }
-
-            // WRAM Bank Select
-            if (address === 0xff70) {
-                // TODO: Implement CGB mode WRAM bank switching
-                return this.ioRegisters[address & 0x7F];
-            }
-            
-            // console.warn(`Attempted to read from unused memory area at address ${address}`);
-            return 0;
-        }
-
-        // High RAM
-        if (address <= 0xfffe) {
-            return this.hram[address & 0x7F];
-        }
-
-        // Interrupt Enable Register
-        if (address === 0xffff) {
-            return this.interruptManager.ie;
-        }
-
-        throw new Error(`Invalid memory read at address ${address.toString(16)}`);
+        throw new Error(`Invalid read address: ${address.toString(16)}`);
     }
 
-    write(address: number, value: number) {
-        address = address & 0xFFFF;
-        value = value & 0xFF;
+    write(address: number, value: number): void {
+        address &= 0xFFFF;
+        value &= 0xFF;
 
-        // ROM banks 
-        if (address <= 0x7fff) {
-            this.cartridge.writeRom(address, value);
-            return;
-        }
-
-        // VRAM
-        if (address <= 0x9fff) {
-            this.ppu.writeVram(address, value);
-            return;
-        }
-
-        // External RAM
-        if (address <= 0xbfff) {
-            this.cartridge.writeRam(address, value);
-            return;
-        }
-
-        // Working RAM
-        if (address <= 0xdfff) {
-            this.wram[address & 0x1FFF] = value;
-        }
-
-        // Working RAM shadow
-        if (address <= 0xfdff) {
-            // console.warn(`Attempted to write to working RAM shadow at address ${address}`);
-            this.wram[address & 0x1FFF] = value;
-        }
-
-        // OAM
-        if (address <= 0xfe9f) {
-            this.ppu.writeOam(address, value);
-            return;
-        }
-
-        // Unused memory area
-        if (address <= 0xfeff) {
-            // console.warn(`Attempted to write to unused memory area at address ${address}`);
-            return;
-        }
-
-        // IO Registers
-        if (address <= 0xff7f) {
-            //  Joypad Input
-            if (address === 0xff00) {
-                // TODO: Implement joypad input
-                this.ioRegisters[address & 0x7F] = value;
+        switch (address >> 12) {
+            // ROM Banks (0x0000 - 0x7FFF)
+            case 0x0: case 0x1: case 0x2: case 0x3:
+            case 0x4: case 0x5: case 0x6: case 0x7:
+                this.cartridge.writeRom(address, value);
                 return;
-            }
 
-            // Serial Transfer
-            if (address >= 0xff01 && address <= 0xff02) {
-                // TODO: Implement serial transfer
-                this.ioRegisters[address & 0x7F] = value;
+            // VRAM (0x8000 - 0x9FFF)
+            case 0x8: case 0x9:
+                this.ppu.writeVram(address, value);
                 return;
-            }
 
-            // Timer and Divider Registers
-            if (address >= 0xff04 && address <= 0xff07) {
+            // External RAM (0xA000 - 0xBFFF)
+            case 0xa: case 0xb:
+                this.cartridge.writeRam(address, value);
+                return;
+
+            // WRAM and Echo (0xC000 - 0xFDFF)
+            case 0xc: case 0xd: case 0xe:
+                this.wram[address & 0x1FFF] = value;
+                return;
+
+            // Special F range
+            case 0xf:
+                if (address <= 0xfdff) {
+                    this.wram[address & 0x1FFF] = value;
+                    return;
+                }
+                // Handle special F range
+                if (address <= 0xfe9f) {
+                    this.ppu.writeOam(address, value);
+                    return;
+                }
+                if (address <= 0xfeff) {
+                    return; // Prohibited area - ignore write
+                }
+                if (address <= 0xff7f) {
+                    this.writeIoRegion(address, value);
+                    return;
+                }
+                if (address <= 0xfffe) {
+                    this.hram[address & 0x7F] = value;
+                    return;
+                }
+                if (address === 0xffff) {
+                    this.interruptManager.ie = value;
+                    return;
+                }
+                throw new Error(`Invalid write address: ${address.toString(16)}`);
+        }
+        throw new Error(`Invalid write address: ${address.toString(16)}`);
+    }
+
+    private readRomRegion(address: number): number {
+        if (address < 0x100 && this._bootRomLoaded) {
+            return this.bootRom![address];
+        }
+        return this.cartridge.readRom(address);
+    }
+
+    private readIoRegion(address: number): number {
+        switch (address) {
+            case 0xff00:
+                return this.ioRegisters[address & 0x7F]; // Joypad
+            case 0xff01: case 0xff02:
+                return this.ioRegisters[address & 0x7F]; // Serial
+            case 0xff04: case 0xff05: case 0xff06: case 0xff07:
+                return this.timer.readRegister(address);
+            case 0xff0f:
+                return this.interruptManager.if;
+            case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
+            case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
+            case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
+                return this.ioRegisters[address & 0x7F]; // Wave Pattern RAM
+            case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
+            case 0xff46: case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:
+                return this.ppu.readRegister(address); // LCD Control Registers
+            case 0xff4f:
+                return this.ppu.readRegister(address); // VRAM Bank
+            case 0xff50:
+                return this._bootRomLoaded ? 0 : 0xff;
+            case 0xff51: case 0xff52: case 0xff53: case 0xff54: case 0xff55:
+                return this.ppu.readRegister(address); // VRAM DMA
+            case 0xff68: case 0xff69: case 0xff6a: case 0xff6b:
+                return this.ppu.readRegister(address); // BG/OBJ Palettes
+            case 0xff70:
+                return this.ioRegisters[address & 0x7F]; // WRAM Bank
+        }
+
+        return 0xff;
+    }
+
+    private writeIoRegion(address: number, value: number): void {
+        switch (address) {
+            case 0xff00:
+                this.ioRegisters[address & 0x7F] = value; // Joypad
+                return;
+            case 0xff01: case 0xff02:
+                this.ioRegisters[address & 0x7F] = value; // Serial
+                return;
+            case 0xff04: case 0xff05: case 0xff06: case 0xff07:
                 this.timer.writeRegister(address, value);
                 return;
-            }
-
-            // Interrupts
-            if (address === 0xff0f) {
+            case 0xff0f:
                 this.interruptManager.if = value;
                 return;
-            }
-
-            // Wave Pattern RAM
-            if (address >= 0xff30 && address <= 0xff3f) {
-                // TODO: Implement sound
-                this.ioRegisters[address & 0x7F] = value;
+            case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
+            case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
+            case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
+                this.ioRegisters[address & 0x7F] = value; // Wave Pattern RAM
                 return;
-            }
-
-            // LCD Control Registers
-            if (address >= 0xff40 && address <= 0xff4b) {
-                if (address === 0xff46) {
-                    this.dmaTransfer(value);
-                } else {
-                    this.ppu.writeRegister(address, value);
-                }
+            case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
+            case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:
+                this.ppu.writeRegister(address, value); // LCD Control Registers
                 return;
-            }
-
-            // VRAM Bank Select
-            if (address === 0xff4f) {
-                this.ppu.writeRegister(address, value);
+            case 0xff46:
+                this.dmaTransfer(value);
                 return;
-            }
-
-            // Boot ROM Disable
-            if (address === 0xff50) {
-                if (value > 0) {
-                    this._bootRomLoaded = false;
-                }
+            case 0xff4f:
+                this.ppu.writeRegister(address, value); // VRAM Bank
                 return;
-            }
-
-            // VRAM DMA Transfer
-            if (address >= 0xff51 && address <= 0xff55) {
-                this.ppu.writeRegister(address, value);
+            case 0xff50:
+                if (value > 0) this._bootRomLoaded = false;
                 return;
-            }
-
-            // BG/OBJ Palettes
-            if (address >= 0xff68 && address <= 0xff6b) {
-                this.ppu.writeRegister(address, value);
+            case 0xff51: case 0xff52: case 0xff53: case 0xff54: case 0xff55:
+                this.ppu.writeRegister(address, value); // VRAM DMA
                 return;
-            }
-
-            // WRAM Bank Select
-            if (address === 0xff70) {
-                // TODO: Implement CGB mode WRAM bank switching
-                this.ioRegisters[address & 0x7F] = value;
+            case 0xff68: case 0xff69: case 0xff6a: case 0xff6b:
+                this.ppu.writeRegister(address, value); // BG/OBJ Palettes
                 return;
-            }
-            
-            // console.warn(`Attempted to write to unused memory area at address ${address}`);
-            return;
+            case 0xff70:
+                this.ioRegisters[address & 0x7F] = value; // WRAM Bank
+                return;
         }
-
-        // High RAM
-        if (address <= 0xfffe) {
-            this.hram[address & 0x7F] = value;
-            return;
-        }
-
-        // Interrupt Enable Register
-        if (address === 0xffff) {
-            this.interruptManager.ie = value;
-            return;
-        }
-
-        throw new Error(`Invalid memory write at address ${address.toString(16)}`);
     }
 
-    private dmaTransfer(value: number) {
-        const data = new Uint8Array(160);
+    private dmaTransfer(value: number): void {
         const sourceAddress = value << 8;
-
+        const data = new Uint8Array(160);
+        
         for (let i = 0; i < 160; i++) {
             data[i] = this.read(sourceAddress + i);
         }
-
+        
         this.ppu.dmaTransfer(data);
     }
 }

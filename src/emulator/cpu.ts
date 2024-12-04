@@ -385,11 +385,6 @@ export class Cpu {
         }
     }
 
-    private readWriteValue8Bit(readOperand: Operand8Bit, writeOperand: Operand8Bit) {
-        const value = this.readValue8Bit(readOperand);
-        this.writeValue8Bit(writeOperand, value);
-    }
-
     private readValue16Bit(operand: Operand16Bit) {
         switch (operand) {
             case Operand16Bit.AF: return this.state.af;

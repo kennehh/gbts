@@ -8,8 +8,8 @@ export abstract class MbcBase implements IMapper {
     protected abstract get currentRamBank(): number;
     protected abstract get ramEnabled(): boolean;
 
-    protected static readonly romBankSize = 0x4000;
-    protected static readonly ramBankSize = 0x2000;
+    protected static readonly ROM_BANK_SIZE = 0x4000;
+    protected static readonly RAM_BANK_SIZE = 0x2000;
 
     constructor(rom: Uint8Array, ramSize: number) {
         this.rom = rom;
@@ -24,7 +24,7 @@ export abstract class MbcBase implements IMapper {
         if (address <= 0x3FFF) {
             return this.readFixedRomBank(address);
         } else {
-            return this.readSwitchableRomBank(address, MbcBase.romBankSize);
+            return this.readSwitchableRomBank(address, MbcBase.ROM_BANK_SIZE);
         }
     }
 
@@ -50,13 +50,13 @@ export abstract class MbcBase implements IMapper {
     }
 
     protected readSwitchableRomBank(address: number, bankSize: number): number {
-        const relativeAddress = address - MbcBase.romBankSize;
+        const relativeAddress = address - MbcBase.ROM_BANK_SIZE;
         const bankOffset = this.currentRomBank * bankSize;
         return this.rom[bankOffset + relativeAddress];
     }
 
     private getRamAddress(address: number): number {
-        const bankOffset = this.currentRamBank * MbcBase.ramBankSize;
+        const bankOffset = this.currentRamBank * MbcBase.RAM_BANK_SIZE;
         return bankOffset + address;
     }
 }
