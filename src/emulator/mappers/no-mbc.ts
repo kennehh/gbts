@@ -2,7 +2,7 @@ import { Mapper } from "./mapper";
 
 export class NoMbc extends Mapper {
     readRom(address: number): number {
-        return this.rom[address];
+        return this.rom.read(address);
     }
     writeRom(address: number, value: number): void {
         console.warn(`Attempted to write to ROM at address ${address} with value ${value}`);

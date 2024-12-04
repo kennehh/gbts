@@ -31,11 +31,13 @@ export class Mbc1 extends MbcBase {
             case 0x3:
                 const bankNumber = value & 0x1F; 
                 this.currentLowerRomBank = bankNumber === 0 ? 1 : bankNumber;
+                console.log(`Switched to ROM bank ${this.currentLowerRomBank} (lower: ${bankNumber} upper: ${this.currentUpperRomBank})`);
                 break;
             case 0x4:
             case 0x5:
-                if (this.rom.length >= (1024 * 1024)) {
+                if (this.cartHeader.rom.size >= (1024 * 1024)) {                    
                     this.currentUpperRomBank = value & 0x03;
+                    console.log(`Switched to ROM bank ${this.currentUpperRomBank} (lower: ${this.currentLowerRomBank} upper: ${this.currentUpperRomBank})`);
                 } else if (this.cartHeader.ram.size >= (32 * 1024)) {
                     this._currentRamBank = value & 0x03;
                 }
@@ -54,13 +56,14 @@ export class Mbc1 extends MbcBase {
     }
 
     override readFixedRomBank(address: number): number {
+        const addressInBank = address & MbcBase.ROM_BANK_MASK;
+
         if (this.bankingMode && this.cartHeader.rom.size >= (1024 * 1024)) {
-            // 1MB ROM
             const bank = this.currentUpperRomBank << 5;
             const bankOffset = bank * MbcBase.ROM_BANK_SIZE;
-            return this.rom[bankOffset + address];
+            return this.rom.read(bankOffset + addressInBank);
         }
 
-         return this.rom[address];
+        return this.rom.read(addressInBank);
     }
 }

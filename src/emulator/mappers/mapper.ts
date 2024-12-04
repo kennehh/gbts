@@ -1,10 +1,15 @@
 import { CartridgeHeader } from "../cartridge-header";
+import { Memory } from "../memory";
 
 export abstract class Mapper {
-    protected ram: Uint8Array;
+    protected readonly cartHeader: CartridgeHeader;
+    protected readonly rom: Memory;
+    protected readonly ram: Memory;
 
-    constructor(protected cartHeader: CartridgeHeader, protected rom: Uint8Array) {
-        this.ram = new Uint8Array(cartHeader.ram.size);
+    constructor(cartHeader: CartridgeHeader, rom: Uint8Array) {
+        this.rom = new Memory(rom);
+        this.ram = new Memory(new Uint8Array(cartHeader.ram.size));
+        this.cartHeader = cartHeader;
     }
 
     abstract readRom(address: number): number;

@@ -43,10 +43,8 @@ export class EmptyCartridge implements ICartridge {
 export class Cartridge implements ICartridge {
     readonly header: CartridgeHeader;
     readonly mapper: Mapper;
-    readonly rom: Uint8Array;
 
     constructor(rom: Uint8Array) {
-        this.rom = rom;
         this.header = new CartridgeHeader(rom);
         this.mapper = MapperFactory.create(this.header, rom);
     }
