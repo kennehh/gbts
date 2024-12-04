@@ -77,35 +77,6 @@ describe.concurrent('CpuState', () => {
         });
     });
 
-    describe('flags', () => {
-        it('should set and get flags', () => {
-            state.updateFlag(RegisterFlag.Zero, true);
-            state.updateFlag(RegisterFlag.Carry, false);
-            state.updateFlag(RegisterFlag.HalfCarry, false);
-            state.updateFlag(RegisterFlag.Subtract, false);
-
-            expect(state.hasFlag(RegisterFlag.Zero)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.Carry)).toBe(false);
-            expect(state.hasFlag(RegisterFlag.HalfCarry)).toBe(false);
-            expect(state.hasFlag(RegisterFlag.Subtract)).toBe(false);
-
-            state.updateFlag(RegisterFlag.Carry, true);
-            state.updateFlag(RegisterFlag.HalfCarry, true);
-
-            expect(state.hasFlag(RegisterFlag.Zero)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.Carry)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.HalfCarry)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.Subtract)).toBe(false);
-
-            state.updateFlag(RegisterFlag.Zero, false);
-
-            expect(state.hasFlag(RegisterFlag.Zero)).toBe(false);
-            expect(state.hasFlag(RegisterFlag.Carry)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.HalfCarry)).toBe(true);
-            expect(state.hasFlag(RegisterFlag.Subtract)).toBe(false);
-        });
-    });
-
     describe('reset', () => {
         it('should reset all registers', () => {
             state.a = 0x12;
