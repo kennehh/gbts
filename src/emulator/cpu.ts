@@ -509,9 +509,9 @@ export class Cpu {
         const result = this.state.hl + value;
         const halfCarryResult = (this.state.hl & 0x0FFF) + (value & 0x0FFF);
 
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.updateFlag(RegisterFlag.HalfCarry, halfCarryResult > 0x0FFF);
-        this.state.updateFlag(RegisterFlag.Carry, result > 0xFFFF);
+        this.state.f = (this.state.f & RegisterFlag.Zero) |
+                       (halfCarryResult > 0x0FFF ? RegisterFlag.HalfCarry : 0) |
+                       (result > 0xFFFF ? RegisterFlag.Carry : 0);
         this.state.hl = result & 0xFFFF;
 
         this.tickMCycle();
@@ -520,7 +520,7 @@ export class Cpu {
     private add_a(operand: Operand8Bit) {
         const a = this.state.a;
         const b = this.readValue8Bit(operand);
-        const result = this.add(a, b, false, true);
+        const result = this.add(a, b, false);
         this.state.a = result;
     }
 
@@ -532,21 +532,21 @@ export class Cpu {
     private adc_a(operand: Operand8Bit) {
         const a = this.state.a;
         const b = this.readValue8Bit(operand);
-        const result = this.add(a, b, true, true);
+        const result = this.add(a, b, true);
         this.state.a = result;
     }
 
     private sub_a(operand: Operand8Bit) {
         const a = this.state.a;
         const b = this.readValue8Bit(operand);
-        const result = this.sub(a, b, false, true);
+        const result = this.sub(a, b, false);
         this.state.a = result;
     }
 
     private sbc_a(operand: Operand8Bit) {
         const a = this.state.a;
         const b = this.readValue8Bit(operand);
-        const result = this.sub(a, b, true, true);
+        const result = this.sub(a, b, true);
         this.state.a = result;
     }
 
@@ -580,69 +580,47 @@ export class Cpu {
     private or(a: number, b: number) {
         const result = a | b;
         const byteResult = result & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, byteResult === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.clearFlag(RegisterFlag.Carry);
-
+        this.state.f = (byteResult === 0 ? RegisterFlag.Zero : 0);
         return byteResult;
     }
 
     private xor(a: number, b: number) {
         const result = a ^ b;
         const byteResult = result & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, byteResult === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.clearFlag(RegisterFlag.Carry);
-
+        this.state.f = (byteResult === 0 ? RegisterFlag.Zero : 0);
         return byteResult;
     }
 
     private and(a: number, b: number) {
         const result = a & b;
         const byteResult = result & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, byteResult === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.setFlag(RegisterFlag.HalfCarry);
-        this.state.clearFlag(RegisterFlag.Carry);
-
+        this.state.f = (byteResult === 0 ? RegisterFlag.Zero : 0) | RegisterFlag.HalfCarry;
         return byteResult;
     }
 
-    private add(a: number, b: number, isCarry: boolean, setCarry: boolean) {
-        const cy = isCarry && this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
+    private add(a: number, b: number, carry: boolean) {
+        const cy = carry && this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
         const result = a + b + cy;
         const halfCarryResult = (a & 0x0F) + (b & 0x0F) + cy;
         const byteResult = result & 0xFF;
 
-        this.state.updateFlag(RegisterFlag.Zero, byteResult === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.updateFlag(RegisterFlag.HalfCarry, halfCarryResult > 0x0F);
-
-        if (setCarry) {
-            this.state.updateFlag(RegisterFlag.Carry, result > 0xFF);
-        }
+        this.state.f = (byteResult === 0 ? RegisterFlag.Zero : 0) |
+                       (halfCarryResult > 0x0F ? RegisterFlag.HalfCarry : 0) |
+                       (result > 0xFF ? RegisterFlag.Carry : 0);
 
         return byteResult;
     }
 
-    private sub(a: number, b: number, isBorrow: boolean, setCarry: boolean) {
-        const cy = isBorrow && this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
+    private sub(a: number, b: number, carry: boolean) {
+        const cy = carry && this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
         const result = a - b - cy;
         const halfCarryResult = (a & 0x0F) - (b & 0x0F) - cy;
         const byteResult = result & 0xFF;
 
-        this.state.updateFlag(RegisterFlag.Zero, byteResult === 0);
-        this.state.setFlag(RegisterFlag.Subtract);
-        this.state.updateFlag(RegisterFlag.HalfCarry, halfCarryResult < 0);
-
-        if (setCarry) {
-            this.state.updateFlag(RegisterFlag.Carry, result < 0);
-        }
+        this.state.f = RegisterFlag.Subtract |
+                       (byteResult === 0 ? RegisterFlag.Zero : 0) |
+                       (halfCarryResult < 0 ? RegisterFlag.HalfCarry : 0) |
+                       (result < 0 ? RegisterFlag.Carry : 0);
 
         return byteResult;
     }
@@ -650,11 +628,12 @@ export class Cpu {
     private cp(a: number, b: number) {
         const result = a - b;
         const halfCarryResult = (a & 0x0F) - (b & 0x0F);
-        
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.setFlag(RegisterFlag.Subtract);
-        this.state.updateFlag(RegisterFlag.HalfCarry, halfCarryResult < 0);
-        this.state.updateFlag(RegisterFlag.Carry, result < 0);
+        const byteResult = result & 0xFF;
+
+        this.state.f = RegisterFlag.Subtract |
+                       (byteResult === 0 ? RegisterFlag.Zero : 0) |
+                       (halfCarryResult < 0 ? RegisterFlag.HalfCarry : 0) |
+                       (result < 0 ? RegisterFlag.Carry : 0)
     }
 
     private rl_a() {
@@ -669,12 +648,7 @@ export class Cpu {
     private rl_base(value: number, clearZero: boolean) {
         const cy = this.state.hasFlag(RegisterFlag.Carry) ? 1 : 0;
         const result = ((value << 1) | cy) & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Carry, (value & 0x80) !== 0);
-        this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-
+        this.state.f = ((value & 0x80) !== 0 ? RegisterFlag.Carry : 0) | (!clearZero && result === 0 ? RegisterFlag.Zero : 0);
         return result;
     }
 
@@ -690,12 +664,7 @@ export class Cpu {
     private rlc_base(value: number, clearZero: boolean) {
         const bit7 = value >> 7;
         const result = ((value << 1) | bit7) & 0xff;
-
-        this.state.updateFlag(RegisterFlag.Carry, bit7 !== 0);
-        this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-
+        this.state.f = (bit7 !== 0 ? RegisterFlag.Carry : 0) | (!clearZero && result === 0 ? RegisterFlag.Zero : 0);
         return result;
     }
 
@@ -711,12 +680,7 @@ export class Cpu {
     private rr_base(value: number, clearZero: boolean) {
         const cy = this.state.hasFlag(RegisterFlag.Carry) ? 0x80 : 0;
         const result = ((value >> 1) | cy) & 0xff;
-
-        this.state.updateFlag(RegisterFlag.Carry, (value & 0x01) !== 0);
-        this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-
+        this.state.f = ((value & 0x01) !== 0 ? RegisterFlag.Carry : 0) | (!clearZero && result === 0 ? RegisterFlag.Zero : 0);
         return result;
     }
 
@@ -732,24 +696,33 @@ export class Cpu {
     private rrc_base(value: number, clearZero: boolean) {
         const bit0 = value & 0x01;
         const result = ((value >> 1) | (bit0 << 7)) & 0xff;
-
-        this.state.updateFlag(RegisterFlag.Carry, bit0 !== 0);
-        this.state.updateFlag(RegisterFlag.Zero, !clearZero && result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-
+        this.state.f = (bit0 !== 0 ? RegisterFlag.Carry : 0) | (!clearZero && result === 0 ? RegisterFlag.Zero : 0);
         return result;
     }
 
     private inc_8(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
-        const result = this.add(value, 1, false, false);
-        this.writeValue8Bit(operand, result);
+        const result = value + 1;
+        const halfCarryResult = (value & 0x0F) + 1;
+        const byteResult = result & 0xFF;
+
+        this.state.f = (this.state.f & RegisterFlag.Carry) |
+                       (byteResult === 0 ? RegisterFlag.Zero : 0) |
+                       (halfCarryResult > 0x0F ? RegisterFlag.HalfCarry : 0);
+
+        this.writeValue8Bit(operand, byteResult);
     }
 
     private dec_8(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
-        const result = this.sub(value, 1, false, false);
+        const result = value - 1;
+        const halfCarryResult = (value & 0x0F) - 1;
+        const byteResult = result & 0xFF;
+
+        this.state.f = (this.state.f & RegisterFlag.Carry) | RegisterFlag.Subtract |
+                       (byteResult === 0 ? RegisterFlag.Zero : 0) |
+                       (halfCarryResult < 0 ? RegisterFlag.HalfCarry : 0);
+
         this.writeValue8Bit(operand, result);
     }
 
@@ -766,11 +739,12 @@ export class Cpu {
     private daa() {
         const carryFlag = this.state.hasFlag(RegisterFlag.Carry);
         const halfCarryFlag = this.state.hasFlag(RegisterFlag.HalfCarry);
+        let setCarry = false;
 
         if (!this.state.hasFlag(RegisterFlag.Subtract)) {
             if (carryFlag || this.state.a > 0x99) {
                 this.state.a += 0x60;
-                this.state.setFlag(RegisterFlag.Carry);
+                setCarry = true;
             }
             if (halfCarryFlag || (this.state.a & 0x0F) > 0x09) {
                 this.state.a += 0x06;
@@ -778,90 +752,63 @@ export class Cpu {
         } else {
             if (carryFlag) {
                 this.state.a -= 0x60;
-                this.state.setFlag(RegisterFlag.Carry);
+                setCarry = true;
             }
             if (halfCarryFlag) {
                 this.state.a -= 0x06;
             }
         }
-
-        this.state.updateFlag(RegisterFlag.Zero, this.state.a === 0);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
+        
+        this.state.f = (this.state.f & RegisterFlag.Subtract) | 
+                       (setCarry ? RegisterFlag.Carry : 0) | 
+                       (this.state.a === 0 ? RegisterFlag.Zero : 0);
     }
 
     private ccf() {
-        this.state.toggleFlag(RegisterFlag.Carry);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
+        this.state.f = (this.state.f & ~(RegisterFlag.Subtract | RegisterFlag.HalfCarry)) ^ RegisterFlag.Carry;
     }
 
     private scf() {
-        this.state.setFlag(RegisterFlag.Carry);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
+        this.state.f = (this.state.f & RegisterFlag.Zero) | RegisterFlag.Carry;
     }
 
     private cpl() {
         this.state.a = ~this.state.a;
-        this.state.setFlag(RegisterFlag.Subtract);
-        this.state.setFlag(RegisterFlag.HalfCarry);
+        this.state.f |= RegisterFlag.HalfCarry | RegisterFlag.Subtract;
     }
 
     private swap(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
         const result = ((value & 0x0F) << 4) | ((value & 0xF0) >> 4);
-
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.clearFlag(RegisterFlag.Carry);
-
+        this.state.f = result === 0 ? RegisterFlag.Zero : 0;
         this.writeValue8Bit(operand, result);
     }
 
     private sla(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
         const result = (value << 1) & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.updateFlag(RegisterFlag.Carry, (value & 0x80) !== 0);
-
+        this.state.f = (result === 0 ? RegisterFlag.Zero : 0) | ((value & 0x80) !== 0 ? RegisterFlag.Carry : 0);
         this.writeValue8Bit(operand, result);
     }
 
     private sra(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
         const result = ((value >> 1) | (value & 0x80)) & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.updateFlag(RegisterFlag.Carry, (value & 0x01) !== 0);
-
+        this.state.f = (result === 0 ? RegisterFlag.Zero : 0) | ((value & 0x01) !== 0 ? RegisterFlag.Carry : 0);
         this.writeValue8Bit(operand, result);
     }
 
     private srl(operand: Operand8Bit) {
         const value = this.readValue8Bit(operand);
         const result = (value >> 1) & 0xFF;
-
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.clearFlag(RegisterFlag.HalfCarry);
-        this.state.updateFlag(RegisterFlag.Carry, (value & 0x01) !== 0);
-
+        this.state.f = (result === 0 ? RegisterFlag.Zero : 0) | ((value & 0x01) !== 0 ? RegisterFlag.Carry : 0);
         this.writeValue8Bit(operand, result);
     }
 
     private bit(operand: Operand8Bit, bit: number) {
         const value = this.readValue8Bit(operand);
         const result = value & (1 << bit);
-
-        this.state.updateFlag(RegisterFlag.Zero, result === 0);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.setFlag(RegisterFlag.HalfCarry);
+        this.state.f = (this.state.f & RegisterFlag.Carry) | (result === 0 ? RegisterFlag.Zero : 0) | RegisterFlag.HalfCarry;
     }
 
     private res(operand: Operand8Bit, bit: number) {
@@ -1011,11 +958,7 @@ export class Cpu {
         const result = this.state.sp + value;
         const carryResult = (this.state.sp & 0xFF) + (value & 0xFF);
         const halfCarryResult = (this.state.sp & 0x0F) + (value & 0x0F);
-
-        this.state.clearFlag(RegisterFlag.Zero);
-        this.state.clearFlag(RegisterFlag.Subtract);
-        this.state.updateFlag(RegisterFlag.HalfCarry, halfCarryResult > 0x0F);
-        this.state.updateFlag(RegisterFlag.Carry, carryResult > 0xFF);
+        this.state.f = (halfCarryResult > 0x0F ? RegisterFlag.HalfCarry : 0) | (carryResult > 0xFF ? RegisterFlag.Carry : 0);
 
         this.tickMCycle();
         return result & 0xFFFF;

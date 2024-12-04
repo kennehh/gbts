@@ -99,26 +99,6 @@ export class CpuState {
     get pc() { return this._pc; }
     set pc(value: number) { this._pc = value & 0xFFFF; }
 
-    updateFlag(flag: RegisterFlag, value: boolean) {
-        if (value) {
-            this.f |= flag;
-        } else {
-            this.f &= ~flag;
-        }
-    }
-
-    setFlag(flag: RegisterFlag) {
-        this.f |= flag;
-    }
-
-    clearFlag(flag: RegisterFlag) {
-        this.f &= ~flag;
-    }
-
-    toggleFlag(flag: RegisterFlag) {
-        this.f ^= flag;
-    }
-
     hasFlag(flag: RegisterFlag) {
         return (this.f & flag) === flag;
     }
