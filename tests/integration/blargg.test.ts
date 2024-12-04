@@ -1,9 +1,8 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, assert } from "vitest";
 import { GameBoy } from "../../src/emulator/gameboy";
 import { CpuStatus } from "../../src/emulator/cpu-state";
-import { assert } from "console";
 
 const romDirectory = 'tests/__fixtures__/roms/blargg';
 
