@@ -6,9 +6,9 @@ export abstract class Mapper {
     protected readonly rom: Memory;
     protected readonly ram: Memory;
 
-    constructor(cartHeader: CartridgeHeader, rom: Uint8Array) {
+    constructor(cartHeader: CartridgeHeader, rom: Uint8Array, ram: Uint8Array | null) {
         this.rom = new Memory(rom);
-        this.ram = new Memory(cartHeader.ram.size);
+        this.ram = new Memory(ram ?? cartHeader.ram.size);
         this.cartHeader = cartHeader;
     }
 

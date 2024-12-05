@@ -6,13 +6,14 @@ export abstract class MbcBase extends Mapper {
     protected abstract get ramEnabled(): boolean;
 
     protected static readonly ROM_BANK_SIZE = 0x4000;
-    protected static readonly ROM_BANK_MASK = MbcBase.ROM_BANK_SIZE - 1;
+    protected static readonly ROM_BANK_MASK = 0x3FFF;
 
     protected static readonly RAM_BANK_SIZE = 0x2000;
-    protected static readonly RAM_BANK_MASK = MbcBase.RAM_BANK_SIZE - 1;
+    protected static readonly RAM_BANK_MASK = 0x1FFF;
 
-    protected static readonly ROM_MAX_BANKS = 0x80;
-    protected static readonly RAM_MAX_BANKS = 0x4;
+    get canAccessRam() {
+        return this.ramEnabled && this.ram.length > 0;
+    }
 
     readRom(address: number): number {
         if (address < MbcBase.ROM_BANK_SIZE) {
@@ -25,14 +26,14 @@ export abstract class MbcBase extends Mapper {
     writeRom(address: number, value: number): void { }
 
     readRam(address: number): number {
-        if (this.ramEnabled && this.ram.length > 0) {
+        if (this.canAccessRam) {
             return this.ram.read(this.getRamAddress(address));
         }
         return 0xFF;
     }
     
     writeRam(address: number, value: number): void {
-        if (this.ramEnabled && this.ram.length > 0) {
+        if (this.canAccessRam) {
             this.ram.write(this.getRamAddress(address), value);
         }
     }

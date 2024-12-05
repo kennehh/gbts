@@ -78,28 +78,28 @@ export class Ppu implements IPpu {
         if (this.state.status === PpuStatus.Drawing) {
             return 0xFF;
         }
-        return this.vram[address & 0x1FFF];
+        return this.vram.read(address & 0x1FFF);
     }
 
     writeVram(address: number, value: number): void {
         if (this.state.status === PpuStatus.Drawing) {
             return;
         }
-        this.vram[address & 0x1FFF] = value;
+        this.vram.write(address, value);
     }
 
     readOam(address: number): number {
         if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
             return 0xFF;
         }
-        return this.oam[address & 0xFF];
+        return this.oam.read(address);
     }
 
     writeOam(address: number, value: number): void {
         if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
             return;
         }
-        this.oam[address & 0xFF] = value;
+        this.oam.write(address, value);
     }    
     
     tick() {

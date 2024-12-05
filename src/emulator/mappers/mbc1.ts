@@ -17,9 +17,10 @@ export class Mbc1 extends MbcBase {
     private upperRomBankShift = 5;
     private lowerRomBankMask = 0x1F;
 
-    constructor(cartHeader: CartridgeHeader, rom: Uint8Array) {
-        super(cartHeader, rom);
+    constructor(cartHeader: CartridgeHeader, rom: Uint8Array, ram: Uint8Array | null) {
+        super(cartHeader, rom, ram);
         
+        // Check if this is a MBC1M cartridge
         if (rom.length >= MemorySize.Size256KB) {
             const logo1 = rom.slice(0x104, 0x134);
             const logo2 = rom.slice(0x40104, 0x40134);
