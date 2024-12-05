@@ -4,14 +4,12 @@ export class NoMbc extends Mapper {
     readRom(address: number): number {
         return this.rom.read(address);
     }
-    writeRom(address: number, value: number): void {
-        console.warn(`Attempted to write to ROM at address ${address} with value ${value}`);
+    
+    writeRom(address: number, value: number): void { }
+
+    readRam(address: number): number { 
+        return 0xFF; 
     }
-    readRam(address: number): number {
-        console.warn(`Attempted to read from RAM at address ${address}`);
-        return 0xFF;
-    }
-    writeRam(address: number, value: number): void {
-        console.warn(`Attempted to write to RAM at address ${address} with value ${value}`);
-    }
+
+    writeRam(address: number, value: number): void {}
 }

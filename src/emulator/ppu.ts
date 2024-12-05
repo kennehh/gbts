@@ -1,5 +1,6 @@
 import { InterruptManager } from "./interrupt-manager";
-import { PpuState, PpuStatus } from "./ppu-state";
+import { Memory } from "./memory";
+import { LcdcFlag, PpuState, PpuStatus } from "./ppu-state";
 
 export interface IPpu {
     tick(): void;
@@ -15,8 +16,8 @@ export interface IPpu {
 export class Ppu implements IPpu {
     readonly state = new PpuState();
     
-    private vram: Uint8Array = new Uint8Array(0x2000);
-    private oam: Uint8Array = new Uint8Array(0xA0);
+    private vram: Memory = new Memory(0x2000);
+    private oam: Memory = new Memory(0xA0);
 
     constructor(private interruptManager: InterruptManager) {
     }
@@ -102,5 +103,10 @@ export class Ppu implements IPpu {
     }    
     
     tick() {
+        if (!this.state.lcdEnabled) {
+            return;
+        }
+
+
     }
 }

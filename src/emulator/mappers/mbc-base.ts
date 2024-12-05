@@ -6,22 +6,23 @@ export abstract class MbcBase extends Mapper {
     protected abstract get ramEnabled(): boolean;
 
     protected static readonly ROM_BANK_SIZE = 0x4000;
-    protected static readonly ROM_BANK_MASK = 0x3FFF;
+    protected static readonly ROM_BANK_MASK = MbcBase.ROM_BANK_SIZE - 1;
 
     protected static readonly RAM_BANK_SIZE = 0x2000;
-    protected static readonly RAM_BANK_MASK = 0x1FFF;
+    protected static readonly RAM_BANK_MASK = MbcBase.RAM_BANK_SIZE - 1;
+
+    protected static readonly ROM_MAX_BANKS = 0x80;
+    protected static readonly RAM_MAX_BANKS = 0x4;
 
     readRom(address: number): number {
-        if (address <= 0x3FFF) {
+        if (address < MbcBase.ROM_BANK_SIZE) {
             return this.readFixedRomBank(address);
         } else {
             return this.readSwitchableRomBank(address);
         }
     }
 
-    writeRom(address: number, value: number): void {
-        console.warn(`Attempted to write to ROM at address ${address} with value ${value}`);
-    }
+    writeRom(address: number, value: number): void { }
 
     readRam(address: number): number {
         if (this.ramEnabled && this.ram.length > 0) {

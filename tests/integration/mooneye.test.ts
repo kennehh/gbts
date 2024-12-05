@@ -100,6 +100,5 @@ describe('Mooneye Test ROMs', () => {
                 it(`should pass ${rom.name}`, () => testRom(rom.path));
             });
         });
-        
     });
 });

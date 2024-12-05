@@ -27,8 +27,8 @@ export enum StatInterruptSourceFlag {
 
 export class PpuState {
     statInterruptSource: StatInterruptSourceFlag = StatInterruptSourceFlag.None;
-    lcdc: LcdcFlag = LcdcFlag.None;
     status: PpuStatus = PpuStatus.HBlank;
+    lcdEnabled: boolean = false;
 
     private _ly: number = 0;
     private _lyc: number = 0;
@@ -40,6 +40,16 @@ export class PpuState {
     private _obp0: number = 0;
     private _obp1: number = 0;
     private _dma: number = 0;
+    private _lcdc: LcdcFlag = LcdcFlag.None;
+
+    get lcdc(): LcdcFlag {
+        return this._lcdc;
+    }
+
+    set lcdc(value: LcdcFlag) {
+        this._lcdc = value & 0xff;
+        this.lcdEnabled = (value & LcdcFlag.LcdEnable) === LcdcFlag.LcdEnable;
+    }
 
     get stat(): number {
         const lyCompareBit = this.lyCompareFlag ? 1 : 0;

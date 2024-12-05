@@ -1,3 +1,5 @@
+import { MemorySize } from "./memory";
+
 type CartridgeChecksum = {
     value: number;
     valid: boolean;
@@ -144,18 +146,18 @@ export class CartridgeHeader {
     private parseRom(rom: Uint8Array): CartridgeMemoryConfig {
         const value = rom[0x148];
         switch (value) {
-            case 0x00: return { rawValue: value, size: 32 * 1024, banks: 2 };
-            case 0x01: return { rawValue: value, size: 64 * 1024, banks: 4 };
-            case 0x02: return { rawValue: value, size: 128 * 1024, banks: 8 };
-            case 0x03: return { rawValue: value, size: 256 * 1024, banks: 16 };
-            case 0x04: return { rawValue: value, size: 512 * 1024, banks: 32 };
-            case 0x05: return { rawValue: value, size: 1024 * 1024, banks: 64 };
-            case 0x06: return { rawValue: value, size: 2048 * 1024, banks: 128 };
-            case 0x07: return { rawValue: value, size: 4096 * 1024, banks: 256 };
-            case 0x08: return { rawValue: value, size: 8192 * 1024, banks: 512 };
-            case 0x52: return { rawValue: value, size: 1152 * 1024, banks: 72 };
-            case 0x53: return { rawValue: value, size: 1280 * 1024, banks: 80 };
-            case 0x54: return { rawValue: value, size: 1536 * 1024, banks: 96 };
+            case 0x00: return { rawValue: value, size: MemorySize.Size32KB, banks: 2 }; 
+            case 0x01: return { rawValue: value, size: MemorySize.Size64KB, banks: 4 };
+            case 0x02: return { rawValue: value, size: MemorySize.Size128KB, banks: 8 };
+            case 0x03: return { rawValue: value, size: MemorySize.Size256KB, banks: 16 };
+            case 0x04: return { rawValue: value, size: MemorySize.Size512KB, banks: 32 };
+            case 0x05: return { rawValue: value, size: MemorySize.Size1MB, banks: 64 };
+            case 0x06: return { rawValue: value, size: MemorySize.Size2MB, banks: 128 };
+            case 0x07: return { rawValue: value, size: MemorySize.Size4MB, banks: 256 };
+            case 0x08: return { rawValue: value, size: MemorySize.Size8MB, banks: 512 };
+            case 0x52: return { rawValue: value, size: MemorySize.Size1_1MB, banks: 72 };
+            case 0x53: return { rawValue: value, size: MemorySize.Size1_2MB, banks: 80 };
+            case 0x54: return { rawValue: value, size: MemorySize.Size1_5MB, banks: 96 };
             default: throw new Error(`Unknown ROM size: 0x${value.toString(16).padStart(2, '0').toUpperCase()}`);
         }
     }
@@ -164,10 +166,10 @@ export class CartridgeHeader {
         const value = rom[0x149];
         switch (value) {
             case 0x00: return { rawValue: value, size: 0, banks: 0 };
-            case 0x02: return { rawValue: value, size: 8 * 1024, banks: 1 };
-            case 0x03: return { rawValue: value, size: 32 * 1024, banks: 4 };
-            case 0x04: return { rawValue: value, size: 128 * 1024, banks: 16 };
-            case 0x05: return { rawValue: value, size: 64 * 1024, banks: 8 };
+            case 0x02: return { rawValue: value, size: MemorySize.Size8KB, banks: 1 };
+            case 0x03: return { rawValue: value, size: MemorySize.Size32KB, banks: 4 };
+            case 0x04: return { rawValue: value, size: MemorySize.Size128KB, banks: 16 };
+            case 0x05: return { rawValue: value, size: MemorySize.Size64KB, banks: 8 };
             default: throw new Error(`Unknown RAM size: 0x${value.toString(16).padStart(2, '0').toUpperCase()}`);
         }
     }
