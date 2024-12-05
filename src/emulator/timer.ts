@@ -1,43 +1,46 @@
 import { InterruptFlag, InterruptManager } from "./interrupt-manager";
 
 export interface ITimer {
-    tick(): void;
+    tickMCycle(): void;
     readRegister(address: number): number;
     writeRegister(address: number, value: number): void;
 }
-
 export class Timer implements ITimer {
-    private static readonly TAC_CLOCKS = [1024, 16, 64, 256];
-    private static readonly DIV_CLOCK = 256;
+    private div = 0; // 16-bit internal divider register
+    private tima = 0;
+    private tma = 0;
+    private tac = 0;
 
-    private _tac: number = 0;
-    private tima: number = 0;
-    private tma: number = 0;
-    private div: number = 0;
+    private timaOverflowPending = false;
+    private timerEnabled = false;
+    private selectedBit = this.getSelectedBit(0);
 
-    private currentTacClock = Timer.TAC_CLOCKS[0];
-
-    private divCycles = 0;
-    private timaCycles = 0;
-    private isTimerEnabled = false;
-
-    constructor(private interruptManager: InterruptManager) {}
-
-    private get tac(): number {
-        return this._tac;
+    constructor(private interruptManager: InterruptManager) {
     }
 
-    private set tac(value: number) {
-        this._tac = value;
-        this.isTimerEnabled = (value & 0b100) !== 0;
-        this.currentTacClock = Timer.TAC_CLOCKS[value & 0b11];
-        this.timaCycles = 0;
+    tickMCycle() {
+        const prevDiv = this.div;
+        this.div = (this.div + 4) & 0xFFFF;
+        if (this.timaOverflowPending) {
+            this.timaOverflowPending = false;
+            this.tima = this.tma;
+            this.interruptManager.requestInterrupt(InterruptFlag.Timer);
+            return;
+        }
+        if (!this.timerEnabled) {
+            return;
+        }
+        const prevBit = this.getBit(prevDiv, this.selectedBit);
+        const currentBit = this.getBit(this.div, this.selectedBit);
+        if (prevBit && !currentBit) {
+            this.incrementTima();
+        }
     }
 
     readRegister(address: number): number {
         switch (address) {
             case 0xFF04:
-                return this.div;
+                return (this.div >> 8) & 0xFF;
             case 0xFF05:
                 return this.tima;
             case 0xFF06:
@@ -52,43 +55,65 @@ export class Timer implements ITimer {
     writeRegister(address: number, value: number): void {
         switch (address) {
             case 0xFF04:
-                this.div = 0;
-                this.divCycles = 0;
+                if (!this.timerEnabled) {
+                    this.div = 0;
+                } else {
+                    const oldBit = this.getBit(this.div, this.selectedBit);
+                    this.div = 0;
+                    if (oldBit) {
+                        this.incrementTima();
+                    }
+                }
                 break; 
-            case 0xFF05: 
+            case 0xFF05:
+                this.timaOverflowPending = false;
                 this.tima = value;
                 break;
             case 0xFF06: 
                 this.tma = value;
                 break;
             case 0xFF07: 
-                this.tac = value;
+                this.setTac(value);
                 break;
             default:
                 throw new Error(`Invalid timer register: ${address.toString(16)}`);
         }
     }
 
-    tick() {
-        // Update DIV
-        this.divCycles++;
-        if (this.divCycles >= Timer.DIV_CLOCK) {
-            this.div = (this.div + 1) & 0xFF;
-            this.divCycles = 0;
+    private setTac(value: number) {
+        const oldEnabled = this.timerEnabled;
+        const oldSelectedBit = this.selectedBit;
+        const oldResult = oldEnabled && this.getBit(this.div, oldSelectedBit);
+        this.tac = value & 0x7;
+        this.timerEnabled = (value & 0x4) !== 0;
+        this.selectedBit = this.getSelectedBit(this.tac);
+        const newResult = this.timerEnabled && this.getBit(this.div, this.selectedBit);
+        this.timaOverflowPending = false;
+        if (oldResult && !newResult) {
+            this.incrementTima();
         }
+    }
 
-        // Update TIMA
-        if (this.isTimerEnabled) {
-            this.timaCycles++;
-            if (this.timaCycles >= this.currentTacClock) {
-                this.tima = (this.tima + 1) & 0xFF;
-                this.timaCycles = 0;
-
-                if (this.tima === 0) {
-                    this.tima = this.tma;
-                    this.interruptManager.requestInterrupt(InterruptFlag.Timer);
-                }
-            }
+    private incrementTima() {
+        if (this.tima === 0xFF) {
+            this.tima = 0;
+            this.timaOverflowPending = true;
+        } else {
+            this.tima++;
         }
+    }
+
+    private getSelectedBit(value: number): number {
+        switch (value & 0x3) {
+            default:
+            case 0: return 9; // 4096 Hz
+            case 1: return 3; // 262144 Hz
+            case 2: return 5; // 65536 Hz
+            case 3: return 7; // 16384 Hz
+        }
+    }
+
+    private getBit(value: number, bit: number): boolean {
+        return (value & (1 << bit)) !== 0;
     }
 }

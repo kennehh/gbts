@@ -5,11 +5,11 @@ export class NoMbc extends Mapper {
         return this.rom.read(address);
     }
     
-    writeRom(address: number, value: number): void { }
+    writeRom(_address: number, _value: number): void { }
 
-    readRam(address: number): number { 
+    readRam(_address: number): number { 
         return 0xFF; 
     }
 
-    writeRam(address: number, value: number): void {}
+    writeRam(_address: number, _value: number): void {}
 }

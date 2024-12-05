@@ -34,53 +34,53 @@ function testRom(romPath: string) {
 }
 
 describe('Mooneye Test ROMs', () => {
-    // describe('acceptance', () => {
-    //     describe('bits', () => {
-    //         getRoms('acceptance/bits').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+    describe('acceptance', () => {
+        describe('bits', () => {
+            getRoms('acceptance/bits').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('instr', () => {
-    //         getRoms('acceptance/instr').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('instr', () => {
+            getRoms('acceptance/instr').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('interrupts', () => {
-    //         getRoms('acceptance/interrupts').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('interrupts', () => {
+            getRoms('acceptance/interrupts').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('oam_dma', () => {
-    //         getRoms('acceptance/oam_dma').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('oam_dma', () => {
+            getRoms('acceptance/oam_dma').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('ppu', () => {
-    //         getRoms('acceptance/ppu').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('ppu', () => {
+            getRoms('acceptance/ppu').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('serial', () => {
-    //         getRoms('acceptance/serial').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('serial', () => {
+            getRoms('acceptance/serial').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     describe('timer', () => {
-    //         getRoms('acceptance/timer').forEach(rom => {
-    //             it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //         });
-    //     });
+        describe('timer', () => {
+            getRoms('acceptance/timer').forEach(rom => {
+                it(`should pass ${rom.name}`, () => testRom(rom.path));
+            });
+        });
 
-    //     getRoms('acceptance').forEach(rom => {
-    //         it(`should pass ${rom.name}`, () => testRom(rom.path));
-    //     });
-    // });
+        getRoms('acceptance').forEach(rom => {
+            it(`should pass ${rom.name}`, () => testRom(rom.path));
+        });
+    });
     
     describe('mappers', () => {
         describe('mbc1', () => {

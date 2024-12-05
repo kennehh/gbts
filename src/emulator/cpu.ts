@@ -334,12 +334,12 @@ export class Cpu {
     private tickTCycle() {
         this.state.currentInstructionCycles++;
         this.state.totalCycles++;
-        this.timer.tick();
         this.ppu.tick();
         // this.checkInterrupts();
     }
 
     private tickMCycle() {
+        this.timer.tickMCycle();
         this.tickTCycle();
         this.tickTCycle();
         this.tickTCycle();

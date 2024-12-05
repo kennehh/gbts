@@ -44,9 +44,9 @@ export class Cartridge implements ICartridge {
     readonly header: CartridgeHeader;
     readonly mapper: Mapper;
 
-    constructor(rom: Uint8Array) {
+    constructor(rom: Uint8Array, ram: Uint8Array | null = null) {
         this.header = new CartridgeHeader(rom);
-        this.mapper = MapperFactory.create(this.header, rom);
+        this.mapper = MapperFactory.create(this.header, rom, ram);
     }
 
     readRom(address: number) {

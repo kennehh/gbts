@@ -23,7 +23,7 @@ export abstract class MbcBase extends Mapper {
         }
     }
 
-    writeRom(address: number, value: number): void { }
+    writeRom(_address: number, _value: number): void { }
 
     readRam(address: number): number {
         if (this.canAccessRam) {
