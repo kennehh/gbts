@@ -22,6 +22,7 @@ function testRom(romPath: string) {
     gb.loadRom(romBuffer);
     let message = '';
 
+    const start = Date.now();
     while (true) {
         const halted = gb.cpu.state.status === CpuStatus.Halted;
         const lastPC = gb.cpu.state.pc;
@@ -35,6 +36,10 @@ function testRom(romPath: string) {
 
         if (lastPC === gb.cpu.state.pc && !halted) {
             break;
+        }
+
+        if (Date.now() - start > 5000) {
+            throw new Error('Test took too long to complete');
         }
     }
 

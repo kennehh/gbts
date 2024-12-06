@@ -20,8 +20,12 @@ function testRom(romPath: string) {
     const gb = new GameBoy();
     gb.loadRom(romBuffer);
 
+    const start = Date.now();
     while (gb.mmu.read(gb.cpu.state.pc) !== 0x40) {
         gb.step();
+        if (Date.now() - start > 5000) {
+            throw new Error('Test took too long to complete');
+        }
     }
 
     // Test is successful when the registers are set to the fibonacci sequence
