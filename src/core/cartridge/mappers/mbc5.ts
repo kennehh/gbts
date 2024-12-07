@@ -6,7 +6,7 @@ export class Mbc5 extends MbcBase {
     private _currentRamBank = 0;
     private _ramEnabled = false;
 
-    private rumbleEnabled = false;
+    //private rumbleEnabled = false;
 
     get currentRomBank(): number {
         return (this.currentUpperRomBank << 8) | this.currentLowerRomBank;
@@ -35,7 +35,7 @@ export class Mbc5 extends MbcBase {
             case 0x4000:
             case 0x5000:
                 if (this.cartHeader.type.hasRumble) {
-                    this.rumbleEnabled = (value & 0x08) !== 0;
+                    //this.rumbleEnabled = (value & 0x08) !== 0;
                     this._currentRamBank = value & 0x07;
                 }
                 if ((address & 0x0100) === 0) {

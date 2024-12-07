@@ -1,8 +1,9 @@
-import { EmptyCartridge, ICartridge } from "./cartridge";
-import { InterruptManager } from "./interrupt-manager";
+import { ICartridge } from "../cartridge/cartridge";
+import { InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "./memory";
-import { IPpu } from "./ppu";
-import { ITimer } from "./timer";
+import { IPpu } from "../ppu/ppu";
+import { ITimer } from "../timer/timer";
+import { EmptyCartridge } from "../cartridge/empty-cartridge";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
@@ -194,7 +195,7 @@ export class Mmu implements IMmu {
     private writeIoRegion(address: number, value: number): void {
         switch (address) {
             case 0xff00:
-                this.ioRegisters.write(address, value); // Joypad
+                // this.ioRegisters.write(address, value); // Joypad
                 return;
             case 0xff01: case 0xff02:
                 this.ioRegisters.write(address, value); // Serial

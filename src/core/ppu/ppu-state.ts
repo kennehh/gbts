@@ -27,8 +27,14 @@ export enum StatInterruptSourceFlag {
 
 export class PpuState {
     statInterruptSource: StatInterruptSourceFlag = StatInterruptSourceFlag.None;
+    pendingLcdStatInterrupt = false;
     status: PpuStatus = PpuStatus.HBlank;
+    tCycles = 0;
+
+    // cached lcdc values
     lcdEnabled: boolean = false;
+    spriteHeight: number = 8;
+
 
     private _ly: number = 0;
     private _lyc: number = 0;
@@ -49,11 +55,12 @@ export class PpuState {
     set lcdc(value: LcdcFlag) {
         this._lcdc = value & 0xff;
         this.lcdEnabled = (value & LcdcFlag.LcdEnable) === LcdcFlag.LcdEnable;
+        this.spriteHeight = (value & LcdcFlag.ObjSize) === LcdcFlag.ObjSize ? 16 : 8;
     }
 
     get stat(): number {
-        const lyCompareBit = this.lyCompareFlag ? 1 : 0;
-        return this.statInterruptSource | (lyCompareBit << 2) | this.status;
+        const lyCoincidenceBit = this.lyCoincidence ? 1 : 0;
+        return this.statInterruptSource | (lyCoincidenceBit << 2) | this.status;
     }
 
     set stat(value: number) {
@@ -82,7 +89,7 @@ export class PpuState {
     get dma() { return this._dma; }
     set dma(value: number) { this._dma = value & 0xff; }
 
-    get lyCompareFlag(): boolean {
+    get lyCoincidence(): boolean {
         return this.ly === this.lyc;
     }
 }

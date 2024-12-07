@@ -1,9 +1,9 @@
-import { Cartridge } from "./cartridge";
-import { Cpu } from "./cpu";
-import { InterruptManager } from "./interrupt-manager";
-import { IMmu, Mmu } from "./mmu";
-import { IPpu, Ppu } from "./ppu";
-import { ITimer, Timer } from "./timer";
+import { Cartridge } from "./cartridge/cartridge";
+import { Cpu } from "./cpu/cpu";
+import { InterruptManager } from "./cpu/interrupt-manager";
+import { IMmu, Mmu } from "./memory/mmu";
+import { IPpu, Ppu } from "./ppu/ppu";
+import { ITimer, Timer } from "./timer/timer";
 
 export class GameBoy {
     readonly cpu: Cpu;

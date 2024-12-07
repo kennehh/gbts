@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
-import { GameBoy } from "../../src/emulator/gameboy";
+import { GameBoy } from "../../src/core/gameboy";
 
 const romDirectory = 'tests/__fixtures__/roms/mooneye-test-suite';
 

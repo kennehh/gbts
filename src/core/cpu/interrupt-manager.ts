@@ -1,7 +1,7 @@
 export enum InterruptFlag {
     None = 0,
     VBlank = 1 << 0,
-    LCDStat = 1 << 1,
+    LcdStat = 1 << 1,
     Timer = 1 << 2,
     Serial = 1 << 3,
     Joypad = 1 << 4,
@@ -44,7 +44,7 @@ export class InterruptManager {
         const interrupt = this.currentInterrupt;
         switch (interrupt) {
             case InterruptFlag.VBlank:  return { interrupt: interrupt, vector: 0x40 };
-            case InterruptFlag.LCDStat: return { interrupt: interrupt, vector: 0x48 };
+            case InterruptFlag.LcdStat: return { interrupt: interrupt, vector: 0x48 };
             case InterruptFlag.Timer:   return { interrupt: interrupt, vector: 0x50 };
             case InterruptFlag.Serial:  return { interrupt: interrupt, vector: 0x58 };
             case InterruptFlag.Joypad:  return { interrupt: interrupt, vector: 0x60 };

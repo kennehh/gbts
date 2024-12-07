@@ -1,5 +1,5 @@
 import { CartridgeHeader } from "../cartridge-header";
-import { Memory } from "../memory";
+import { Memory } from "../../memory/memory";
 
 export abstract class Mapper {
     protected readonly cartHeader: CartridgeHeader;

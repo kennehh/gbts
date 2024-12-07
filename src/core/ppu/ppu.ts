@@ -1,6 +1,7 @@
-import { InterruptManager } from "./interrupt-manager";
-import { Memory } from "./memory";
-import { LcdcFlag, PpuState, PpuStatus } from "./ppu-state";
+import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
+import { Memory } from "../memory/memory";
+import { OamEntry, OamScanner } from "./oam-scanner";
+import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 
 export interface IPpu {
     tick(): void;
@@ -18,6 +19,8 @@ export class Ppu implements IPpu {
     
     private vram: Memory = new Memory(0x2000);
     private oam: Memory = new Memory(0xA0);
+
+    readonly oamScanner = new OamScanner(this.oam);
 
     constructor(private interruptManager: InterruptManager) {
     }
@@ -104,9 +107,73 @@ export class Ppu implements IPpu {
     
     tick() {
         if (!this.state.lcdEnabled) {
+            this.state.ly = 0;
+            this.state.tCycles = 0;
+            this.state.status = PpuStatus.HBlank;
+            this.state.pendingLcdStatInterrupt = false;
             return;
         }
 
+        this.state.tCycles++;
 
+        if (this.state.ly <= 143) {
+            if (this.state.tCycles <= 80) {
+                if (this.state.status !== PpuStatus.OamScan) {
+                    this.state.status = PpuStatus.OamScan;
+                    this.oamScanner.reset(this.state.spriteHeight);
+                }
+                if (this.oamScanner.tick(this.state.ly)) {
+                    const sprites = this.oamScanner.getSprites();
+                }
+                this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
+            } else if (this.state.tCycles <= 252) {
+                // could take from 172 to 289 cycles, defaulting to 172 for now
+                this.state.status = PpuStatus.Drawing;
+            } else if (this.state.tCycles <= 456) {
+                // could take from 87 to 204 cycles, defaulting to 204 for now
+                this.state.status = PpuStatus.HBlank;
+                this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
+
+                if (this.state.tCycles === 456) {
+                    this.state.tCycles = 0;
+                    this.incrementLy();
+                }
+            }
+        } else {
+            if (this.state.status !== PpuStatus.VBlank) {
+                this.state.status = PpuStatus.VBlank;
+                this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
+            }
+            
+            this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
+
+            if (this.state.tCycles >= 456) {
+                this.incrementLy();
+                this.state.tCycles = 0;
+            }
+        }
+
+        if (this.state.pendingLcdStatInterrupt) {
+            this.interruptManager.requestInterrupt(InterruptFlag.LcdStat);
+            this.state.pendingLcdStatInterrupt = false;
+        }
+    }
+
+    private incrementLy() {
+        this.state.ly++;
+        
+        if (this.state.lyCoincidence) {
+            this.checkStatInterrupt(StatInterruptSourceFlag.Lcdc);
+        }
+
+        if (this.state.ly >= 153) {
+            this.state.ly = 0;
+        }
+    }
+
+    private checkStatInterrupt(flag: StatInterruptSourceFlag) {
+        if (this.state.statInterruptSource & flag) {
+            this.state.pendingLcdStatInterrupt = true;
+        }
     }
 }

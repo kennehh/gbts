@@ -1,4 +1,4 @@
-import { MemorySize } from "./memory";
+import { MemorySize } from "../memory/memory";
 
 type CartridgeChecksum = {
     value: number;

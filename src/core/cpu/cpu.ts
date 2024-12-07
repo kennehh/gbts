@@ -1,7 +1,7 @@
-import { IMmu } from "./mmu";
+import { IMmu } from "../memory/mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
-import { IPpu } from "./ppu";
-import { ITimer } from "./timer";
+import { IPpu } from "../ppu/ppu";
+import { ITimer } from "../timer/timer";
 import { InterruptManager } from "./interrupt-manager";
 
 enum Operand8Bit {
@@ -740,7 +740,7 @@ export class Cpu {
         const carryFlag = this.state.hasFlag(RegisterFlag.Carry);
         const halfCarryFlag = this.state.hasFlag(RegisterFlag.HalfCarry);
         let setCarry = false;
-
+        
         if (!this.state.hasFlag(RegisterFlag.Subtract)) {
             if (carryFlag || this.state.a > 0x99) {
                 this.state.a += 0x60;
@@ -758,9 +758,9 @@ export class Cpu {
                 this.state.a -= 0x06;
             }
         }
-        
-        this.state.f = (this.state.f & RegisterFlag.Subtract) | 
-                       (setCarry ? RegisterFlag.Carry : 0) | 
+       
+        this.state.f = (this.state.f & RegisterFlag.Subtract) |
+                       (setCarry ? RegisterFlag.Carry : 0) |
                        (this.state.a === 0 ? RegisterFlag.Zero : 0);
     }
 
