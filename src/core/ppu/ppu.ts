@@ -1,9 +1,17 @@
 import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "../memory/memory";
-import { OamEntry, OamScanner } from "./oam-scanner";
+import { IDisplay } from "./display";
+import { OamSprite, OamScanner } from "./oam-scanner";
+import { PixelFetcher } from "./pixel-fetcher";
+import { PixelFifo } from "./pixel-fifo";
+import { PixelRenderer } from "./pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 
 export interface IPpu {
+    get state(): PpuState;
+    get oam(): Memory;
+    get vram(): Memory;
+
     tick(): void;
     readVram(address: number): number;
     writeVram(address: number, value: number): void;
@@ -17,12 +25,25 @@ export interface IPpu {
 export class Ppu implements IPpu {
     readonly state = new PpuState();
     
-    private vram: Memory = new Memory(0x2000);
-    private oam: Memory = new Memory(0xA0);
+    readonly vram: Memory = new Memory(0x2000);
+    readonly oam: Memory = new Memory(0xA0);
 
-    readonly oamScanner = new OamScanner(this.oam);
+    private readonly oamScanner: OamScanner;
+    private readonly pixelFetcher: PixelFetcher;
+    private readonly pixelRenderer: PixelRenderer;
 
-    constructor(private interruptManager: InterruptManager) {
+    private readonly interruptManager: InterruptManager;
+
+    private previousEnableLcd = false;
+
+    constructor(interruptManager: InterruptManager, display: IDisplay) {
+        this.interruptManager = interruptManager;
+        this.oamScanner = new OamScanner(this.state, this.oam);
+
+        const bgPixelFifo = new PixelFifo();
+        const spritePixelFifo = new PixelFifo();
+        this.pixelFetcher = new PixelFetcher(this.state, this.vram, bgPixelFifo, spritePixelFifo);
+        this.pixelRenderer = new PixelRenderer(this.state, display, bgPixelFifo, spritePixelFifo);
     }
 
     dmaTransfer(data: Uint8Array): void {
@@ -81,7 +102,7 @@ export class Ppu implements IPpu {
         if (this.state.status === PpuStatus.Drawing) {
             return 0xFF;
         }
-        return this.vram.read(address & 0x1FFF);
+        return this.vram.read(address);
     }
 
     writeVram(address: number, value: number): void {
@@ -105,52 +126,84 @@ export class Ppu implements IPpu {
         this.oam.write(address, value);
     }    
     
-    tick() {
+    tick() {        
+        if (this.state.lcdEnabled !== this.previousEnableLcd) {
+            if (this.state.lcdEnabled) {
+                this.state.ly = 0;
+                this.state.tCycles = 0;
+                this.state.pendingLcdStatInterrupt = false;
+                this.state.status = PpuStatus.OamScan;         
+            }
+            this.previousEnableLcd = this.state.lcdEnabled;
+        }
+
         if (!this.state.lcdEnabled) {
-            this.state.ly = 0;
-            this.state.tCycles = 0;
-            this.state.status = PpuStatus.HBlank;
-            this.state.pendingLcdStatInterrupt = false;
             return;
         }
 
         this.state.tCycles++;
 
-        if (this.state.ly <= 143) {
-            if (this.state.tCycles <= 80) {
-                if (this.state.status !== PpuStatus.OamScan) {
-                    this.state.status = PpuStatus.OamScan;
-                    this.oamScanner.reset(this.state.spriteHeight);
+        switch (this.state.status) {
+            case PpuStatus.OamScan:
+                if (this.state.previousStatus !== PpuStatus.OamScan) {
+                    if (!this.state.windowWasVisible && this.state.ly === this.state.wy) {
+                        this.state.windowWasVisible = true;
+                    }
+                    this.oamScanner.reset();
+                    this.state.previousStatus = PpuStatus.OamScan;
                 }
-                if (this.oamScanner.tick(this.state.ly)) {
-                    const sprites = this.oamScanner.getSprites();
-                }
-                this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
-            } else if (this.state.tCycles <= 252) {
-                // could take from 172 to 289 cycles, defaulting to 172 for now
-                this.state.status = PpuStatus.Drawing;
-            } else if (this.state.tCycles <= 456) {
-                // could take from 87 to 204 cycles, defaulting to 204 for now
-                this.state.status = PpuStatus.HBlank;
-                this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
 
+                this.oamScanner.tick();
+                this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
+
+                if (this.state.tCycles === 80) {
+                    this.state.status = PpuStatus.Drawing;
+                }
+                break;
+            case PpuStatus.Drawing:
+                if (this.state.previousStatus !== PpuStatus.Drawing) {
+                    this.state.fetcherWindowMode = false;
+                    this.pixelRenderer.startNewScanline();
+                    this.pixelFetcher.startNewScanline(this.oamScanner.getSprites());
+                    this.state.previousStatus = PpuStatus.Drawing;
+                }
+
+                const oldWindowMode = this.state.fetcherWindowMode;
+                this.pixelFetcher.tick();
+                this.pixelRenderer.tick();
+
+                if (this.pixelRenderer.finishedScanline) {
+                    this.state.status = PpuStatus.HBlank;
+                    if (this.state.fetcherWindowMode) {
+                        this.state.windowLineCounter++;
+                    }
+                    break;
+                }
+
+                if (!oldWindowMode && this.state.fetcherWindowMode) {
+                    this.pixelFetcher.startNewScanline();
+                    break;
+                }
+                break;
+            case PpuStatus.HBlank:
+                this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
                 if (this.state.tCycles === 456) {
                     this.state.tCycles = 0;
                     this.incrementLy();
+                    this.state.status = this.state.ly === 144 ? PpuStatus.VBlank : PpuStatus.OamScan;
                 }
-            }
-        } else {
-            if (this.state.status !== PpuStatus.VBlank) {
-                this.state.status = PpuStatus.VBlank;
-                this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
-            }
-            
-            this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
-
-            if (this.state.tCycles >= 456) {
-                this.incrementLy();
-                this.state.tCycles = 0;
-            }
+                break;
+            case PpuStatus.VBlank:
+                this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
+                if (this.state.tCycles === 456) {
+                    this.state.tCycles = 0;
+                    this.incrementLy();
+                    if (this.state.ly === 0) {
+                        this.state.windowLineCounter = 0;
+                        this.state.status = PpuStatus.OamScan;
+                    }
+                }
+                break;
         }
 
         if (this.state.pendingLcdStatInterrupt) {

@@ -1,52 +1,59 @@
 import { Memory } from "../memory/memory";
+import { PpuState } from "./ppu-state";
 
-export type OamEntry = {
+export type OamSprite = {
     y: number,
     x: number,
     tileIndex: number,
-    flags: number,
-    oamIndex: number
+    oamIndex: number,
+
+    // flags
+    priority: boolean,
+    flipX: boolean,
+    flipY: boolean,
+    dmgPalette: number,
+    bank: number,
+    cgbPalette: number,
+    
+    fetched: boolean
 }
 
 export class OamScanner {
-    private spriteBuffer: OamEntry[] = [];
-    private spriteHeight: number = 8;
+    private spriteBuffer: OamSprite[] = new Array(10);
     private currentOamIndex = 0;
-    private tCycles = 0;
 
-    constructor(private readonly oam: Memory) { }
+    constructor(private readonly state: PpuState, private readonly oam: Memory) { }
 
-    reset(spriteHeight: number) {
-        this.spriteHeight = spriteHeight;
+    reset() {
         this.spriteBuffer = [];
         this.currentOamIndex = 0;
-        this.tCycles = 0;
     }
 
-    tick(ly: number) {
-        this.tCycles++;
-
-        if (this.spriteBuffer.length < 10) {
-            // Only evaluate sprites every other cycle (we evaluate 40 sprites in 80 t-cycles)
-            const doEvaluate = (this.tCycles & 0x1) === 0;
-            if (doEvaluate) {
-                this.evaluateSprite(ly);
-            }
+    tick() {
+        if (this.state.dmaActive) {
+            return;
         }
         
-        if (this.tCycles === 80) {
-            this.sortSprites();
-            return true;
+        if (this.spriteBuffer.length < 10) {
+            // Only evaluate sprites every other cycle (we evaluate 40 sprites in 80 t-cycles)
+            const doEvaluate = (this.state.tCycles & 0x1) === 0;
+            if (doEvaluate) {
+                this.evaluateSprite();
+            }
         }
-
-        return false;
     }
 
     getSprites() {
-        return this.spriteBuffer;
+        return this.spriteBuffer.sort((a, b) => {
+            const xDifference = a.x - b.x;
+            if (xDifference !== 0) {
+                return xDifference;
+            }
+            return a.oamIndex - b.oamIndex;
+        });
     }
 
-    private evaluateSprite(ly: number) {
+    private evaluateSprite() {
         const oamIndex = this.currentOamIndex;
         this.currentOamIndex += 4;
 
@@ -56,22 +63,25 @@ export class OamScanner {
         }
 
         const y = this.oam.read(oamIndex);    
-        const lyAdjusted = ly + 16;
+        const lyAdjusted = this.state.ly + 16;
 
-        if (lyAdjusted >= y && lyAdjusted < (y + this.spriteHeight)) {
+        if (lyAdjusted >= y && lyAdjusted < (y + this.state.spriteHeight)) {
             const tileIndex = this.oam.read(oamIndex + 2);
             const flags = this.oam.read(oamIndex + 3);
-            this.spriteBuffer.push({ y, x, tileIndex, flags, oamIndex });
-        }     
-    }
 
-    private sortSprites() {
-        this.spriteBuffer.sort((a, b) => {
-            const xDifference = a.x - b.x;
-            if (xDifference !== 0) {
-                return xDifference;
-            }
-            return a.oamIndex - b.oamIndex;
-        });
+            this.spriteBuffer.push({ 
+                y, 
+                x, 
+                tileIndex, 
+                priority: (flags & 0x80) !== 0,
+                flipX: (flags & 0x20) !== 0,
+                flipY: (flags & 0x40) !== 0,
+                dmgPalette: (flags & 0x10) >> 4,
+                bank: (flags & 0x8) >> 3,
+                cgbPalette: flags & 0x7,
+                oamIndex, 
+                fetched: false 
+            });
+        }     
     }
 }

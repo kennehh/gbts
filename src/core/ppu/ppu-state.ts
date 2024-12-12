@@ -29,11 +29,28 @@ export class PpuState {
     statInterruptSource: StatInterruptSourceFlag = StatInterruptSourceFlag.None;
     pendingLcdStatInterrupt = false;
     status: PpuStatus = PpuStatus.HBlank;
+    previousStatus: PpuStatus = PpuStatus.HBlank;
+    dmaActive = false;
+
+    windowWasVisible = false;
+    windowLineCounter = 0;
+    fetcherWindowMode = false;
+
     tCycles = 0;
 
     // cached lcdc values
-    lcdEnabled: boolean = false;
-    spriteHeight: number = 8;
+    bgWindowPriority: boolean = false;              // lcdc bit 0
+    spriteEnable: boolean = false;                     // lcdc bit 1
+    spriteHeight: number = 8;                       // lcdc bit 2
+    bgTileMapAddress: number = 0x9800;              // lcdc bit 3    
+    useBgWindow8000AdressingMode: boolean = false;  // lcdc bit 4
+    windowEnabled: boolean = false;                  // lcdc bit 5
+    windowTileMapAddress: number = 0x9800;          // lcdc bit 6
+    lcdEnabled: boolean = false;                    // lcdc bit 7
+
+    // CGB only
+    isCgb: boolean = false;
+    isDoubleSpeed: boolean = false;
 
 
     private _ly: number = 0;
@@ -54,8 +71,14 @@ export class PpuState {
 
     set lcdc(value: LcdcFlag) {
         this._lcdc = value & 0xff;
-        this.lcdEnabled = (value & LcdcFlag.LcdEnable) === LcdcFlag.LcdEnable;
+        this.bgWindowPriority = (value & LcdcFlag.BgWindowPriority) === LcdcFlag.BgWindowPriority;
+        this.spriteEnable = (value & LcdcFlag.ObjEnable) === LcdcFlag.ObjEnable;
         this.spriteHeight = (value & LcdcFlag.ObjSize) === LcdcFlag.ObjSize ? 16 : 8;
+        this.bgTileMapAddress = (value & LcdcFlag.BgTileMapArea) === LcdcFlag.BgTileMapArea ? 0x9C00 : 0x9800;
+        this.useBgWindow8000AdressingMode = (value & LcdcFlag.TileDataArea) === LcdcFlag.TileDataArea;
+        this.windowEnabled = (value & LcdcFlag.WindowEnable) === LcdcFlag.WindowEnable;
+        this.windowTileMapAddress = (value & LcdcFlag.WindowTileMapArea) === LcdcFlag.WindowTileMapArea ? 0x9C00 : 0x9800;
+        this.lcdEnabled = (value & LcdcFlag.LcdEnable) === LcdcFlag.LcdEnable;
     }
 
     get stat(): number {

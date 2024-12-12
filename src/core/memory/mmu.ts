@@ -4,9 +4,11 @@ import { Memory } from "./memory";
 import { IPpu } from "../ppu/ppu";
 import { ITimer } from "../timer/timer";
 import { EmptyCartridge } from "../cartridge/empty-cartridge";
+import { DmaController } from "./dma-controller";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
+    tickMCycle(): void;
     read(address: number): number;
     write(address: number, value: number): void;
     reset(): void;
@@ -21,15 +23,22 @@ export class Mmu implements IMmu {
     private wram: Memory = new Memory(0x2000);
     private hram: Memory = new Memory(0x80);
     private ioRegisters: Memory = new Memory(0x80);
+    private dmaController: DmaController;
 
     constructor(
         private readonly interruptManager: InterruptManager,
         private readonly timer: ITimer,
         private readonly ppu: IPpu,
-    ) {}
+    ) {
+        this.dmaController = new DmaController(this.ppu.state, this, this.ppu.oam);
+    }
 
     get bootRomLoaded(): boolean {
         return this._bootRomLoaded;
+    }
+
+    tickMCycle(): void {
+        this.dmaController.tickMCycle();
     }
 
     loadBootRom(rom: Memory): void {
@@ -50,6 +59,14 @@ export class Mmu implements IMmu {
 
     read(address: number): number {
         address &= 0xFFFF;
+
+        if (this.ppu.state.dmaActive) {
+            if (address >= 0xff80 && address <= 0xfffe) {
+                // only HRAM can be accessed during DMA
+                return this.hram.read(address);
+            }
+            return 0xff;
+        }
         
         // Use upper 4 bits for primary switching
         switch (address & 0xF000) {
@@ -99,6 +116,14 @@ export class Mmu implements IMmu {
     write(address: number, value: number): void {
         address &= 0xFFFF;
         value &= 0xFF;
+
+        if (this.ppu.state.dmaActive) {
+            if (address >= 0xff80 && address <= 0xfffe) {
+                // only HRAM can be accessed during DMA
+                return this.hram.write(address, value);
+            }
+            return;
+        }
 
         switch (address & 0xF000) {
             // ROM Banks (0x0000 - 0x7FFF)
@@ -216,7 +241,8 @@ export class Mmu implements IMmu {
                 this.ppu.writeRegister(address, value); // LCD Control Registers
                 return;
             case 0xff46:
-                this.dmaTransfer(value);
+                this.ppu.writeRegister(address, value); // OAM DMA
+                this.dmaController.start(value);
                 return;
             case 0xff4f:
                 this.ppu.writeRegister(address, value); // VRAM Bank
@@ -234,16 +260,5 @@ export class Mmu implements IMmu {
                 this.ioRegisters.write(address, value); // WRAM Bank
                 return;
         }
-    }
-
-    private dmaTransfer(value: number): void {
-        const sourceAddress = value << 8;
-        const data = new Uint8Array(160);
-        
-        for (let i = 0; i < 160; i++) {
-            data[i] = this.read(sourceAddress + i);
-        }
-        
-        this.ppu.dmaTransfer(data);
     }
 }

@@ -344,6 +344,7 @@ export class Cpu {
         this.tickTCycle();
         this.tickTCycle();
         this.tickTCycle();
+        this.mmu.tickMCycle();
     }
 
     private readValue8Bit(operand: Operand8Bit) {
