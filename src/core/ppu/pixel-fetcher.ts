@@ -34,18 +34,6 @@ export class PixelFetcher {
         private readonly spritePixelFifo: PixelFifo
     ) { }
 
-    startNewScanline(spriteBuffer: OamSprite[] | null = null) {
-        this.currentTileX = 0;
-        this.finishedScanline = false;
-        this.state = PixelFetcherState.FetchTileNumber;
-        this.windowMode = this.ppuState.fetcherWindowMode;
-        this.currentSprite = null;
-        this.spriteFetchInProgress = false;
-        if (spriteBuffer != null) {
-            this.spriteBuffer = spriteBuffer;
-        }
-    }
-
     tick() {
         if (this.finishedScanline) {
             return;
@@ -66,6 +54,22 @@ export class PixelFetcher {
         } else {
             this.handlePushState();
         }
+    }
+
+    reset(spriteBuffer: OamSprite[] | null = null) {
+        this.finishedScanline = false;
+        this.currentTileX = 0;
+        this.currentPixelX = 0;
+        this.state = PixelFetcherState.FetchTileNumber;
+        this.spriteBuffer = spriteBuffer ?? [];
+        this.currentSprite = null;
+        this.spriteFetchInProgress = false;
+        this.windowMode = false;
+    }
+
+    resetForWindow() {
+        this.reset();
+        this.windowMode = true;
     }
 
     private findNextSprite() {

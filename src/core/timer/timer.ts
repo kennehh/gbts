@@ -10,6 +10,7 @@ export interface ITimer {
     tickMCycle(): void;
     readRegister(address: number): number;
     writeRegister(address: number, value: number): void;
+    reset(): void;
 }
 export class Timer implements ITimer {
     private div = 0;
@@ -23,6 +24,18 @@ export class Timer implements ITimer {
     private lastDivBitAndEnabled = false;
 
     constructor(private interruptManager: InterruptManager) {
+        this.reset();
+    }
+
+    reset(): void {
+        this.div = 0;
+        this.tima = 0;
+        this.tma = 0;
+        this.tac = 0;
+        this.timerEnabled = false;
+        this.selectedBit = this.getSelectedBit(0);
+        this.timaReloadState = TimaReloadState.None;
+        this.lastDivBitAndEnabled = false;
     }
 
     tickMCycle() {

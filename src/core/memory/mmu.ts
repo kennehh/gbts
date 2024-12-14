@@ -31,6 +31,7 @@ export class Mmu implements IMmu {
         private readonly ppu: IPpu,
     ) {
         this.dmaController = new DmaController(this.ppu.state, this, this.ppu.oam);
+        this.reset();
     }
 
     get bootRomLoaded(): boolean {
@@ -55,6 +56,7 @@ export class Mmu implements IMmu {
         this.hram.fill(0);
         this.ioRegisters.fill(0);
         this._bootRomLoaded = false;
+        this.dmaController.reset();
     }
 
     read(address: number): number {
@@ -188,7 +190,8 @@ export class Mmu implements IMmu {
     private readIoRegion(address: number): number {
         switch (address) {
             case 0xff00:
-                return this.ioRegisters.read(address); // Joypad
+                //return this.ioRegisters.read(address); // Joypad
+                return 0xff;
             case 0xff01: case 0xff02:
                 return this.ioRegisters.read(address); // Serial
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:

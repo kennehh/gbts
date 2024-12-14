@@ -17,7 +17,15 @@ export class InterruptManager {
     private _ie: InterruptFlag = InterruptFlag.None;
     private _if: InterruptFlag = InterruptFlag.None;
 
-    constructor() {}
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.ime = false;
+        this._ie = InterruptFlag.None;
+        this._if = InterruptFlag.None;
+    }
 
     get ie(): number {
         return this._ie;

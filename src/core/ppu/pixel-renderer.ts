@@ -18,9 +18,9 @@ export class PixelRenderer {
         return this._finishedScanline;
     }
 
-    startNewScanline() {
+    reset() {
         this.pixelX = 0;
-        this._finishedScanline = false
+        this._finishedScanline = false;
     }
 
     tick() {

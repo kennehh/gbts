@@ -57,6 +57,10 @@ export class Cpu {
         return this.state.currentInstructionCycles;
     }
 
+    reset() {
+        this.state.reset(this.mmu.bootRomLoaded);
+    }
+
     private execute(opcode: number) {
         switch (opcode) {
             case 0x00: break;
@@ -335,7 +339,6 @@ export class Cpu {
         this.state.currentInstructionCycles++;
         this.state.totalCycles++;
         this.ppu.tick();
-        // this.checkInterrupts();
     }
 
     private tickMCycle() {

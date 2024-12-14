@@ -27,7 +27,7 @@ function testRom(romPath: string) {
         const halted = gb.cpu.state.status === CpuStatus.Halted;
         const lastPC = gb.cpu.state.pc;
 
-        gb.step();
+        gb.stepInstruction();
 
         if (gb.mmu.read(0xff02) == 0x81) {
             message += String.fromCharCode(gb.mmu.read(0xff01));

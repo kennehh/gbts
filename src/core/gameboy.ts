@@ -1,80 +1,91 @@
+// gameboy.ts
+
 import { Cartridge } from "./cartridge/cartridge";
 import { Cpu } from "./cpu/cpu";
 import { InterruptManager } from "./cpu/interrupt-manager";
 import { IMmu, Mmu } from "./memory/mmu";
-import { IDisplay, MockDisplay as DummyDisplay } from "./ppu/display";
+import { IDisplay, MockDisplay } from "./ppu/display";
 import { IPpu, Ppu } from "./ppu/ppu";
 import { ITimer, Timer } from "./timer/timer";
 
 export class GameBoy {
+    private static readonly GB_CLOCK_SPEED = 4_194_304; // Hz
+    private static readonly CYCLES_PER_SECOND = GameBoy.GB_CLOCK_SPEED;
+    private static readonly CYCLES_PER_MS = GameBoy.CYCLES_PER_SECOND / 1000;
+
     readonly cpu: Cpu;
     readonly mmu: IMmu;
     readonly ppu: IPpu;
     readonly timer: ITimer;
     readonly interruptManager: InterruptManager;
+    private readonly display: IDisplay;
     
-    private static readonly CYCLES_PER_FRAME = 70224;
-    private static readonly FRAME_RATE = 59.73;
-    
-    private cyclesThisFrame = 0;
-    private lastFrameTime = 0;
-    private running = false;
-    
-    constructor(display: IDisplay) {
+    // Timing state
+    private running: boolean = false;
+    private lastTimestamp: number = 0;
+    private cyclesPending: number = 0;
+
+    constructor(display: IDisplay = new MockDisplay()) {
+        this.display = display;
         this.interruptManager = new InterruptManager();
         this.timer = new Timer(this.interruptManager);
-        this.ppu = new Ppu(this.interruptManager, display ?? new DummyDisplay());
+        this.ppu = new Ppu(this.interruptManager, display);
         this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu);
         this.cpu = new Cpu(this.interruptManager, this.timer, this.ppu, this.mmu);
+        this.reset();
     }
 
-    start() {
+    stepInstruction(): number {
+        return this.cpu.step();
+    }
+
+    run() {
         if (this.running) return;
+        
         this.running = true;
-        this.lastFrameTime = performance.now();
-        requestAnimationFrame(() => this.emulateFrame());
+        this.lastTimestamp = performance.now();
+        this.cyclesPending = 0;
+
+        this.emulationLoop();
     }
 
     stop() {
         this.running = false;
     }
 
-    step() {
-        const cycles = this.cpu.step();
-        this.cyclesThisFrame += cycles;
-        
-        if (this.cyclesThisFrame >= GameBoy.CYCLES_PER_FRAME) {
-            this.cyclesThisFrame = 0;
-        }
-        
-        return cycles;
-    }
-
-    private emulateFrame() {
-        if (!this.running) return;
-
-        const currentTime = performance.now();
-        const elapsed = currentTime - this.lastFrameTime;
-        const targetFrameTime = 1000 / GameBoy.FRAME_RATE;
-
-        if (elapsed >= targetFrameTime) {
-            // Execute CPU cycles for one frame
-            this.cyclesThisFrame = 0;
-            while (this.cyclesThisFrame < GameBoy.CYCLES_PER_FRAME) {
-                this.step();
-            }
-            
-            this.lastFrameTime = currentTime - (elapsed % targetFrameTime);
-        }
-
-        requestAnimationFrame(() => this.emulateFrame());
-    }
-
     loadRom(rom: Uint8Array) {
+        this.reset();
         const cart = new Cartridge(rom);
         this.mmu.loadCartridge(cart);
-        this.cpu.state.reset(this.mmu.bootRomLoaded);
-        this.cyclesThisFrame = 0;
-        this.lastFrameTime = performance.now();
+    }
+
+    reset() {
+        this.stop();
+        this.lastTimestamp = 0;
+        this.cyclesPending = 0;
+
+        this.ppu.reset();
+        this.interruptManager.reset();
+        this.cpu.reset();
+        this.timer.reset();
+        this.mmu.reset();
+        this.display.clear();
+    }
+
+    private emulationLoop() {
+        if (!this.running) {
+            return;
+        }
+    
+        const now = performance.now();
+        const elapsedMs = now - this.lastTimestamp;
+        this.lastTimestamp = now;
+        this.cyclesPending += elapsedMs * GameBoy.CYCLES_PER_MS;
+    
+        while (this.cyclesPending >= 4) {
+            this.cyclesPending -= this.stepInstruction();
+        }
+    
+        requestAnimationFrame(() => this.emulationLoop());
     }
 }

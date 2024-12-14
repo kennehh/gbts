@@ -26,3 +26,5 @@ dist-ssr
 # profiling files
 *.cpuprofile
 *.heapprofile
+
+*.sav

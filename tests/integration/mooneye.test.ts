@@ -22,7 +22,7 @@ function testRom(romPath: string) {
 
     const start = Date.now();
     while (gb.mmu.read(gb.cpu.state.pc) !== 0x40) {
-        gb.step();
+        gb.stepInstruction();
         if (Date.now() - start > 5000) {
             throw new Error('Test took too long to complete');
         }

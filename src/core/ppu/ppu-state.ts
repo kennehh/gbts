@@ -115,4 +115,32 @@ export class PpuState {
     get lyCoincidence(): boolean {
         return this.ly === this.lyc;
     }
+
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.ly = 0;
+        this.lyc = 0;
+        this.scx = 0;
+        this.scy = 0;
+        this.wx = 0;
+        this.wy = 0;
+        this.bgp = 0xfc;
+        this.obp0 = 0xff;
+        this.obp1 = 0xff;
+        this.dma = 0;
+        this.lcdc = 0x91 as LcdcFlag;
+        this.stat = 0;
+        this.status = PpuStatus.HBlank;
+        this.previousStatus = PpuStatus.HBlank;
+        this.statInterruptSource = StatInterruptSourceFlag.None;
+        this.pendingLcdStatInterrupt = false;
+        this.dmaActive = false;
+        this.windowWasVisible = false;
+        this.windowLineCounter = 0;
+        this.fetcherWindowMode = false;
+        this.tCycles = 0;
+    }
 }

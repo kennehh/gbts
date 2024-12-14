@@ -5,9 +5,12 @@ export class MockDisplay implements IDisplay {
     renderFrame(): void {
         // console.log("Rendering frame");
     }
+    clear(): void {
+    }
 }
 
 export interface IDisplay {
     setPixel(x: number, y: number, color: number): void;
     renderFrame(): void;
+    clear(): void;
 }

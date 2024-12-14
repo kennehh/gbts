@@ -12,6 +12,12 @@ export class DmaController {
         private readonly oam: Memory
     ) {}
 
+    reset() {
+        this.sourceBaseAddress = 0;
+        this.currentByte = 0;
+        this.ppuState.dmaActive = false;
+    }
+
     start(value: number) {
         // Source address is value * $100
         this.sourceBaseAddress = value << 8;
