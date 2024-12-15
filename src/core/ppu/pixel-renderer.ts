@@ -6,6 +6,8 @@ import { PpuState } from "./ppu-state";
 export class PixelRenderer {
     private pixelX = 0;
     private _finishedScanline = false;
+    private _windowTriggered = false;
+    private static bg0Pixel: Pixel = { color: 0, isSprite: false };
 
     constructor(
         private readonly ppuState: PpuState,
@@ -18,9 +20,14 @@ export class PixelRenderer {
         return this._finishedScanline;
     }
 
+    get windowTriggered() {
+        return this._windowTriggered
+    }
+
     reset() {
         this.pixelX = 0;
         this._finishedScanline = false;
+        this._windowTriggered = false;
     }
 
     tick() {
@@ -31,7 +38,7 @@ export class PixelRenderer {
             return;
         }
         if (this.checkWindowTrigger()) {
-            this.bgPixelFifo.clear();
+            this._windowTriggered = true;
             return;
         }
                 
@@ -49,35 +56,27 @@ export class PixelRenderer {
     }
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel | null): Pixel {
-        if (spritePixel == null) {
-            return bgPixel;
-        }
-        if (spritePixel.color === 0) {
-            return bgPixel;
-        }
-        if (this.ppuState.bgWindowPriority && bgPixel?.color !== 0) {
-            return bgPixel;
-        }
-        return spritePixel!;
+        // if (this.ppuState.spriteEnable && spritePixel !== null && spritePixel.color !== 0) {
+        //     return spritePixel;
+        // }
+        return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
     }
 
     private getFinalPixel(pixel: Pixel): number {
-        // For sprite pixels, use the appropriate sprite palette (OBP0 or OBP1)
+        let palette: number;
+
         if (pixel.isSprite) {
-            const palette = pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0;
-            // Color 0 is transparent for sprites, but this should be handled before getFinalPixel
-            // in mixPixels
-            return (palette >> (pixel.color << 1)) & 0b11;
+            palette = pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0;
+        } else {
+            palette = this.ppuState.bgp;
         }
-        
-        // For background pixels, use the background palette (BGP)
-        const palette = this.ppuState.bgp;
+
         return (palette >> (pixel.color << 1)) & 0b11;
     }
     
 
     private checkWindowTrigger() {
-        if (this.ppuState.fetcherWindowMode) {
+        if (this._windowTriggered) {
             return false;
         }
         if (!this.ppuState.windowEnabled) {
@@ -89,7 +88,8 @@ export class PixelRenderer {
         if (this.pixelX < this.ppuState.wx - 7) {
             return false;
         }
-        this.ppuState.fetcherWindowMode = true;
+    
+        this._windowTriggered = true;
         return true;
     }
 }

@@ -62,7 +62,11 @@ export class WorkerDisplay implements IDisplay {
     }
 
     clear(): void {
-        this.frameBuffer.fill(0);
+        for (let y = 0; y < 144; y++) {
+            for (let x = 0; x < 160; x++) {
+                this.setPixel(y, x, 0);
+            }
+        }
         this.ctx.putImageData(this.imageData, 0, 0);
         this.dirty = false;
     }

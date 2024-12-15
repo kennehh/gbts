@@ -34,12 +34,11 @@ export class PpuState {
 
     windowWasVisible = false;
     windowLineCounter = 0;
-    fetcherWindowMode = false;
 
     tCycles = 0;
 
     // cached lcdc values
-    bgWindowPriority: boolean = false;              // lcdc bit 0
+    bgWindowEnable: boolean = false;              // lcdc bit 0
     spriteEnable: boolean = false;                     // lcdc bit 1
     spriteHeight: number = 8;                       // lcdc bit 2
     bgTileMapAddress: number = 0x9800;              // lcdc bit 3    
@@ -51,6 +50,8 @@ export class PpuState {
     // CGB only
     isCgb: boolean = false;
     isDoubleSpeed: boolean = false;
+
+    scanlineScxDelay: number = 0;
 
 
     private _ly: number = 0;
@@ -71,7 +72,7 @@ export class PpuState {
 
     set lcdc(value: LcdcFlag) {
         this._lcdc = value & 0xff;
-        this.bgWindowPriority = (value & LcdcFlag.BgWindowPriority) === LcdcFlag.BgWindowPriority;
+        this.bgWindowEnable = (value & LcdcFlag.BgWindowPriority) === LcdcFlag.BgWindowPriority;
         this.spriteEnable = (value & LcdcFlag.ObjEnable) === LcdcFlag.ObjEnable;
         this.spriteHeight = (value & LcdcFlag.ObjSize) === LcdcFlag.ObjSize ? 16 : 8;
         this.bgTileMapAddress = (value & LcdcFlag.BgTileMapArea) === LcdcFlag.BgTileMapArea ? 0x9C00 : 0x9800;
@@ -140,7 +141,6 @@ export class PpuState {
         this.dmaActive = false;
         this.windowWasVisible = false;
         this.windowLineCounter = 0;
-        this.fetcherWindowMode = false;
         this.tCycles = 0;
     }
 }

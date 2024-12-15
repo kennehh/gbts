@@ -1,13 +1,12 @@
 export type Pixel = {
     color: number;
-    priority: number;
+    isSprite: boolean;
     spritePriority?: number;
     spritePalette?: number;
-    isSprite: boolean;
 }
 
 export class PixelFifo {
-    private static readonly CAPACITY = 16;
+    private static readonly CAPACITY = 8;
     private static readonly MASK = PixelFifo.CAPACITY - 1;
 
     private buffer: Pixel[] = new Array(PixelFifo.CAPACITY);

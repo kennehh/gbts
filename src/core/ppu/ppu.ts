@@ -2,10 +2,11 @@ import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "../memory/memory";
 import { IDisplay } from "./display";
 import { OamScanner } from "./oam-scanner";
-import { PixelFetcher } from "./pixel-fetcher";
+import { BackgroundFetcher } from "./background-fetcher";
 import { PixelFifo } from "./pixel-fifo";
 import { PixelRenderer } from "./pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
+import { SpriteFetcher } from "./sprite-fetcher";
 
 export interface IPpu {
     get state(): PpuState;
@@ -30,7 +31,8 @@ export class Ppu implements IPpu {
     readonly oam: Memory = new Memory(0xA0);
 
     private readonly oamScanner: OamScanner;
-    private readonly pixelFetcher: PixelFetcher;
+    private readonly backgroundFetcher: BackgroundFetcher;
+    private readonly spriteFetcher: SpriteFetcher;
     private readonly pixelRenderer: PixelRenderer;
 
     private readonly interruptManager: InterruptManager;
@@ -45,7 +47,8 @@ export class Ppu implements IPpu {
 
         const bgPixelFifo = new PixelFifo();
         const spritePixelFifo = new PixelFifo();
-        this.pixelFetcher = new PixelFetcher(this.state, this.vram, bgPixelFifo, spritePixelFifo);
+        this.backgroundFetcher = new BackgroundFetcher(this.state, this.vram, bgPixelFifo);
+        this.spriteFetcher = new SpriteFetcher(this.state, this.vram, spritePixelFifo);
         this.pixelRenderer = new PixelRenderer(this.state, this.display, bgPixelFifo, spritePixelFifo);
     }
 
@@ -54,7 +57,8 @@ export class Ppu implements IPpu {
         this.oam.fill(0);
         this.vram.fill(0);
         this.oamScanner.reset();
-        this.pixelFetcher.reset();
+        this.backgroundFetcher.reset();
+        this.spriteFetcher.reset();
         this.pixelRenderer.reset();
         this.display.clear();
         this.previousEnableLcd = false;
@@ -142,16 +146,7 @@ export class Ppu implements IPpu {
     
     tick() {        
         if (this.state.lcdEnabled !== this.previousEnableLcd) {
-            if (this.state.lcdEnabled) {
-                this.state.ly = 0;
-                this.state.tCycles = 0;
-                this.state.pendingLcdStatInterrupt = false;
-                this.state.status = PpuStatus.OamScan;         
-            } else {
-                this.display.clear();
-                this.display.renderFrame();
-            }
-            this.previousEnableLcd = this.state.lcdEnabled;
+            this.handleLcdEnabledChange();
         }
 
         if (!this.state.lcdEnabled) {
@@ -161,78 +156,30 @@ export class Ppu implements IPpu {
         this.state.tCycles++;
 
         switch (this.state.status) {
-            case PpuStatus.OamScan:
-                if (this.state.previousStatus !== PpuStatus.OamScan) {
-                    if (!this.state.windowWasVisible && this.state.ly === this.state.wy) {
-                        this.state.windowWasVisible = true;
-                    }
-                    this.oamScanner.reset();
-                    this.state.previousStatus = PpuStatus.OamScan;
-                }
-
-                this.oamScanner.tick();
-                this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
-
-                if (this.state.tCycles === 80) {
-                    this.state.status = PpuStatus.Drawing;
-                }
-                break;
-            case PpuStatus.Drawing:
-                if (this.state.previousStatus !== PpuStatus.Drawing) {
-                    this.state.fetcherWindowMode = false;
-                    this.pixelRenderer.reset();
-                    this.pixelFetcher.reset(this.oamScanner.getSprites());
-                    this.state.previousStatus = PpuStatus.Drawing;
-                }
-
-                const oldWindowMode = this.state.fetcherWindowMode;
-                this.pixelFetcher.tick();
-                this.pixelRenderer.tick();
-
-                if (this.pixelRenderer.finishedScanline) {
-                    this.state.status = PpuStatus.HBlank;
-                    if (this.state.fetcherWindowMode) {
-                        this.state.windowLineCounter++;
-                    }
-                    break;
-                }
-
-                if (!oldWindowMode && this.state.fetcherWindowMode) {
-                    this.pixelFetcher.resetForWindow();
-                    break;
-                }
-                break;
-            case PpuStatus.HBlank:
-                this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
-                
-                if (this.state.tCycles === 456) {
-                    this.state.tCycles = 0;
-                    this.incrementLy();
-                    this.state.status = this.state.ly === 144 ? PpuStatus.VBlank : PpuStatus.OamScan;
-                }
-                break;
-            case PpuStatus.VBlank:
-                if (this.state.previousStatus !== PpuStatus.VBlank) {
-                    this.display.renderFrame();
-                }
-
-                this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
-
-                if (this.state.tCycles === 456) {
-                    this.state.tCycles = 0;
-                    this.incrementLy();
-                    if (this.state.ly === 0) {
-                        this.state.windowLineCounter = 0;
-                        this.state.status = PpuStatus.OamScan;
-                    }
-                }
-                break;
+            case PpuStatus.OamScan: this.handleOamScan(); break;
+            case PpuStatus.Drawing: this.handleDrawing(); break;
+            case PpuStatus.HBlank: this.handleHBlank(); break;
+            case PpuStatus.VBlank: this.handleVBlank(); break;
+            default: throw new Error(`Invalid PPU status: ${this.state.status}`);
         }
 
         if (this.state.pendingLcdStatInterrupt) {
             this.interruptManager.requestInterrupt(InterruptFlag.LcdStat);
             this.state.pendingLcdStatInterrupt = false;
         }
+    }
+
+    private handleLcdEnabledChange() {
+        if (this.state.lcdEnabled) {
+            this.state.ly = 0;
+            this.state.tCycles = 0;
+            this.state.pendingLcdStatInterrupt = false;
+            this.state.status = PpuStatus.OamScan;         
+        } else {
+            this.display.clear();
+            this.display.renderFrame();
+        }
+        this.previousEnableLcd = this.state.lcdEnabled;
     }
 
     private incrementLy() {
@@ -248,8 +195,104 @@ export class Ppu implements IPpu {
     }
 
     private checkStatInterrupt(flag: StatInterruptSourceFlag) {
-        if (this.state.statInterruptSource & flag) {
+        if ((this.state.statInterruptSource & flag) !== 0) {
             this.state.pendingLcdStatInterrupt = true;
+        }
+    }
+
+    private handleOamScan() {
+        if (this.state.previousStatus !== PpuStatus.OamScan) {
+            if (this.state.windowEnabled && !this.state.windowWasVisible && this.state.ly === this.state.wy) {
+                this.state.windowWasVisible = true;
+            }
+            this.oamScanner.reset();
+            this.state.previousStatus = PpuStatus.OamScan;
+        }
+
+        this.oamScanner.tick();
+        this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
+
+        if (this.state.tCycles === 80) {
+            this.state.status = PpuStatus.Drawing;
+        }
+    }
+
+    private handleDrawing() {
+        if (this.state.previousStatus !== PpuStatus.Drawing) {
+            this.pixelRenderer.reset();
+            this.backgroundFetcher.reset();
+            this.spriteFetcher.reset();
+            
+            this.spriteFetcher.spriteBuffer = this.oamScanner.getSprites();
+            this.state.scanlineScxDelay = this.state.scx & 0x7;
+            this.state.previousStatus = PpuStatus.Drawing;
+        }
+
+        if (this.state.scanlineScxDelay > 0) {
+            this.state.scanlineScxDelay--;
+            return;
+        }
+
+        if (this.spriteFetcher.foundSpriteAt(this.backgroundFetcher.fetcherTileX)) {
+            this.backgroundFetcher.pause();
+            return;
+        }
+
+        if (this.spriteFetcher.fetchingSprite) {
+            this.spriteFetcher.tick();
+            if (!this.spriteFetcher.fetchingSprite) {
+                this.backgroundFetcher.resume();
+            }            
+            return;
+        }
+
+        this.backgroundFetcher.tick();
+        this.pixelRenderer.tick();
+
+        if (this.pixelRenderer.finishedScanline) {
+            // console.log(`Drawing took: ${this.state.tCycles - 80}`);
+            this.state.status = PpuStatus.HBlank;
+            if (this.backgroundFetcher.windowMode) {
+                this.state.windowLineCounter++;
+            }
+            return;
+        }
+        if (this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
+            this.backgroundFetcher.reset(true);
+            this.spriteFetcher.reset();
+        }
+    }
+
+    private handleHBlank() {
+        if (this.state.previousStatus !== PpuStatus.HBlank) {
+            this.state.previousStatus = PpuStatus.HBlank;
+        }
+
+        this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
+
+        if (this.state.tCycles >= 456) {
+            this.state.tCycles = 0;
+            this.incrementLy();
+            this.state.status = this.state.ly === 144 ? PpuStatus.VBlank : PpuStatus.OamScan;
+        }
+    }
+
+    private handleVBlank() {
+        if (this.state.previousStatus !== PpuStatus.VBlank) {
+            this.display.renderFrame();
+            this.state.previousStatus = PpuStatus.VBlank;
+        }
+
+        this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
+
+        if (this.state.tCycles >= 456) {
+            this.state.tCycles = 0;
+            this.incrementLy();
+            if (this.state.ly === 0) {
+                this.state.windowLineCounter = 0;
+                this.state.windowWasVisible = false;
+                this.state.status = PpuStatus.OamScan;
+            }
         }
     }
 }
