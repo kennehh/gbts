@@ -1,7 +1,7 @@
 export type Pixel = {
     color: number;
     isSprite: boolean;
-    spritePriority?: number;
+    spritePriority?: boolean;
     spritePalette?: number;
 }
 

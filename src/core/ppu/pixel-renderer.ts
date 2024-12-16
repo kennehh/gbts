@@ -50,16 +50,22 @@ export class PixelRenderer {
 
         this.display.setPixel(this.ppuState.ly, this.pixelX, color);
         this.pixelX++;
+        
         if (this.pixelX === 160) {
             this._finishedScanline = true;
         }
     }
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel | null): Pixel {
-        // if (this.ppuState.spriteEnable && spritePixel !== null && spritePixel.color !== 0) {
-        //     return spritePixel;
-        // }
-        return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
+        if (!this.ppuState.spriteEnable || spritePixel === null || spritePixel.color === 0) {
+            return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
+        }
+
+        if (spritePixel.spritePriority && bgPixel.color !== 0) {
+            return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
+        }
+
+        return spritePixel;
     }
 
     private getFinalPixel(pixel: Pixel): number {

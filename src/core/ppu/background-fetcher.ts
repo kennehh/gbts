@@ -12,6 +12,8 @@ enum PixelFetcherState {
 }
 
 export class BackgroundFetcher {
+    pixelsToDiscard = 0;
+
     private stepCycles = 0;
     private state = PixelFetcherState.FetchTileNumber;
 
@@ -55,7 +57,6 @@ export class BackgroundFetcher {
         this._fetcherTileX = 0;
         this.state = PixelFetcherState.FetchTileNumber;
         this._windowMode = windowMode;
-        this.fifo.clear();
     }
 
     pause() {
@@ -115,50 +116,51 @@ export class BackgroundFetcher {
     }
 
     private fetchTileNumber() {
-        let fetcherX: number, fetcherY: number, tileMapAddress: number;
+        let tileMapBaseAddress: number;
+        let offset = this._fetcherTileX;
 
         if (this._windowMode) {
-            fetcherX = this._fetcherTileX;
-            fetcherY = this.ppuState.windowLineCounter;
-            tileMapAddress = this.ppuState.windowTileMapAddress;
+            tileMapBaseAddress = this.ppuState.windowTileMapAddress;
+            offset += (this.ppuState.windowLineCounter >> 3) << 5;
         } else {
-            fetcherX = ((this.ppuState.scx >> 3) + this._fetcherTileX) & 0x1f;
-            fetcherY = (this.ppuState.scy + this.ppuState.ly) & 0xff;
-            tileMapAddress = this.ppuState.bgTileMapAddress;
+            tileMapBaseAddress = this.ppuState.bgTileMapAddress;
+            offset += this.ppuState.scx >> 3;
+            offset &= 0x1f;
+            offset += ((this.ppuState.ly + this.ppuState.scy) >> 3) << 5;
+            offset &= 0x3ff;
         }
 
-        const tileAddress = tileMapAddress + ((fetcherY >> 3) << 5) + fetcherX;
-        this.fetchedTileId = this.vram.read(tileAddress);
+        const tileMapAddress = tileMapBaseAddress + offset;
+        this.fetchedTileId = this.vram.read(tileMapAddress);
     }
 
     private fetchTileDataLow() {
-        const tileDataAddress = this.getTileDataAddress(false);
+        const tileDataAddress = this.getTileDataAddress();
         this.fetchedTileDataLow = this.vram.read(tileDataAddress);
     }
 
     private fetchTileDataHigh() {
-        const tileDataAddress = this.getTileDataAddress(true);
+        const tileDataAddress = this.getTileDataAddress() + 1;
         this.fetchedTileDataHigh = this.vram.read(tileDataAddress);
     }
 
-    private getTileDataAddress(high: boolean) {
-        let tileDataAddress = this.ppuState.useBgWindow8000AdressingMode ? 0x8000 : 0x9000;
-        
-        // Get Y position within the tile (0-7)
-        const tileY = this._windowMode ? this.ppuState.windowLineCounter & 7 : (this.ppuState.ly + this.ppuState.scy) & 7;
-        
-        // Each row takes 2 bytes
-        const rowOffset = tileY << 1;
-        
-        // Add 1 if getting high byte
-        const byteOffset = high ? 1 : 0;
-        let tileNumber = this.fetchedTileId;
-        if (!this.ppuState.useBgWindow8000AdressingMode) {
-            // Signed tile numbers
-            tileNumber = tileNumber << 24 >> 24;
+    private getTileDataAddress() {
+        const tileDataBaseAddress = this.ppuState.useBgWindow8000AdressingMode ? 0x8000 : 0x9000;
+        let offset: number;
+
+        if (this._windowMode) {
+            offset = (this.ppuState.windowLineCounter & 0x7) << 1;
+        } else {
+            offset = ((this.ppuState.ly + this.ppuState.scy) & 0x7) << 1;
         }
-        
-        return tileDataAddress + (tileNumber << 4) + rowOffset + byteOffset;
+
+        let tileId = this.fetchedTileId;
+        if (!this.ppuState.useBgWindow8000AdressingMode) {
+            // Signed tile id
+            tileId = tileId << 24 >> 24;
+        }
+
+        return tileDataBaseAddress + offset + (tileId << 4);
     }
 
     private pushBgToFifo() {
@@ -167,8 +169,11 @@ export class BackgroundFetcher {
             return false;
         }
 
+        const pixelStart = 7 - this.pixelsToDiscard;
+        this.pixelsToDiscard = 0;
+        
         // Get 8 pixels from the current tile data
-        for (let i = 7; i >= 0; i--) {
+        for (let i = pixelStart; i >= 0; i--) {
             // Get color bits from the high and low bytes
             // TODO: Handle CGB tile flipping
             const colorBit1 = (this.fetchedTileDataHigh >> i) & 1;

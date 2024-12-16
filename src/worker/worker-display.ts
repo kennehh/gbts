@@ -30,7 +30,7 @@ export class WorkerDisplay implements IDisplay {
         if (x < 0 || x >= 160 || y < 0 || y >= 144) {
             return;
         }
-        
+
         const offset = ((y * 160) << 2) + (x << 2);
         const colorOffset = colorId * 3;
         this.frameBuffer[offset] = this.colorBuffer[colorOffset];
@@ -49,7 +49,7 @@ export class WorkerDisplay implements IDisplay {
         this.dirty = false;
 
         this.fpsTracker.track();
-        console.log(this.fpsTracker.getFormattedFps());
+        // console.log(this.fpsTracker.getFormattedFps());
     }
 
     setPalette(palette: Array<[number, number, number]>): void {

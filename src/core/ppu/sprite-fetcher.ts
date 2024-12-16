@@ -63,7 +63,6 @@ export class SpriteFetcher {
 
     reset() {
         this.resetFetchedSpriteState();
-        this.fifo.clear();
         this.state = PixelFetcherState.Sleep;
         this.lastFetcherTileX = -1;
     }
@@ -81,10 +80,10 @@ export class SpriteFetcher {
     }
     
     private findNextSprite(tileX: number) {
-        const x = (tileX << 3) + 8;
+        const x = (tileX << 3);
 
         for (const sprite of this.spriteBuffer) {
-            if (sprite.fetched || sprite.x <= x) {
+            if (sprite.fetched || sprite.x > x) {
                 continue;
             }
             sprite.fetched = true;
@@ -106,15 +105,15 @@ export class SpriteFetcher {
 
         switch (this.state) {
             case PixelFetcherState.FetchTileNumber:
-                this.fetchSpriteTileNumber();
+                this.fetchTileNumber();
                 this.state = PixelFetcherState.FetchTileDataLow;
                 break;
             case PixelFetcherState.FetchTileDataLow:
-                this.fetchSpriteTileDataLow();
+                this.fetchTileDataLow();
                 this.state = PixelFetcherState.FetchTileDataHigh;
                 break;
             case PixelFetcherState.FetchTileDataHigh:
-                this.fetchSpriteTileDataHigh();
+                this.fetchTileDataHigh();
                 this.state = PixelFetcherState.PushToFifo;
                 break;
             default:
@@ -124,7 +123,7 @@ export class SpriteFetcher {
         this.stepCycles = 0;
     }
 
-    private fetchSpriteTileNumber() {
+    private fetchTileNumber() {
         const tileNumber = this.currentSprite!.tileIndex;
         if (this.ppuState.spriteHeight === 16) {
             this.fetchedTileId = tileNumber & 0xfe;
@@ -133,15 +132,17 @@ export class SpriteFetcher {
             if (spriteY >= 8) {
                 this.fetchedTileId |= 1;
             }
+        } else {
+            this.fetchedTileId = tileNumber;
         }
     }
 
-    private fetchSpriteTileDataLow() {
+    private fetchTileDataLow() {
         const tileDataAddress = this.getSpriteTileDataAddress(false);
         this.fetchedTileDataLow = this.vram.read(tileDataAddress);
     }
 
-    private fetchSpriteTileDataHigh() {
+    private fetchTileDataHigh() {
         const tileDataAddress = this.getSpriteTileDataAddress(true);
         this.fetchedTileDataHigh = this.vram.read(tileDataAddress);
     }
@@ -173,9 +174,10 @@ export class SpriteFetcher {
     private pushSpriteToFifo() {
         const sprite = this.currentSprite!;
         const pixelsToSkip = this.fifo.length;
+        const start = 7 - pixelsToSkip;
 
-        for (let i = 7 - pixelsToSkip; i >= 0; i--) {
-            const bitPos = sprite.flipX ? (7 - i) : i;
+        for (let i = start; i >= 0; i--) {
+            const bitPos = sprite.flipX ? start : i;
             const colorBit1 = (this.fetchedTileDataHigh >> bitPos) & 1;
             const colorBit0 = (this.fetchedTileDataLow >> bitPos) & 1;
             const color = (colorBit1 << 1) | colorBit0;
@@ -184,7 +186,7 @@ export class SpriteFetcher {
                 color,
                 isSprite: true,
                 spritePalette: sprite.dmgPalette,
-                spritePriority: sprite.priority ? 1 : 0
+                spritePriority: sprite.priority
             };
 
             this.fifo.push(pixel);

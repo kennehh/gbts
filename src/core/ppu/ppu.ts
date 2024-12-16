@@ -34,6 +34,8 @@ export class Ppu implements IPpu {
     private readonly backgroundFetcher: BackgroundFetcher;
     private readonly spriteFetcher: SpriteFetcher;
     private readonly pixelRenderer: PixelRenderer;
+    private readonly bgPixelFifo = new PixelFifo();
+    private readonly spritePixelFifo = new PixelFifo();
 
     private readonly interruptManager: InterruptManager;
     private readonly display: IDisplay;
@@ -45,11 +47,9 @@ export class Ppu implements IPpu {
         this.oamScanner = new OamScanner(this.state, this.oam);
         this.display = display;
 
-        const bgPixelFifo = new PixelFifo();
-        const spritePixelFifo = new PixelFifo();
-        this.backgroundFetcher = new BackgroundFetcher(this.state, this.vram, bgPixelFifo);
-        this.spriteFetcher = new SpriteFetcher(this.state, this.vram, spritePixelFifo);
-        this.pixelRenderer = new PixelRenderer(this.state, this.display, bgPixelFifo, spritePixelFifo);
+        this.backgroundFetcher = new BackgroundFetcher(this.state, this.vram, this.bgPixelFifo);
+        this.spriteFetcher = new SpriteFetcher(this.state, this.vram, this.spritePixelFifo);
+        this.pixelRenderer = new PixelRenderer(this.state, this.display, this.bgPixelFifo, this.spritePixelFifo);
     }
 
     reset() {
@@ -88,10 +88,7 @@ export class Ppu implements IPpu {
 
     writeRegister(address: number, value: number): void {
         switch (address) {
-            case 0xFF40: 
-                this.state.lcdc = value;
-                // TODO: Implement LCDC update
-                break;
+            case 0xFF40: this.state.lcdc = value; break;
             case 0xFF41: this.state.stat = value; break;
             case 0xFF42: this.state.scy = value; break;
             case 0xFF43: this.state.scx = value; break;
@@ -192,6 +189,7 @@ export class Ppu implements IPpu {
         if (this.state.ly >= 153) {
             this.state.ly = 0;
         }
+        //console.log(`scx: ${this.state.scx}, scy: ${this.state.scy}, ly: ${this.state.ly}`);
     }
 
     private checkStatInterrupt(flag: StatInterruptSourceFlag) {
@@ -222,29 +220,33 @@ export class Ppu implements IPpu {
             this.pixelRenderer.reset();
             this.backgroundFetcher.reset();
             this.spriteFetcher.reset();
+            this.bgPixelFifo.clear();
+            this.spritePixelFifo.clear();
             
             this.spriteFetcher.spriteBuffer = this.oamScanner.getSprites();
-            this.state.scanlineScxDelay = this.state.scx & 0x7;
+            this.backgroundFetcher.pixelsToDiscard = this.state.scx & 0x7;
+            this.state.drawingInitialScanlineDelay = 6 + this.backgroundFetcher.pixelsToDiscard;
+
             this.state.previousStatus = PpuStatus.Drawing;
         }
 
-        if (this.state.scanlineScxDelay > 0) {
-            this.state.scanlineScxDelay--;
+        if (this.state.drawingInitialScanlineDelay > 0) {
+            this.state.drawingInitialScanlineDelay--;
             return;
         }
 
-        if (this.spriteFetcher.foundSpriteAt(this.backgroundFetcher.fetcherTileX)) {
-            this.backgroundFetcher.pause();
-            return;
-        }
+        // if (this.spriteFetcher.foundSpriteAt(this.backgroundFetcher.fetcherTileX)) {
+        //     this.backgroundFetcher.pause();
+        //     return;
+        // }
 
-        if (this.spriteFetcher.fetchingSprite) {
-            this.spriteFetcher.tick();
-            if (!this.spriteFetcher.fetchingSprite) {
-                this.backgroundFetcher.resume();
-            }            
-            return;
-        }
+        // if (this.spriteFetcher.fetchingSprite) {
+        //     this.spriteFetcher.tick();
+        //     if (!this.spriteFetcher.fetchingSprite) {
+        //         this.backgroundFetcher.resume();
+        //     }            
+        //     return;
+        // }
 
         this.backgroundFetcher.tick();
         this.pixelRenderer.tick();
@@ -257,9 +259,10 @@ export class Ppu implements IPpu {
             }
             return;
         }
-        if (this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
+        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
             this.backgroundFetcher.reset(true);
             this.spriteFetcher.reset();
+            this.bgPixelFifo.clear();
         }
     }
 
