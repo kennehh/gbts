@@ -2,8 +2,8 @@ import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 
 enum TimaReloadState {
     None = 0,
-    Pending = 1,  // First M-cycle after overflow
-    Reload = 2    // Second M-cycle where reload and interrupt happen
+    Reloading = 1,
+    Reloaded = 
 }
 
 export interface ITimer {
@@ -41,51 +41,35 @@ export class Timer implements ITimer {
 
     tickMCycle() {
         if (this.timaReloadState !== TimaReloadState.None) {
-            if (this.timaReloadState === TimaReloadState.Pending) {
-                this.timaReloadState = TimaReloadState.Reload;
-            } else {
-                // Reload and request interrupt
-                this.timaReloadState = TimaReloadState.None;
+            if (this.timaReloadState === TimaReloadState.Reloading) {
                 this.tima = this.tma;
                 this.interruptManager.requestInterrupt(InterruptFlag.Timer);
+                this.timaReloadState = TimaReloadState.Reloaded;
+            } else {
+                this.timaReloadState = TimaReloadState.None;
             }
-            return;
         }
-        
+
         this.setDiv(this.div + 4);
     }
 
     readRegister(address: number): number {
         switch (address) {
-            case 0xFF04:
-                return (this.div >> 8) & 0xFF;
-            case 0xFF05:
-                return this.tima;
-            case 0xFF06:
-                return this.tma;
-            case 0xFF07:
-                return this.tac;
-            default:
-                throw new Error(`Invalid timer register: ${address.toString(16)}`);
+            case 0xFF04: return (this.div >> 8) & 0xFF;
+            case 0xFF05: return this.tima;
+            case 0xFF06: return this.tma;
+            case 0xFF07: return this.tac;
+            default: throw new Error(`Invalid timer register: ${address.toString(16)}`);
         }
     }
 
     writeRegister(address: number, value: number): void {
         switch (address) {
-            case 0xFF04:
-                this.setDiv(0);
-                break; 
-            case 0xFF05:
-                this.setTima(value);
-                break;
-            case 0xFF06: 
-                this.setTma(value);
-                break;
-            case 0xFF07: 
-                this.setTac(value);
-                break;
-            default:
-                throw new Error(`Invalid timer register: ${address.toString(16)}`);
+            case 0xFF04: this.setDiv(0);      break; 
+            case 0xFF05: this.setTima(value); break;
+            case 0xFF06: this.setTma(value);  break;
+            case 0xFF07: this.setTac(value);  break;
+            default: throw new Error(`Invalid timer register: ${address.toString(16)}`);
         }
     }
 
@@ -100,14 +84,14 @@ export class Timer implements ITimer {
     }
 
     private setTima(value: number) {
-        if (this.timaReloadState !== TimaReloadState.Reload) {
+        if (this.timaReloadState !== TimaReloadState.Reloaded) {
             this.tima = value;
             this.timaReloadState = TimaReloadState.None;
         }
     }
 
     private setTma(value: number) {
-        if (this.timaReloadState === TimaReloadState.Reload) {
+        if (this.timaReloadState === TimaReloadState.Reloaded) {
             this.tima = value;
         }
         this.tma = value;
@@ -116,7 +100,7 @@ export class Timer implements ITimer {
     private incrementTima() {
         if (this.tima === 0xFF) {
             this.tima = 0;
-            this.timaReloadState = TimaReloadState.Pending;
+            this.timaReloadState = TimaReloadState.Reloading;
         } else {
             this.tima++;
         }

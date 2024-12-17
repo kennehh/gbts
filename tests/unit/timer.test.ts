@@ -89,9 +89,8 @@ describe('Timer', () => {
 
             timer.tickMCycle();
 
-            // TIMA should now be reloaded with TMA value
+            // TIMA should now be reloaded with TMA value and requests interrupt
             expect(timer.readRegister(0xFF05)).toBe(0xAA);
-            // Interrupt finally requested
             expect(interruptManager.currentInterrupt).toBe(InterruptFlag.Timer);
         });
     });
