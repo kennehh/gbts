@@ -1,5 +1,5 @@
+import { WorkerMessage } from '../common/types';
 import Worker from '../worker/emulator-worker?worker'
-import { WorkerMessageType } from "../common/enums";
 
 export class Emulator {
     private worker = new Worker();
@@ -16,26 +16,19 @@ export class Emulator {
         parent.appendChild(canvas);
 
         const offscreen = canvas.transferControlToOffscreen();
-        this.worker.postMessage({ type: WorkerMessageType.Init, canvas: offscreen }, [offscreen]);
+        this.postMessage({ type: 'INIT', payload: { canvas: offscreen } }, [offscreen]);
     }
 
     loadRom(rom: Uint8Array) {
-        this.worker.postMessage({ 
-            type: WorkerMessageType.LoadRom,
-            rom: rom 
-        });
+        this.postMessage({ type: 'LOAD_ROM', payload: { rom } }, [rom.buffer]);
     }
 
     run() {
-        this.worker.postMessage({ type: WorkerMessageType.Run });
+        this.postMessage({ type: 'RUN' });
     }
 
     stop() {
-        this.worker.postMessage({ type: WorkerMessageType.Stop });
-    }
-
-    step() {
-        this.worker.postMessage({ type: WorkerMessageType.Step });
+        this.postMessage({ type: 'STOP' });
     }
 
     private setupInputEventListeners() {
@@ -46,5 +39,9 @@ export class Emulator {
         window.addEventListener('keyup', (e) => {
             this.worker.postMessage({ type: 'keyup', key: e.key });
         });
+    }
+
+    private postMessage(message: WorkerMessage, transfer: Transferable[] = []) {
+        this.worker.postMessage(message, transfer);
     }
 }

@@ -1,28 +1,36 @@
 // emulator.worker.ts
 /// <reference lib="webworker" />
 
-import { WorkerMessageType } from '../common/enums';
+import { WorkerMessage } from '../common/types';
 import { GameBoy } from '../core/gameboy';
-import { WorkerDisplay } from './worker-display';
+import { IDisplay } from '../core/ppu/display';
+import { CanvasDisplay } from './canvas-display';
+import { WebGLDisplay } from './webgl-display';
 
-let display: WorkerDisplay;
+let display: IDisplay;
 let gameboy: GameBoy;
 
 // Handle worker messages
 self.onmessage = (e: MessageEvent) => {
-    switch (e.data.type) {
-        case WorkerMessageType.Init:
-            display = new WorkerDisplay(e.data.canvas);
+    const message = e.data as WorkerMessage;
+    switch (message?.type) {
+        case 'INIT':
+            try {
+                display = new WebGLDisplay(message.payload.canvas);
+            } catch {
+                console.warn('WebGL not supported, falling back to Canvas2D');
+                display = new CanvasDisplay(message.payload.canvas);
+            }
             gameboy = new GameBoy(display);
             break;
-        case WorkerMessageType.Run:
+        case 'RUN':
             gameboy.run();
             break;
-        case WorkerMessageType.Stop:
+        case 'STOP':
             gameboy.stop();
             break;
-        case WorkerMessageType.LoadRom:
-            gameboy.loadRom(e.data.rom);
+        case 'LOAD_ROM':
+            gameboy.loadRom(message.payload.rom);
             break;
     }
 };

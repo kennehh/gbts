@@ -1,7 +1,7 @@
 import { IDisplay } from '../core/ppu/display';
 import { FpsTracker } from './fps-tracker';
 
-export class WorkerDisplay implements IDisplay {
+export class CanvasDisplay implements IDisplay {
     private readonly fpsTracker = new FpsTracker();
     
     private readonly ctx: OffscreenCanvasRenderingContext2D;

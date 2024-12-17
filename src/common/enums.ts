@@ -1,11 +1,3 @@
-export enum WorkerMessageType {
-    Init,
-    Run,
-    Stop,
-    Step,
-    LoadRom,
-}
-
 export enum JoypadButton {
     Right = 1 << 0,
     Left = 1 << 1,
