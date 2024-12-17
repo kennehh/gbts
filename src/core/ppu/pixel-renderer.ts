@@ -4,7 +4,11 @@ import { Pixel, PixelFifo } from "./pixel-fifo";
 import { PpuState } from "./ppu-state";
 
 export class PixelRenderer {
-    private pixelX = 0;
+    get pixelX() {
+        return this.__pixelX;
+    }
+
+    private __pixelX = 0;
     private _finishedScanline = false;
     private _windowTriggered = false;
     private static bg0Pixel: Pixel = { color: 0, isSprite: false };
@@ -25,7 +29,7 @@ export class PixelRenderer {
     }
 
     reset() {
-        this.pixelX = 0;
+        this.__pixelX = 0;
         this._finishedScanline = false;
         this._windowTriggered = false;
     }
@@ -48,10 +52,10 @@ export class PixelRenderer {
         const finalPixel = this.mixPixels(bgPixel, spritePixel);
         const color = this.getFinalPixel(finalPixel);
 
-        this.display.setPixel(this.ppuState.ly, this.pixelX, color);
-        this.pixelX++;
+        this.display.setPixel(this.ppuState.ly, this.__pixelX, color);
+        this.__pixelX++;
         
-        if (this.pixelX === 160) {
+        if (this.__pixelX === 160) {
             this._finishedScanline = true;
         }
     }
@@ -61,7 +65,7 @@ export class PixelRenderer {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }
 
-        if (spritePixel.spritePriority && bgPixel.color !== 0) {
+        if (spritePixel.bgSpritePriority && bgPixel.color !== 0) {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }
 
@@ -91,7 +95,7 @@ export class PixelRenderer {
         if (!this.ppuState.windowWasVisible) {
             return false;
         }
-        if (this.pixelX < this.ppuState.wx - 7) {
+        if (this.__pixelX < this.ppuState.wx - 7) {
             return false;
         }
     

@@ -51,7 +51,7 @@ export class PpuState {
     isCgb: boolean = false;
     isDoubleSpeed: boolean = false;
 
-    drawingInitialScanlineDelay: number = 0;
+    drawingDelay: number = 0;
 
 
     private _ly: number = 0;

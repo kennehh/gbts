@@ -12,6 +12,7 @@ enum PixelFetcherState {
 }
 
 export class BackgroundFetcher {
+    delay = 0;
     pixelsToDiscard = 0;
 
     private stepCycles = 0;
@@ -20,13 +21,10 @@ export class BackgroundFetcher {
     private fetchedTileId = 0;
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
-    private _fetcherTileX = 0;
+    private fetcherTileX = 0;
     
     private _windowMode = false;
 
-    get fetcherTileX() {
-        return this._fetcherTileX;
-    }
 
     get windowMode() {
         return this._windowMode;
@@ -43,6 +41,11 @@ export class BackgroundFetcher {
             return;
         }
 
+        if (this.delay > 0) {
+            this.delay--;
+            return;
+        }
+
         this.stepCycles++;
 
         if (this.state !== PixelFetcherState.PushToFifo) {
@@ -54,7 +57,7 @@ export class BackgroundFetcher {
 
     reset(windowMode: boolean = false) {
         this.resetFetchedTileState();
-        this._fetcherTileX = 0;
+        this.fetcherTileX = 0;
         this.state = PixelFetcherState.FetchTileNumber;
         this._windowMode = windowMode;
     }
@@ -72,8 +75,8 @@ export class BackgroundFetcher {
             return;
         }
     
-        if (this._fetcherTileX <= 20) {
-            this._fetcherTileX++;
+        if (this.fetcherTileX <= 20) {
+            this.fetcherTileX++;
             this.state = PixelFetcherState.FetchTileNumber;
         } else {
             this.state = PixelFetcherState.Sleep;
@@ -117,7 +120,7 @@ export class BackgroundFetcher {
 
     private fetchTileNumber() {
         let tileMapBaseAddress: number;
-        let offset = this._fetcherTileX;
+        let offset = this.fetcherTileX;
 
         if (this._windowMode) {
             tileMapBaseAddress = this.ppuState.windowTileMapAddress;

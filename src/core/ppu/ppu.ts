@@ -225,44 +225,41 @@ export class Ppu implements IPpu {
             
             this.spriteFetcher.spriteBuffer = this.oamScanner.getSprites();
             this.backgroundFetcher.pixelsToDiscard = this.state.scx & 0x7;
-            this.state.drawingInitialScanlineDelay = 6 + this.backgroundFetcher.pixelsToDiscard;
+            this.backgroundFetcher.delay = 6 + this.backgroundFetcher.pixelsToDiscard;
 
             this.state.previousStatus = PpuStatus.Drawing;
         }
 
-        if (this.state.drawingInitialScanlineDelay > 0) {
-            this.state.drawingInitialScanlineDelay--;
+        if (this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
+            this.backgroundFetcher.pause();
             return;
         }
 
-        // if (this.spriteFetcher.foundSpriteAt(this.backgroundFetcher.fetcherTileX)) {
-        //     this.backgroundFetcher.pause();
-        //     return;
-        // }
-
-        // if (this.spriteFetcher.fetchingSprite) {
-        //     this.spriteFetcher.tick();
-        //     if (!this.spriteFetcher.fetchingSprite) {
-        //         this.backgroundFetcher.resume();
-        //     }            
-        //     return;
-        // }
+        if (this.spriteFetcher.fetchingSprite) {
+            this.spriteFetcher.tick();
+            if (!this.spriteFetcher.fetchingSprite) {
+                // this.backgroundFetcher.delay = Math.max(6 - this.bgPixelFifo.length, 0);
+                this.backgroundFetcher.resume();
+                this.pixelRenderer.tick();
+            }
+            return;
+        }
 
         this.backgroundFetcher.tick();
         this.pixelRenderer.tick();
 
+        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
+            this.backgroundFetcher.reset(true);
+            this.bgPixelFifo.clear();
+            return;
+        }
+
         if (this.pixelRenderer.finishedScanline) {
-            // console.log(`Drawing took: ${this.state.tCycles - 80}`);
+            console.log(`Ly: ${this.state.ly} Drawing took: ${this.state.tCycles - 80}`);
             this.state.status = PpuStatus.HBlank;
             if (this.backgroundFetcher.windowMode) {
                 this.state.windowLineCounter++;
             }
-            return;
-        }
-        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
-            this.backgroundFetcher.reset(true);
-            this.spriteFetcher.reset();
-            this.bgPixelFifo.clear();
         }
     }
 

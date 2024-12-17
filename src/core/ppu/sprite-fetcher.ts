@@ -20,7 +20,7 @@ export class SpriteFetcher {
     private fetchedTileId = 0;
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
-    private lastFetcherTileX = -1;
+    private lastPixelX = -1;
 
     private currentSprite: OamSprite | null = null;
     
@@ -30,14 +30,14 @@ export class SpriteFetcher {
         private readonly fifo: PixelFifo
     ) { }
 
-    foundSpriteAt(tileX: number) {
-        if (tileX === this.lastFetcherTileX) {
+    foundSpriteAt(pixelX: number) {
+        if (pixelX === this.lastPixelX) {
             return false;
         }
 
-        this.lastFetcherTileX = tileX;
+        this.lastPixelX = pixelX;
 
-        const sprite = this.findNextSprite(tileX);
+        const sprite = this.findNextSprite(pixelX);
         if (sprite != null) {
             this.currentSprite = sprite;
             this.state = PixelFetcherState.FetchTileNumber;
@@ -64,7 +64,7 @@ export class SpriteFetcher {
     reset() {
         this.resetFetchedSpriteState();
         this.state = PixelFetcherState.Sleep;
-        this.lastFetcherTileX = -1;
+        this.lastPixelX = -1;
     }
 
     get fetchingSprite() {
@@ -79,15 +79,13 @@ export class SpriteFetcher {
         this.stepCycles = 0;
     }
     
-    private findNextSprite(tileX: number) {
-        const x = (tileX << 3);
-
+    private findNextSprite(pixelX: number) {
+        const x = pixelX + 8;
         for (const sprite of this.spriteBuffer) {
-            if (sprite.fetched || sprite.x > x) {
-                continue;
+            if (!sprite.fetched && sprite.x <= x) {
+                sprite.fetched = true;
+                return sprite;
             }
-            sprite.fetched = true;
-            return sprite;
         }        
         return null;
     }
@@ -138,58 +136,58 @@ export class SpriteFetcher {
     }
 
     private fetchTileDataLow() {
-        const tileDataAddress = this.getSpriteTileDataAddress(false);
+        const tileDataAddress = this.getSpriteTileDataAddress();
         this.fetchedTileDataLow = this.vram.read(tileDataAddress);
     }
 
     private fetchTileDataHigh() {
-        const tileDataAddress = this.getSpriteTileDataAddress(true);
+        const tileDataAddress = this.getSpriteTileDataAddress() + 1;
         this.fetchedTileDataHigh = this.vram.read(tileDataAddress);
     }
 
-    private getSpriteTileDataAddress(high: boolean) {
+    private getSpriteTileDataAddress() {
         const tileDataAddress = 0x8000;
+        const sprite = this.currentSprite!;
         
-        // Get Y position within the tile (0-7)
-        let spriteY = this.ppuState.ly - this.currentSprite!.y - 16;
+        const line = this.ppuState.ly - sprite.y - 16;
+        let offset = line & (this.ppuState.spriteHeight - 1);
         
-        if (this.currentSprite!.flipY) {
-            spriteY = this.ppuState.spriteHeight - 1 - spriteY;
+        if (sprite.flipY) {
+            offset = this.ppuState.spriteHeight - 1 - offset;
         }
 
-        if (this.ppuState.spriteHeight === 16) {
-            // only grab the current half of the sprite
-            spriteY &= 0x7;
-        }
-
-        // Each row takes 2 bytes
-        const rowOffset = spriteY << 1;
-        
-        // Add 1 if getting high byte
-        const byteOffset = high ? 1 : 0;
-        
-        return tileDataAddress + (this.fetchedTileId << 4) + rowOffset + byteOffset;
+        return tileDataAddress + (offset << 1) + (this.fetchedTileId << 4);
     }
 
     private pushSpriteToFifo() {
         const sprite = this.currentSprite!;
-        const pixelsToSkip = this.fifo.length;
-        const start = 7 - pixelsToSkip;
+        const remainingBits = 7 - this.fifo.length;
 
-        for (let i = start; i >= 0; i--) {
-            const bitPos = sprite.flipX ? start : i;
-            const colorBit1 = (this.fetchedTileDataHigh >> bitPos) & 1;
-            const colorBit0 = (this.fetchedTileDataLow >> bitPos) & 1;
-            const color = (colorBit1 << 1) | colorBit0;
-
-            const pixel: Pixel = {
-                color,
-                isSprite: true,
-                spritePalette: sprite.dmgPalette,
-                spritePriority: sprite.priority
-            };
-
-            this.fifo.push(pixel);
+        if (!sprite.flipX) {
+            for (let i = remainingBits; i >= 0; i--) {
+                this.pushPixelToFifo(i);
+            }
+        } else {
+            for (let i = 0; i <= remainingBits; i++) {
+                this.pushPixelToFifo(i);
+            }
         }
+    }
+
+    private pushPixelToFifo(index: number) {
+        const sprite = this.currentSprite!;
+
+        const colorBit1 = (this.fetchedTileDataHigh >> index) & 1;
+        const colorBit0 = (this.fetchedTileDataLow >> index) & 1;
+        const color = (colorBit1 << 1) | colorBit0;
+
+        const pixel: Pixel = {
+            color,
+            isSprite: true,
+            spritePalette: sprite.dmgPalette,
+            bgSpritePriority: sprite.priority
+        };
+
+        this.fifo.push(pixel);
     }
 }
