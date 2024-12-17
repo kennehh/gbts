@@ -3,7 +3,7 @@ import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 enum TimaReloadState {
     None = 0,
     Reloading = 1,
-    Reloaded = 
+    Reloaded = 2
 }
 
 export interface ITimer {
