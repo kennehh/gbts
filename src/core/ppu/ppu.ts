@@ -144,6 +144,8 @@ export class Ppu implements IPpu {
     tick() {        
         if (this.state.lcdEnabled !== this.previousEnableLcd) {
             this.handleLcdEnabledChange();
+        } else {
+            this.state.firstFrameAfterDisplayEnable = false
         }
 
         if (!this.state.lcdEnabled) {
@@ -179,7 +181,7 @@ export class Ppu implements IPpu {
         this.previousEnableLcd = this.state.lcdEnabled;
     }
 
-    private incrementLy() {
+    private goToNextScanline() {
         this.state.ly++;
         
         if (this.state.lyCoincidence) {
@@ -189,7 +191,6 @@ export class Ppu implements IPpu {
         if (this.state.ly >= 153) {
             this.state.ly = 0;
         }
-        //console.log(`scx: ${this.state.scx}, scy: ${this.state.scy}, ly: ${this.state.ly}`);
     }
 
     private checkStatInterrupt(flag: StatInterruptSourceFlag) {
@@ -225,9 +226,14 @@ export class Ppu implements IPpu {
             
             this.spriteFetcher.spriteBuffer = this.oamScanner.getSprites();
             this.backgroundFetcher.pixelsToDiscard = this.state.scx & 0x7;
-            this.backgroundFetcher.delay = 6 + this.backgroundFetcher.pixelsToDiscard;
+            this.state.drawingInitialScanlineDelay = 6 + this.backgroundFetcher.pixelsToDiscard;
 
             this.state.previousStatus = PpuStatus.Drawing;
+        }
+
+        if (this.state.drawingInitialScanlineDelay > 0) {
+            this.state.drawingInitialScanlineDelay--;
+            return;
         }
 
         if (this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
@@ -238,9 +244,7 @@ export class Ppu implements IPpu {
         if (this.spriteFetcher.fetchingSprite) {
             this.spriteFetcher.tick();
             if (!this.spriteFetcher.fetchingSprite) {
-                // this.backgroundFetcher.delay = Math.max(6 - this.bgPixelFifo.length, 0);
                 this.backgroundFetcher.resume();
-                this.pixelRenderer.tick();
             }
             return;
         }
@@ -255,7 +259,6 @@ export class Ppu implements IPpu {
         }
 
         if (this.pixelRenderer.finishedScanline) {
-            console.log(`Ly: ${this.state.ly} Drawing took: ${this.state.tCycles - 80}`);
             this.state.status = PpuStatus.HBlank;
             if (this.backgroundFetcher.windowMode) {
                 this.state.windowLineCounter++;
@@ -272,7 +275,7 @@ export class Ppu implements IPpu {
 
         if (this.state.tCycles >= 456) {
             this.state.tCycles = 0;
-            this.incrementLy();
+            this.goToNextScanline();
             this.state.status = this.state.ly === 144 ? PpuStatus.VBlank : PpuStatus.OamScan;
         }
     }
@@ -287,7 +290,7 @@ export class Ppu implements IPpu {
 
         if (this.state.tCycles >= 456) {
             this.state.tCycles = 0;
-            this.incrementLy();
+            this.goToNextScanline();
             if (this.state.ly === 0) {
                 this.state.windowLineCounter = 0;
                 this.state.windowWasVisible = false;

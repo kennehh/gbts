@@ -12,6 +12,7 @@ export interface ITimer {
     writeRegister(address: number, value: number): void;
     reset(): void;
 }
+
 export class Timer implements ITimer {
     private div = 0;
     private tima = 0;

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Timer } from '../../src/emulator/timer';
-import { InterruptManager, InterruptFlag } from '../../src/emulator/interrupt-manager';
+import { Timer } from '../../src/core/timer/timer';
+import { InterruptManager, InterruptFlag } from '../../src/core/cpu/interrupt-manager';
 
 describe('Timer', () => {
     let interruptManager: InterruptManager;
@@ -29,7 +29,7 @@ describe('Timer', () => {
 
         it('should write to TAC register', () => {
             timer.writeRegister(0xFF07, 3);
-            expect(timer.readRegister(0xFF07)).toBe(3);
+            expect(timer.readRegister(0xFF07)).toBe(0b11111000 | 3);
         });
 
         it('should throw error for invalid register', () => {
@@ -39,36 +39,36 @@ describe('Timer', () => {
 
     describe('tick', () => {
         it('should increment DIV register', () => {
-            for (let i = 0; i < 256; i++) {
-                timer.tick();
+            for (let i = 0; i < 256 / 4; i++) {
+                timer.tickMCycle();
             }
             expect(timer.readRegister(0xFF04)).toBe(1);
         });
 
         it('should reset DIV register when it overflows', () => {
-            for (let i = 0; i < 256; i++) {
-                timer.tick();
+            for (let i = 0; i < 256 / 4; i++) {
+                timer.tickMCycle();
             }
             expect(timer.readRegister(0xFF04)).toBe(1);
 
-            for (let i = 0; i < 256; i++) {
-                timer.tick();
+            for (let i = 0; i < 256 / 4; i++) {
+                timer.tickMCycle();
             }
             expect(timer.readRegister(0xFF04)).toBe(2);
         });
 
         it('should increment TIMA register when enabled', () => {
             timer.writeRegister(0xFF07, 0b101); // Enable timer with clock 16
-            for (let i = 0; i < 16; i++) {
-                timer.tick();
+            for (let i = 0; i < 16 / 4; i++) {
+                timer.tickMCycle();
             }
             expect(timer.readRegister(0xFF05)).toBe(1);
         });
 
         it('should not increment TIMA register when disabled', () => {
             timer.writeRegister(0xFF07, 0b100); // Disable timer
-            for (let i = 0; i < 16; i++) {
-                timer.tick();
+            for (let i = 0; i < 16 / 4; i++) {
+                timer.tickMCycle();
             }
             expect(timer.readRegister(0xFF05)).toBe(0);
         });
@@ -80,11 +80,18 @@ describe('Timer', () => {
             timer.writeRegister(0xFF05, 0xFF); // Set TIMA to 255
             timer.writeRegister(0xFF06, 0xAA); // Set TMA to 170
 
-            for (let i = 0; i < 16; i++) {
-                timer.tick();
+            for (let i = 0; i < 16 / 4; i++) {
+                timer.tickMCycle();
             }
 
+            // TIMA should be zero after overflowing for 4 cycles
+            expect(timer.readRegister(0xFF05)).toBe(0);
+
+            timer.tickMCycle();
+
+            // TIMA should now be reloaded with TMA value
             expect(timer.readRegister(0xFF05)).toBe(0xAA);
+            // Interrupt finally requested
             expect(interruptManager.currentInterrupt).toBe(InterruptFlag.Timer);
         });
     });

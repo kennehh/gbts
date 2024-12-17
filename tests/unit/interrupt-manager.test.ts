@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { InterruptManager, InterruptFlag } from '../../src/emulator/interrupt-manager';
+import { InterruptManager, InterruptFlag } from '../../src/core/cpu/interrupt-manager';
 
 describe('InterruptManager', () => {
     it('should initialize with default values', () => {
@@ -17,8 +17,8 @@ describe('InterruptManager', () => {
 
     it('should set and get if correctly', () => {
         const manager = new InterruptManager();
-        manager.if = InterruptFlag.LCDStat | InterruptFlag.Serial;
-        expect(manager.if).toBe(InterruptFlag.LCDStat | InterruptFlag.Serial);
+        manager.if = InterruptFlag.LcdStat | InterruptFlag.Serial;
+        expect(manager.if).toBe(InterruptFlag.LcdStat | InterruptFlag.Serial);
     });
 
     it('should return the correct currentInterrupt', () => {

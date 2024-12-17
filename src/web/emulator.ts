@@ -1,7 +1,8 @@
-// emulator.ts
+import Worker from '../worker/emulator-worker?worker'
+import { WorkerMessageType } from "../common/enums";
 
 export class Emulator {
-    private worker: Worker;
+    private worker = new Worker();
 
     constructor(parent: HTMLElement, scale: number = 4) {
         if (!parent) throw new Error('Parent element not found');
@@ -14,36 +15,36 @@ export class Emulator {
         canvas.style.imageRendering = 'pixelated';
         parent.appendChild(canvas);
 
-        // Create worker
-        this.worker = new Worker(new URL('../worker/emulator-worker.ts', import.meta.url), { type: 'module' });
-
-        this.worker.onmessage = (e) => {
-            if (e.data.type === 'performance') {
-                console.log(e.data);
-            }
-        };
-
-        // Initialize the worker
         const offscreen = canvas.transferControlToOffscreen();
-        this.worker.postMessage({ type: 'init', canvas: offscreen }, [offscreen]);
+        this.worker.postMessage({ type: WorkerMessageType.Init, canvas: offscreen }, [offscreen]);
     }
 
     loadRom(rom: Uint8Array) {
         this.worker.postMessage({ 
-            type: 'loadRom',
+            type: WorkerMessageType.LoadRom,
             rom: rom 
         });
     }
 
     run() {
-        this.worker.postMessage({ type: 'run' });
+        this.worker.postMessage({ type: WorkerMessageType.Run });
     }
 
     stop() {
-        this.worker.postMessage({ type: 'stop' });
+        this.worker.postMessage({ type: WorkerMessageType.Stop });
     }
 
     step() {
-        this.worker.postMessage({ type: 'step' });
+        this.worker.postMessage({ type: WorkerMessageType.Step });
+    }
+
+    private setupInputEventListeners() {
+        window.addEventListener('keydown', (e) => {
+            this.worker.postMessage({ type: 'keydown', key: e.key });
+        });
+
+        window.addEventListener('keyup', (e) => {
+            this.worker.postMessage({ type: 'keyup', key: e.key });
+        });
     }
 }

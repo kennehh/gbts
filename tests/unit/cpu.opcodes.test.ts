@@ -1,15 +1,17 @@
 import { describe, it } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
-import { CpuStatus, RegisterFlag } from '../../src/emulator/cpu-state';
-import { Cpu } from '../../src/emulator/cpu';
-import { IMmu } from '../../src/emulator/mmu';
-import { IPpu } from '../../src/emulator/ppu';
-import { ITimer } from '../../src/emulator/timer';
-import { InterruptManager } from '../../src/emulator/interrupt-manager';
-import { ICartridge } from '../../src/emulator/cartridge';
+import { CpuStatus, RegisterFlag } from '../../src/core/cpu/cpu-state';
+import { Cpu } from '../../src/core/cpu/cpu';
+import { IMmu } from '../../src/core/memory/mmu';
+import { IPpu } from '../../src/core/ppu/ppu';
+import { ITimer } from '../../src/core/timer/timer';
+import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
+import { ICartridge } from '../../src/core/cartridge/cartridge';
+import { Memory } from '../../src/core/memory/memory';
+import { PpuState } from '../../src/core/ppu/ppu-state';
 
-const testDataDirectory = 'tests/__fixtures__/opcodeTestData';
+const testDataDirectory = 'tests/__fixtures__/opcodes';
 
 interface CpuTestData {
     a: number;
@@ -43,16 +45,14 @@ class MmuMock implements IMmu {
         this.buffer = new ArrayBuffer(MmuMock.MEMORY_SIZE);
         this.view = new DataView(this.buffer);
     }
+    
     get bootRomLoaded(): boolean {
         return false;
     }
 
-    loadBootRom(rom: Uint8Array): void {
-        throw new Error("Method not implemented.");
-    }
-    loadCartridge(cart: ICartridge): void {
-        throw new Error("Method not implemented.");
-    }
+    tickMCycle(): void {}
+    loadBootRom(_rom: Memory): void {}
+    loadCartridge(_cart: ICartridge): void {}
 
     reset() {
         new Uint8Array(this.buffer).fill(0);
@@ -68,16 +68,28 @@ class MmuMock implements IMmu {
 }
 
 class TimerMock implements ITimer {
+    tickMCycle(): void {}
+    reset(): void {}
     readRegister(address: number): number {
         return 0xff;
     }
-    writeRegister(address: number, value: number): void {
-    }
-    tick() {
-    }
+    writeRegister(address: number, value: number): void {}
+    tick() {}
 }
 
 class PpuMock implements IPpu {
+    get state(): PpuState {
+        throw new Error('Method not implemented.');
+    }
+    get oam(): Memory {
+        throw new Error('Method not implemented.');
+    }
+    get vram(): Memory {
+        throw new Error('Method not implemented.');
+    }
+    reset(): void {
+        throw new Error('Method not implemented.');
+    }
     readRegister(address: number): number {
         return 0xff;
     }

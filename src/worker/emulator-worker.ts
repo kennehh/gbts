@@ -1,6 +1,7 @@
 // emulator.worker.ts
 /// <reference lib="webworker" />
 
+import { WorkerMessageType } from '../common/enums';
 import { GameBoy } from '../core/gameboy';
 import { WorkerDisplay } from './worker-display';
 
@@ -10,17 +11,17 @@ let gameboy: GameBoy;
 // Handle worker messages
 self.onmessage = (e: MessageEvent) => {
     switch (e.data.type) {
-        case 'init':
+        case WorkerMessageType.Init:
             display = new WorkerDisplay(e.data.canvas);
             gameboy = new GameBoy(display);
             break;
-        case 'run':
+        case WorkerMessageType.Run:
             gameboy.run();
             break;
-        case 'stop':
+        case WorkerMessageType.Stop:
             gameboy.stop();
             break;
-        case 'loadRom':
+        case WorkerMessageType.LoadRom:
             gameboy.loadRom(e.data.rom);
             break;
     }

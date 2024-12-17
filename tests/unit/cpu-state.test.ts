@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CpuState, RegisterFlag } from '../../src/emulator/cpu-state';
+import { CpuState } from '../../src/core/cpu/cpu-state';
 
 describe.concurrent('CpuState', () => {
     let state: CpuState;

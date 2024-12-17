@@ -14,9 +14,9 @@ export enum MemorySize {
     Size2MB = 2 * MB,
     Size4MB = 4 * MB,
     Size8MB = 8 * MB,
-    Size1_1MB = 1100 * KB,
-    Size1_2MB = 1200 * KB,
-    Size1_5MB = 1500 * KB
+    Size1_1MB = 1.1 * MB,
+    Size1_2MB = 1.2 * MB,
+    Size1_5MB = 1.5 * MB
 }
 
 export class Memory {

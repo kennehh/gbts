@@ -51,7 +51,8 @@ export class PpuState {
     isCgb: boolean = false;
     isDoubleSpeed: boolean = false;
 
-    drawingDelay: number = 0;
+    drawingInitialScanlineDelay: number = 0;
+    firstFrameAfterDisplayEnable: boolean = true;
 
 
     private _ly: number = 0;
@@ -142,5 +143,10 @@ export class PpuState {
         this.windowWasVisible = false;
         this.windowLineCounter = 0;
         this.tCycles = 0;
+        this.drawingInitialScanlineDelay = 0;
+        this.firstFrameAfterDisplayEnable = true;
+
+        this.isCgb = false;
+        this.isDoubleSpeed = false;
     }
 }

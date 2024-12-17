@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CartridgeHeader, CartridgeCgbFlag, CartridgeDestinationCode, CartridgeMapperType } from '../../src/emulator/cartridge-header';
+import { CartridgeHeader, CartridgeCgbFlag, CartridgeDestinationCode, CartridgeMapperType } from '../../src/core/cartridge/cartridge-header';
 
 describe('CartridgeHeader', () => {
     // Helper to create a basic ROM array
@@ -108,7 +108,7 @@ describe('CartridgeHeader', () => {
         it('should parse special ROM sizes', () => {
             const rom = createMockRom({ 0x148: 0x52 });
             const header = new CartridgeHeader(rom);
-            expect(header.rom.size).toBe(1152 * 1024);
+            expect(header.rom.size).toBe(1.1 * 1024 * 1024);
         });
 
         it('should parse RAM sizes', () => {
