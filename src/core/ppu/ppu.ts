@@ -82,6 +82,15 @@ export class Ppu implements IPpu {
             case 0xFF49: return this.state.obp1;
             case 0xFF4A: return this.state.wy;
             case 0xFF4B: return this.state.wx;
+            case 0xFF4F:
+                // VRAM bank switch (CGB)
+                return 0xff;
+            case 0xFF51: case 0xFF52: case 0xFF53: case 0xFF54: case 0xFF55:
+                // VRAM DMA transfer (CGB)
+                return 0xff;
+            case 0xFF68: case 0xFF69: case 0xFF6A: case 0xFF6B:
+                // update palette (CGB)
+                return 0xff;
             default: throw new Error(`Invalid PPU register address: ${address.toString(16)}`);
         }
     }
@@ -109,6 +118,15 @@ export class Ppu implements IPpu {
                 break;
             case 0xFF4A: this.state.wy = value; break;
             case 0xFF4B: this.state.wx = value; break;
+            case 0xFF4F:
+                // VRAM bank switch (CGB)
+                break;
+            case 0xFF51: case 0xFF52: case 0xFF53: case 0xFF54: case 0xFF55:
+                // VRAM DMA transfer (CGB)
+                break;
+            case 0xFF68: case 0xFF69: case 0xFF6A: case 0xFF6B:
+                // update palette (CGB)
+                break;
             default: throw new Error(`Invalid PPU register address: ${address.toString(16)}`);
         }
     }
@@ -144,8 +162,6 @@ export class Ppu implements IPpu {
     tick() {        
         if (this.state.lcdEnabled !== this.previousEnableLcd) {
             this.handleLcdEnabledChange();
-        } else {
-            this.state.firstFrameAfterDisplayEnable = false
         }
 
         if (!this.state.lcdEnabled) {

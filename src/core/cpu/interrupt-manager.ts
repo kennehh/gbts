@@ -32,11 +32,11 @@ export class InterruptManager {
     }
 
     set ie(value: number) {
-        this._ie = value & 0x1f;
+        this._ie = value;
     }
 
     get if(): number {
-        return this._if;
+        return 0xe0 | this._if;
     }
 
     set if(value: number) {

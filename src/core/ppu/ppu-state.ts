@@ -52,8 +52,6 @@ export class PpuState {
     isDoubleSpeed: boolean = false;
 
     drawingInitialScanlineDelay: number = 0;
-    firstFrameAfterDisplayEnable: boolean = true;
-
 
     private _ly: number = 0;
     private _lyc: number = 0;
@@ -85,7 +83,7 @@ export class PpuState {
 
     get stat(): number {
         const lyCoincidenceBit = this.lyCoincidence ? 1 : 0;
-        return this.statInterruptSource | (lyCoincidenceBit << 2) | this.status;
+        return 1 << 7 | this.statInterruptSource | (lyCoincidenceBit << 2) | this.status;
     }
 
     set stat(value: number) {
@@ -144,7 +142,6 @@ export class PpuState {
         this.windowLineCounter = 0;
         this.tCycles = 0;
         this.drawingInitialScanlineDelay = 0;
-        this.firstFrameAfterDisplayEnable = true;
 
         this.isCgb = false;
         this.isDoubleSpeed = false;

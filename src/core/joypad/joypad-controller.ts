@@ -3,6 +3,8 @@ import { InterruptFlag, InterruptManager } from '../cpu/interrupt-manager';
 import { IJoypadHandler } from './joypad-handler';
 
 enum JoypadRegisterFlag {
+    DefaultState = 0b1100_1111,
+
     SelectActionNotSelected = 1 << 5,
     SelectDirectionNotSelected = 1 << 4,
     DownOrStartReleased = 1 << 3,
@@ -12,7 +14,7 @@ enum JoypadRegisterFlag {
 }
 
 export class JoypadController {
-    private register = 0x0f as JoypadRegisterFlag;
+    private register = JoypadRegisterFlag.DefaultState;
     constructor(
         private readonly handler: IJoypadHandler,
         private readonly interruptManager: InterruptManager
@@ -43,7 +45,7 @@ export class JoypadController {
     }
 
     reset() {
-        this.register = 0x0f as JoypadRegisterFlag;
+        this.register = JoypadRegisterFlag.DefaultState;
     }
 
     private checkButtons(isAction: boolean) {

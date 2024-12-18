@@ -73,10 +73,6 @@ export class PixelRenderer {
     }
 
     private getFinalPixel(pixel: Pixel): number {
-        if (this.ppuState.firstFrameAfterDisplayEnable) {
-            return 0;
-        }
-
         let palette: number;
 
         if (pixel.isSprite) {

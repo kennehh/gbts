@@ -199,7 +199,7 @@ export class Mmu implements IMmu {
             case 0xff00:
                 return this.joypadController.readRegister();
             case 0xff01: case 0xff02:
-                return this.ioRegisters.read(address); // Serial
+                return 0xff; // Serial
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:
                 return this.timer.readRegister(address);
             case 0xff0f:
@@ -220,7 +220,7 @@ export class Mmu implements IMmu {
             case 0xff68: case 0xff69: case 0xff6a: case 0xff6b:
                 return this.ppu.readRegister(address); // BG/OBJ Palettes
             case 0xff70:
-                return this.ioRegisters.read(address); // WRAM Bank
+                return 0xff; // WRAM Bank
         }
 
         return 0xff;
@@ -232,7 +232,7 @@ export class Mmu implements IMmu {
                 this.joypadController.writeRegister(value);
                 return;
             case 0xff01: case 0xff02:
-                this.ioRegisters.write(address, value); // Serial
+                //this.ioRegisters.write(address, value); // Serial
                 return;
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:
                 this.timer.writeRegister(address, value);
@@ -267,7 +267,7 @@ export class Mmu implements IMmu {
                 this.ppu.writeRegister(address, value); // BG/OBJ Palettes
                 return;
             case 0xff70:
-                this.ioRegisters.write(address, value); // WRAM Bank
+                // WRAM Bank
                 return;
         }
     }

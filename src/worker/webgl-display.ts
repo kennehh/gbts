@@ -67,10 +67,10 @@ export class WebGLDisplay implements IDisplay {
         
         // Set default palette
         this.setPalette([
-            [155, 188, 15],  // Lightest
-            [139, 172, 15],  // Light
-            [48, 98, 48],    // Dark
-            [15, 56, 15]     // Darkest
+            [255, 255, 255],  // Lightest
+            [170, 170, 170],  // Light
+            [85, 85, 85],    // Dark
+            [0, 0, 0]     // Darkest
         ]);
     }
 
