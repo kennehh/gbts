@@ -1,9 +1,19 @@
 import { JoypadButton } from "../common/enums";
+import { WorkerMessage } from "../common/types";
 import { IJoypadHandler } from "../core/joypad/joypad-handler";
 
 export class JoypadHandler implements IJoypadHandler {
-    buttonsPressed(): JoypadButton {
-        throw new Error("Method not implemented.");
+    pressedButtons = JoypadButton.None;
+
+    getPressedButtons(): JoypadButton {
+        return this.pressedButtons;
+    }
+    
+    buttonDown(button: JoypadButton) {
+        this.pressedButtons |= button;
     }
 
+    buttonUp(button: JoypadButton) {
+        this.pressedButtons &= ~button;
+    }
 }

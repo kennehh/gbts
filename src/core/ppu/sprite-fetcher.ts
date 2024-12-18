@@ -23,7 +23,7 @@ export class SpriteFetcher {
     private lastPixelX = -1;
 
     private currentSprite: OamSprite | null = null;
-    
+
     constructor(
         private readonly ppuState: PpuState,
         private readonly vram: Memory,

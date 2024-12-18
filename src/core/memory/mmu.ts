@@ -5,6 +5,8 @@ import { IPpu } from "../ppu/ppu";
 import { ITimer } from "../timer/timer";
 import { EmptyCartridge } from "../cartridge/empty-cartridge";
 import { DmaController } from "./dma-controller";
+import { IJoypadHandler } from "../joypad/joypad-handler";
+import { JoypadController } from "../joypad/joypad-controller";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
@@ -20,17 +22,20 @@ export class Mmu implements IMmu {
     private _bootRomLoaded: boolean = false;
     private cartridge: ICartridge = EmptyCartridge.getInstance();
     private bootRom: Memory | null = null;
-    private wram: Memory = new Memory(0x2000);
-    private hram: Memory = new Memory(0x80);
-    private ioRegisters: Memory = new Memory(0x80);
-    private dmaController: DmaController;
+    private readonly wram: Memory = new Memory(0x2000);
+    private readonly hram: Memory = new Memory(0x80);
+    private readonly ioRegisters: Memory = new Memory(0x80);
+    private readonly dmaController: DmaController;
+    private readonly joypadController: JoypadController;
 
     constructor(
         private readonly interruptManager: InterruptManager,
         private readonly timer: ITimer,
         private readonly ppu: IPpu,
+        joypadHandler: IJoypadHandler
     ) {
         this.dmaController = new DmaController(this.ppu.state, this, this.ppu.oam);
+        this.joypadController = new JoypadController(joypadHandler, interruptManager);
         this.reset();
     }
 
@@ -39,7 +44,8 @@ export class Mmu implements IMmu {
     }
 
     tickMCycle(): void {
-        this.dmaController.tickMCycle();
+        //this.dmaController.tickMCycle();
+        this.joypadController.checkForInputs();
     }
 
     loadBootRom(rom: Memory): void {
@@ -57,6 +63,7 @@ export class Mmu implements IMmu {
         this.ioRegisters.fill(0);
         this._bootRomLoaded = false;
         this.dmaController.reset();
+        this.joypadController.reset();
     }
 
     read(address: number): number {
@@ -190,8 +197,7 @@ export class Mmu implements IMmu {
     private readIoRegion(address: number): number {
         switch (address) {
             case 0xff00:
-                //return this.ioRegisters.read(address); // Joypad
-                return 0xff;
+                return this.joypadController.readRegister();
             case 0xff01: case 0xff02:
                 return this.ioRegisters.read(address); // Serial
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:
@@ -223,7 +229,7 @@ export class Mmu implements IMmu {
     private writeIoRegion(address: number, value: number): void {
         switch (address) {
             case 0xff00:
-                // this.ioRegisters.write(address, value); // Joypad
+                this.joypadController.writeRegister(value);
                 return;
             case 0xff01: case 0xff02:
                 this.ioRegisters.write(address, value); // Serial
@@ -245,7 +251,8 @@ export class Mmu implements IMmu {
                 return;
             case 0xff46:
                 this.ppu.writeRegister(address, value); // OAM DMA
-                this.dmaController.start(value);
+                //this.dmaController.start(value);
+                this.dmaTransfer(value);
                 return;
             case 0xff4f:
                 this.ppu.writeRegister(address, value); // VRAM Bank
@@ -263,5 +270,16 @@ export class Mmu implements IMmu {
                 this.ioRegisters.write(address, value); // WRAM Bank
                 return;
         }
+    }
+
+    private dmaTransfer(value: number): void {
+        const sourceAddress = value << 8;
+        const data = new Uint8Array(160);
+        
+        for (let i = 0; i < 160; i++) {
+            data[i] = this.read(sourceAddress + i);
+        }
+        
+        this.ppu.dmaTransfer(data);
     }
 }

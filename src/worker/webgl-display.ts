@@ -74,6 +74,77 @@ export class WebGLDisplay implements IDisplay {
         ]);
     }
 
+    setPixel(y: number, x: number, colorId: number): void {
+        if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+            return;
+        }
+        const offset = y * SCREEN_WIDTH + x;
+        if (this.frameData[offset] !== colorId) {
+            this.frameData[offset] = colorId;
+            this.dirty = true;
+        }
+    }
+
+    renderFrame(): void {
+        if (!this.dirty) {
+            return;
+        }
+
+        const { program, frameTexture } = this.resources;
+        this.gl.useProgram(program);
+
+        // Update texture with new frame data
+        this.gl.bindTexture(this.gl.TEXTURE_2D, frameTexture);
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
+            0,
+            this.gl.R8,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            0,
+            this.gl.RED,
+            this.gl.UNSIGNED_BYTE,
+            this.frameData
+        );
+
+        // Set palette uniform
+        const paletteLoc = this.gl.getUniformLocation(program, 'u_palette');
+        this.gl.uniform3fv(paletteLoc, this.palette);
+
+        // Draw
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+        
+        this.dirty = false;
+    }
+
+    setPalette(palette: Array<[number, number, number]>): void {
+        if (palette.length !== COLORS_PER_PALETTE) {
+            throw new Error(`Palette must contain exactly ${COLORS_PER_PALETTE} colors`);
+        }
+
+        let i = 0;
+        for (const [r, g, b] of palette) {
+            this.palette[i++] = r / 255;
+            this.palette[i++] = g / 255;
+            this.palette[i++] = b / 255;
+        }
+    }
+
+    clear(): void {
+        this.frameData.fill(0);
+        this.dirty = true;
+        this.renderFrame();
+    }
+
+    dispose(): void {
+        const { program, frameTexture, vertexBuffer, texCoordBuffer } = this.resources;
+        
+        this.gl.deleteProgram(program);
+        this.gl.deleteTexture(frameTexture);
+        this.gl.deleteBuffer(vertexBuffer);
+        this.gl.deleteBuffer(texCoordBuffer);
+    }
+
     private initializeWebGLResources(): WebGLResources {
         const program = this.createProgram();
         const { vertexBuffer, texCoordBuffer } = this.createBuffers(program);
@@ -181,76 +252,5 @@ export class WebGLDisplay implements IDisplay {
         }
 
         return shader;
-    }
-
-    setPixel(y: number, x: number, colorId: number): void {
-        if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
-            return;
-        }
-        const offset = y * SCREEN_WIDTH + x;
-        if (this.frameData[offset] !== colorId) {
-            this.frameData[offset] = colorId;
-            this.dirty = true;
-        }
-    }
-
-    renderFrame(): void {
-        if (!this.dirty) {
-            return;
-        }
-
-        const { program, frameTexture } = this.resources;
-        this.gl.useProgram(program);
-
-        // Update texture with new frame data
-        this.gl.bindTexture(this.gl.TEXTURE_2D, frameTexture);
-        this.gl.texImage2D(
-            this.gl.TEXTURE_2D,
-            0,
-            this.gl.R8,
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            0,
-            this.gl.RED,
-            this.gl.UNSIGNED_BYTE,
-            this.frameData
-        );
-
-        // Set palette uniform
-        const paletteLoc = this.gl.getUniformLocation(program, 'u_palette');
-        this.gl.uniform3fv(paletteLoc, this.palette);
-
-        // Draw
-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-        
-        this.dirty = false;
-    }
-
-    setPalette(palette: Array<[number, number, number]>): void {
-        if (palette.length !== COLORS_PER_PALETTE) {
-            throw new Error(`Palette must contain exactly ${COLORS_PER_PALETTE} colors`);
-        }
-
-        let i = 0;
-        for (const [r, g, b] of palette) {
-            this.palette[i++] = r / 255;
-            this.palette[i++] = g / 255;
-            this.palette[i++] = b / 255;
-        }
-    }
-
-    clear(): void {
-        this.frameData.fill(0);
-        this.dirty = true;
-        this.renderFrame();
-    }
-
-    dispose(): void {
-        const { program, frameTexture, vertexBuffer, texCoordBuffer } = this.resources;
-        
-        this.gl.deleteProgram(program);
-        this.gl.deleteTexture(frameTexture);
-        this.gl.deleteBuffer(vertexBuffer);
-        this.gl.deleteBuffer(texCoordBuffer);
     }
 }

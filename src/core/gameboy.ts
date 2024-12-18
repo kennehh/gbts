@@ -3,6 +3,7 @@
 import { Cartridge } from "./cartridge/cartridge";
 import { Cpu } from "./cpu/cpu";
 import { InterruptManager } from "./cpu/interrupt-manager";
+import { IJoypadHandler, MockJoypadHandler } from "./joypad/joypad-handler";
 import { IMmu, Mmu } from "./memory/mmu";
 import { IDisplay, MockDisplay } from "./ppu/display";
 import { IPpu, Ppu } from "./ppu/ppu";
@@ -25,12 +26,12 @@ export class GameBoy {
     private lastTimestamp: number = 0;
     private cyclesPending: number = 0;
 
-    constructor(display: IDisplay = new MockDisplay()) {
+    constructor(display: IDisplay = new MockDisplay(), joypadHandler: IJoypadHandler = new MockJoypadHandler()) {
         this.display = display;
         this.interruptManager = new InterruptManager();
         this.timer = new Timer(this.interruptManager);
         this.ppu = new Ppu(this.interruptManager, display);
-        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu);
+        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, joypadHandler);
         this.cpu = new Cpu(this.interruptManager, this.timer, this.ppu, this.mmu);
         this.reset();
     }

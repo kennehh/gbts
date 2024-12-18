@@ -1,5 +1,18 @@
+import { JoypadButton } from '../common/enums';
 import { WorkerMessage } from '../common/types';
 import Worker from '../worker/emulator-worker?worker'
+
+const KeyMap = new Map<string, JoypadButton>([
+    ['ArrowUp',     JoypadButton.Up],
+    ['ArrowDown',   JoypadButton.Down],
+    ['ArrowLeft',   JoypadButton.Left],
+    ['ArrowRight',  JoypadButton.Right],
+    ['z',           JoypadButton.A],
+    ['x',           JoypadButton.B],
+    ['Enter',       JoypadButton.Start],
+    ['Shift',       JoypadButton.Select],
+]);
+
 
 export class Emulator {
     private worker = new Worker();
@@ -14,6 +27,8 @@ export class Emulator {
         canvas.style.height = `${144 * scale}px`;
         canvas.style.imageRendering = 'pixelated';
         parent.appendChild(canvas);
+
+        this.setupInputEventListeners();
 
         const offscreen = canvas.transferControlToOffscreen();
         this.postMessage({ type: 'INIT', payload: { canvas: offscreen } }, [offscreen]);
@@ -33,11 +48,17 @@ export class Emulator {
 
     private setupInputEventListeners() {
         window.addEventListener('keydown', (e) => {
-            this.worker.postMessage({ type: 'keydown', key: e.key });
+            if (KeyMap.has(e.key)) {
+                const button = KeyMap.get(e.key)!;
+                this.postMessage({ type: 'JOYPAD_DOWN', payload: { button } });
+            }
         });
 
         window.addEventListener('keyup', (e) => {
-            this.worker.postMessage({ type: 'keyup', key: e.key });
+            if (KeyMap.has(e.key)) {
+                const button = KeyMap.get(e.key)!;
+                this.postMessage({ type: 'JOYPAD_UP', payload: { button } });
+            }
         });
     }
 

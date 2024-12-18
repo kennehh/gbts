@@ -169,12 +169,14 @@ export class Ppu implements IPpu {
     }
 
     private handleLcdEnabledChange() {
+        this.state.ly = 0;
+        this.state.tCycles = 0;
+        this.state.pendingLcdStatInterrupt = false;
+        
         if (this.state.lcdEnabled) {
-            this.state.ly = 0;
-            this.state.tCycles = 0;
-            this.state.pendingLcdStatInterrupt = false;
-            this.state.status = PpuStatus.OamScan;         
+            this.state.status = PpuStatus.OamScan;
         } else {
+            this.state.status = PpuStatus.HBlank;
             this.display.clear();
             this.display.renderFrame();
         }
@@ -282,6 +284,7 @@ export class Ppu implements IPpu {
 
     private handleVBlank() {
         if (this.state.previousStatus !== PpuStatus.VBlank) {
+            this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
             this.display.renderFrame();
             this.state.previousStatus = PpuStatus.VBlank;
         }
