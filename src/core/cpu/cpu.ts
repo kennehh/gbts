@@ -1,7 +1,5 @@
 import { IMmu } from "../memory/mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
-import { IPpu } from "../ppu/ppu";
-import { ITimer } from "../timer/timer";
 import { InterruptManager } from "./interrupt-manager";
 
 enum Operand8Bit {
@@ -37,8 +35,6 @@ export class Cpu {
 
     constructor(
         private interruptManager: InterruptManager,
-        private timer: ITimer,
-        private ppu: IPpu,
         private mmu: IMmu
     ) {}
 
@@ -338,11 +334,10 @@ export class Cpu {
     private tickTCycle() {
         this.state.currentInstructionCycles++;
         this.state.totalCycles++;
-        this.ppu.tick();
+        this.mmu.tickTCycle();
     }
 
     private tickMCycle() {
-        this.timer.tickMCycle();
         this.tickTCycle();
         this.tickTCycle();
         this.tickTCycle();

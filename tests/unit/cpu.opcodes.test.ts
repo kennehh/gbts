@@ -4,12 +4,9 @@ import path from 'path';
 import { CpuStatus, RegisterFlag } from '../../src/core/cpu/cpu-state';
 import { Cpu } from '../../src/core/cpu/cpu';
 import { IMmu } from '../../src/core/memory/mmu';
-import { IPpu } from '../../src/core/ppu/ppu';
-import { ITimer } from '../../src/core/timer/timer';
 import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
 import { ICartridge } from '../../src/core/cartridge/cartridge';
-import { Memory } from '../../src/core/memory/memory';
-import { PpuState } from '../../src/core/ppu/ppu-state';
+import { Memory } from '../../src/core/memory/memory'
 
 const testDataDirectory = 'tests/__fixtures__/opcodes';
 
@@ -50,7 +47,9 @@ class MmuMock implements IMmu {
         return false;
     }
 
+    tickTCycle(): void {}
     tickMCycle(): void {}
+
     loadBootRom(_rom: Memory): void {}
     loadCartridge(_cart: ICartridge): void {}
 
@@ -66,51 +65,6 @@ class MmuMock implements IMmu {
         this.view.setUint8(address, value);
     }
 }
-
-class TimerMock implements ITimer {
-    tickMCycle(): void {}
-    reset(): void {}
-    readRegister(address: number): number {
-        return 0xff;
-    }
-    writeRegister(address: number, value: number): void {}
-    tick() {}
-}
-
-class PpuMock implements IPpu {
-    get state(): PpuState {
-        throw new Error('Method not implemented.');
-    }
-    get oam(): Memory {
-        throw new Error('Method not implemented.');
-    }
-    get vram(): Memory {
-        throw new Error('Method not implemented.');
-    }
-    reset(): void {
-        throw new Error('Method not implemented.');
-    }
-    readRegister(address: number): number {
-        return 0xff;
-    }
-    writeRegister(address: number, value: number): void {
-    }
-    dmaTransfer(data: Uint8Array): void {
-    }
-    readVram(address: number): number {
-        return 0xff;
-    }
-    writeVram(address: number, value: number): void {
-    }
-    readOam(address: number): number {
-        return 0xff;
-    }
-    writeOam(address: number, value: number): void {
-    }
-    tick() {
-    }
-}
-
 
 function getDebugState(cpu: Cpu, mmu: IMmu, test: CpuTest): string {
     const initial = test.initial;
@@ -210,15 +164,12 @@ describe ('Cpu', () => {
             tests: JSON.parse(readFileSync(path.join(testDataDirectory, file), 'utf-8')) as CpuTest[]
         }));
 
-    const timer = new TimerMock();
-    const ppu = new PpuMock();
-    const interruptManager = new InterruptManager();
-
     testFiles.forEach(({ opcode, tests }) => {
         describe(`0x${opcode}`, () => {
             it(`executes all test cases (${tests.length} cases)`, () => {
+                const interruptManager = new InterruptManager();
                 const mmu = new MmuMock();
-                const cpu = new Cpu(interruptManager, timer, ppu, mmu);
+                const cpu = new Cpu(interruptManager, mmu);
                 
                 tests.forEach((test, index) => {
                     try {

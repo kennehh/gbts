@@ -6,14 +6,7 @@ enum TimaReloadState {
     Reloaded = 2
 }
 
-export interface ITimer {
-    tickMCycle(): void;
-    readRegister(address: number): number;
-    writeRegister(address: number, value: number): void;
-    reset(): void;
-}
-
-export class Timer implements ITimer {
+export class Timer {
     private div = 0;
     private tima = 0;
     private tma = 0;

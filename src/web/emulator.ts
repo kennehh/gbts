@@ -7,8 +7,8 @@ const KeyMap = new Map<string, JoypadButton>([
     ['ArrowDown',   JoypadButton.Down],
     ['ArrowLeft',   JoypadButton.Left],
     ['ArrowRight',  JoypadButton.Right],
-    ['z',           JoypadButton.A],
-    ['x',           JoypadButton.B],
+    ['x',           JoypadButton.A],
+    ['z',           JoypadButton.B],
     ['Enter',       JoypadButton.Start],
     ['Shift',       JoypadButton.Select],
 ]);

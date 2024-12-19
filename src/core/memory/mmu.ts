@@ -1,15 +1,16 @@
 import { ICartridge } from "../cartridge/cartridge";
 import { InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "./memory";
-import { IPpu } from "../ppu/ppu";
-import { ITimer } from "../timer/timer";
+import { Ppu } from "../ppu/ppu";
+import { Timer } from "../timer/timer";
 import { EmptyCartridge } from "../cartridge/empty-cartridge";
 import { DmaController } from "./dma-controller";
-import { IJoypadHandler } from "../joypad/joypad-handler";
 import { JoypadController } from "../joypad/joypad-controller";
+import { SerialController } from "../serial/serial-controller";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
+    tickTCycle(): void;
     tickMCycle(): void;
     read(address: number): number;
     write(address: number, value: number): void;
@@ -26,16 +27,15 @@ export class Mmu implements IMmu {
     private readonly hram: Memory = new Memory(0x80);
     private readonly ioRegisters: Memory = new Memory(0x80);
     private readonly dmaController: DmaController;
-    private readonly joypadController: JoypadController;
 
     constructor(
         private readonly interruptManager: InterruptManager,
-        private readonly timer: ITimer,
-        private readonly ppu: IPpu,
-        joypadHandler: IJoypadHandler
+        private readonly timer: Timer,
+        private readonly ppu: Ppu,
+        private readonly joypadController: JoypadController,
+        private readonly serialController: SerialController
     ) {
         this.dmaController = new DmaController(this.ppu.state, this, this.ppu.oam);
-        this.joypadController = new JoypadController(joypadHandler, interruptManager);
         this.reset();
     }
 
@@ -43,8 +43,14 @@ export class Mmu implements IMmu {
         return this._bootRomLoaded;
     }
 
+    tickTCycle(): void {
+        this.ppu.tickTCycle();
+    }
+
     tickMCycle(): void {
         //this.dmaController.tickMCycle();
+        this.timer.tickMCycle();
+        //this.serialController.tickTCycle();
         this.joypadController.checkForInputs();
     }
 
@@ -198,8 +204,10 @@ export class Mmu implements IMmu {
         switch (address) {
             case 0xff00:
                 return this.joypadController.readRegister();
-            case 0xff01: case 0xff02:
-                return 0xff; // Serial
+            case 0xff01:
+                return this.serialController.readSB(); 
+            case 0xff02:
+                return this.serialController.readSC();
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:
                 return this.timer.readRegister(address);
             case 0xff0f:
@@ -231,8 +239,11 @@ export class Mmu implements IMmu {
             case 0xff00:
                 this.joypadController.writeRegister(value);
                 return;
-            case 0xff01: case 0xff02:
-                //this.ioRegisters.write(address, value); // Serial
+            case 0xff01: 
+                this.serialController.writeSB(value);
+                return;
+            case 0xff02:
+                this.serialController.writeSC(value);
                 return;
             case 0xff04: case 0xff05: case 0xff06: case 0xff07:
                 this.timer.writeRegister(address, value);

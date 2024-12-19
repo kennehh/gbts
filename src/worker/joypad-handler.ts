@@ -1,5 +1,4 @@
 import { JoypadButton } from "../common/enums";
-import { WorkerMessage } from "../common/types";
 import { IJoypadHandler } from "../core/joypad/joypad-handler";
 
 export class JoypadHandler implements IJoypadHandler {
@@ -8,7 +7,7 @@ export class JoypadHandler implements IJoypadHandler {
     getPressedButtons(): JoypadButton {
         return this.pressedButtons;
     }
-    
+
     buttonDown(button: JoypadButton) {
         this.pressedButtons |= button;
     }

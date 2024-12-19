@@ -29,7 +29,7 @@ function testRom(romPath: string) {
 
         gb.stepInstruction();
 
-        if (gb.mmu.read(0xff02) == 0x81) {
+        if ((gb.mmu.read(0xff02) & 0x81) === 0x81) {
             message += String.fromCharCode(gb.mmu.read(0xff01));
             gb.mmu.write(0xff02, 0x01);
         }

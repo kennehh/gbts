@@ -8,23 +8,7 @@ import { PixelRenderer } from "./pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 import { SpriteFetcher } from "./sprite-fetcher";
 
-export interface IPpu {
-    get state(): PpuState;
-    get oam(): Memory;
-    get vram(): Memory;
-
-    tick(): void;
-    readVram(address: number): number;
-    writeVram(address: number, value: number): void;
-    readOam(address: number): number;
-    writeOam(address: number, value: number): void;
-    readRegister(address: number): number;
-    writeRegister(address: number, value: number): void;
-    dmaTransfer(data: Uint8Array): void;
-    reset(): void;
-}
-
-export class Ppu implements IPpu {
+export class Ppu {
     readonly state = new PpuState();
     
     readonly vram: Memory = new Memory(0x2000);
@@ -159,7 +143,7 @@ export class Ppu implements IPpu {
         this.oam.write(address, value);
     }    
     
-    tick() {        
+    tickTCycle() {        
         if (this.state.lcdEnabled !== this.previousEnableLcd) {
             this.handleLcdEnabledChange();
         }

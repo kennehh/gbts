@@ -3,11 +3,13 @@
 import { Cartridge } from "./cartridge/cartridge";
 import { Cpu } from "./cpu/cpu";
 import { InterruptManager } from "./cpu/interrupt-manager";
+import { JoypadController } from "./joypad/joypad-controller";
 import { IJoypadHandler, MockJoypadHandler } from "./joypad/joypad-handler";
-import { IMmu, Mmu } from "./memory/mmu";
+import { SerialController } from "./serial/serial-controller";
+import { Mmu } from "./memory/mmu";
 import { IDisplay, MockDisplay } from "./ppu/display";
-import { IPpu, Ppu } from "./ppu/ppu";
-import { ITimer, Timer } from "./timer/timer";
+import { Ppu } from "./ppu/ppu";
+import { Timer } from "./timer/timer";
 
 export class GameBoy {
     private static readonly GB_CLOCK_SPEED = 4_194_304; // Hz
@@ -15,11 +17,13 @@ export class GameBoy {
     private static readonly CYCLES_PER_MS = GameBoy.CYCLES_PER_SECOND / 1000;
 
     readonly cpu: Cpu;
-    readonly mmu: IMmu;
-    readonly ppu: IPpu;
-    readonly timer: ITimer;
+    readonly mmu: Mmu;
+    readonly ppu: Ppu;
+    readonly timer: Timer;
+    readonly joypadController: JoypadController;
+    readonly serialController: SerialController;
     readonly interruptManager: InterruptManager;
-    private readonly display: IDisplay;
+    readonly display: IDisplay;
     
     // Timing state
     private running: boolean = false;
@@ -28,11 +32,13 @@ export class GameBoy {
 
     constructor(display: IDisplay = new MockDisplay(), joypadHandler: IJoypadHandler = new MockJoypadHandler()) {
         this.display = display;
+        this.serialController = new SerialController();
         this.interruptManager = new InterruptManager();
         this.timer = new Timer(this.interruptManager);
+        this.joypadController = new JoypadController(joypadHandler, this.interruptManager);
         this.ppu = new Ppu(this.interruptManager, display);
-        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, joypadHandler);
-        this.cpu = new Cpu(this.interruptManager, this.timer, this.ppu, this.mmu);
+        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.joypadController, this.serialController);
+        this.cpu = new Cpu(this.interruptManager, this.mmu);
         this.reset();
     }
 
