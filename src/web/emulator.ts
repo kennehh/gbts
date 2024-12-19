@@ -1,6 +1,7 @@
 import { JoypadButton } from '../common/enums';
 import { WorkerMessage } from '../common/types';
 import Worker from '../worker/emulator-worker?worker'
+import { unzipSync } from 'fflate';
 
 const KeyMap = new Map<string, JoypadButton>([
     ['ArrowUp',     JoypadButton.Up],
@@ -34,8 +35,22 @@ export class Emulator {
         this.postMessage({ type: 'INIT', payload: { canvas: offscreen } }, [offscreen]);
     }
 
-    loadRom(rom: Uint8Array) {
-        this.postMessage({ type: 'LOAD_ROM', payload: { rom } }, [rom.buffer]);
+    async loadRom(romFile: File) {
+        const buffer = await romFile.arrayBuffer();
+        let data = new Uint8Array(buffer);
+
+        if (romFile.name.endsWith('.zip')) {
+            const unzipped = unzipSync(data, {
+                filter: (file) => file.name.endsWith('.gb')// || file.name.endsWith('.gbc'),
+            })
+
+            data = Object.entries(unzipped)[0]?.[1];
+            if (!data) {
+                throw new Error('No ROM found in ZIP file');
+            }
+        }
+
+        this.postMessage({ type: 'LOAD_ROM', payload: { rom: data } }, [data.buffer]);
     }
 
     run() {

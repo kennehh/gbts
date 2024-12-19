@@ -157,16 +157,16 @@ export class SpriteFetcher {
 
     private pushSpriteToFifo() {
         const sprite = this.currentSprite!;
-        const remainingBits = 7 - this.fifo.length;
+        const start = sprite.x < 7 ? sprite.x : 7;
         let xPosition = 0;
 
         if (!sprite.flipX) {
-            for (let i = 7; i >= 0; i--) {
+            for (let i = start; i >= 0; i--) {
                 this.pushPixelToFifo(i, xPosition);
                 xPosition++;
             }
         } else {
-            for (let i = 0; i <= 7; i++) {
+            for (let i = 0; i <= start; i++) {
                 this.pushPixelToFifo(i, xPosition);
                 xPosition++;
             }
@@ -184,7 +184,8 @@ export class SpriteFetcher {
             color,
             isSprite: true,
             spritePalette: sprite.dmgPalette,
-            spriteBgHasPriority: sprite.priority
+            spriteBgHasPriority: sprite.priority,
+            tileNo: this.fetchedTileId
         };
 
         this.fifo.pushSpritePixel(pixel, xPosition);

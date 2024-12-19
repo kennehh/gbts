@@ -1,7 +1,6 @@
 // main.ts
 
 import './style.css'
-import { GameBoy } from './core/gameboy.ts';
 import { Emulator } from './web/emulator.ts';
 
 // Main entry point
@@ -19,12 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Read the ROM file
-            const buffer = await file.arrayBuffer();
-            const rom = new Uint8Array(buffer);
-            
-            // Load and start the game
-            emulator.loadRom(rom);
+            await emulator.loadRom(file);
             emulator.run();
         } catch (error) {
             console.error('Error loading ROM:', error);

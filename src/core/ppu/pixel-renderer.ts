@@ -5,10 +5,10 @@ import { PpuState } from "./ppu-state";
 
 export class PixelRenderer {
     get pixelX() {
-        return this.__pixelX;
+        return this._pixelX;
     }
 
-    private __pixelX = 0;
+    private _pixelX = 0;
     private _finishedScanline = false;
     private _windowTriggered = false;
     private static bg0Pixel: Pixel = { color: 0, isSprite: false };
@@ -29,7 +29,7 @@ export class PixelRenderer {
     }
 
     reset() {
-        this.__pixelX = 0;
+        this._pixelX = 0;
         this._finishedScanline = false;
         this._windowTriggered = false;
     }
@@ -52,10 +52,10 @@ export class PixelRenderer {
         const finalPixel = this.mixPixels(bgPixel, spritePixel);
         const color = this.getFinalPixel(finalPixel);
 
-        this.display.setPixel(this.ppuState.ly, this.__pixelX, color);
-        this.__pixelX++;
+        this.display.setPixel(this.ppuState.ly, this._pixelX, color);
+        this._pixelX++;
         
-        if (this.__pixelX === 160) {
+        if (this._pixelX === 160) {
             this._finishedScanline = true;
         }
     }
@@ -95,7 +95,7 @@ export class PixelRenderer {
         if (!this.ppuState.windowWasVisible) {
             return false;
         }
-        if (this.__pixelX < this.ppuState.wx - 7) {
+        if (this._pixelX < this.ppuState.wx - 7) {
             return false;
         }
     
