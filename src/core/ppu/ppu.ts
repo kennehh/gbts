@@ -3,7 +3,7 @@ import { Memory } from "../memory/memory";
 import { IDisplay } from "./display";
 import { OamScanner } from "./oam-scanner";
 import { BackgroundFetcher } from "./background-fetcher";
-import { PixelFifo } from "./pixel-fifo";
+import { PixelFifo, SpritePixelFifo } from "./pixel-fifo";
 import { PixelRenderer } from "./pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 import { SpriteFetcher } from "./sprite-fetcher";
@@ -19,7 +19,7 @@ export class Ppu {
     private readonly spriteFetcher: SpriteFetcher;
     private readonly pixelRenderer: PixelRenderer;
     private readonly bgPixelFifo = new PixelFifo();
-    private readonly spritePixelFifo = new PixelFifo();
+    private readonly spritePixelFifo = new SpritePixelFifo();
 
     private readonly interruptManager: InterruptManager;
     private readonly display: IDisplay;
@@ -245,7 +245,7 @@ export class Ppu {
 
         if (this.spriteFetcher.fetchingSprite) {
             this.spriteFetcher.tick();
-            if (!this.spriteFetcher.fetchingSprite) {
+            if (!this.spriteFetcher.fetchingSprite && !this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
                 this.backgroundFetcher.resume();
             }
             return;

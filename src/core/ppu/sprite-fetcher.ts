@@ -1,6 +1,6 @@
 import { Memory } from "../memory/memory";
 import { OamSprite } from "./oam-scanner";
-import { Pixel, PixelFifo } from "./pixel-fifo";
+import { Pixel, SpritePixelFifo } from "./pixel-fifo";
 import { PpuState } from "./ppu-state";
 
 enum PixelFetcherState {
@@ -20,22 +20,19 @@ export class SpriteFetcher {
     private fetchedTileId = 0;
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
-    private lastPixelX = -1;
 
     private currentSprite: OamSprite | null = null;
 
     constructor(
         private readonly ppuState: PpuState,
         private readonly vram: Memory,
-        private readonly fifo: PixelFifo
+        private readonly fifo: SpritePixelFifo
     ) { }
 
     foundSpriteAt(pixelX: number) {
-        if (pixelX === this.lastPixelX) {
+        if (this.state !== PixelFetcherState.Sleep) {
             return false;
         }
-
-        this.lastPixelX = pixelX;
 
         const sprite = this.findNextSprite(pixelX);
         if (sprite != null) {
@@ -64,7 +61,6 @@ export class SpriteFetcher {
     reset() {
         this.resetFetchedSpriteState();
         this.state = PixelFetcherState.Sleep;
-        this.lastPixelX = -1;
     }
 
     get fetchingSprite() {
@@ -162,19 +158,22 @@ export class SpriteFetcher {
     private pushSpriteToFifo() {
         const sprite = this.currentSprite!;
         const remainingBits = 7 - this.fifo.length;
+        let xPosition = 0;
 
         if (!sprite.flipX) {
-            for (let i = remainingBits; i >= 0; i--) {
-                this.pushPixelToFifo(i);
+            for (let i = 7; i >= 0; i--) {
+                this.pushPixelToFifo(i, xPosition);
+                xPosition++;
             }
         } else {
-            for (let i = 0; i <= remainingBits; i++) {
-                this.pushPixelToFifo(i);
+            for (let i = 0; i <= 7; i++) {
+                this.pushPixelToFifo(i, xPosition);
+                xPosition++;
             }
         }
     }
 
-    private pushPixelToFifo(index: number) {
+    private pushPixelToFifo(index: number, xPosition: number) {
         const sprite = this.currentSprite!;
 
         const colorBit1 = (this.fetchedTileDataHigh >> index) & 1;
@@ -185,9 +184,9 @@ export class SpriteFetcher {
             color,
             isSprite: true,
             spritePalette: sprite.dmgPalette,
-            bgSpritePriority: sprite.priority
+            spriteBgHasPriority: sprite.priority
         };
 
-        this.fifo.push(pixel);
+        this.fifo.pushSpritePixel(pixel, xPosition);
     }
 }

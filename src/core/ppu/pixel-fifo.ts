@@ -1,44 +1,38 @@
 export type Pixel = {
     color: number;
     isSprite: boolean;
-    bgSpritePriority?: boolean;
+    spriteBgHasPriority?: boolean;
     spritePalette?: number;
 }
 
+const FIFO_CAPACITY = 8;
+const FIFO_MASK = FIFO_CAPACITY - 1;
+const PIXEL_ZERO: Pixel = { color: 0, isSprite: false };
+
 export class PixelFifo {
-    private static readonly CAPACITY = 8;
-    private static readonly MASK = PixelFifo.CAPACITY - 1;
+    protected buffer: Pixel[] = new Array(FIFO_CAPACITY);
+    protected head = 0;
+    protected tail = 0;
+    protected size = 0;
 
-    private buffer: Pixel[] = new Array(PixelFifo.CAPACITY);
-    private head = 0;
-    private tail = 0;
-    private size = 0;
-
-    shift(): Pixel | null {
+    shift(): Pixel {
         if (this.isEmpty()) {
-            return null;
+            return PIXEL_ZERO;
         }
 
         const pixel = this.buffer[this.head];
-        this.head = (this.head + 1) & PixelFifo.MASK;
+        this.head = (this.head + 1) & FIFO_MASK;
         this.size--;
         return pixel;
     }
-
-    peak(): Pixel | null {
-        if (this.isEmpty()) {
-            return null;
-        }
-        return this.buffer[this.head];
-    }
-
+    
     push(pixel: Pixel) {
         if (this.isFull()) {
             return;
         }
 
         this.buffer[this.tail] = pixel;
-        this.tail = (this.tail + 1) & PixelFifo.MASK;
+        this.tail = (this.tail + 1) & FIFO_MASK;
         this.size++;
     }
 
@@ -47,7 +41,7 @@ export class PixelFifo {
     }
 
     isFull(): boolean {
-        return this.size === PixelFifo.CAPACITY;
+        return this.size === FIFO_CAPACITY;
     }
 
     clear() {
@@ -58,5 +52,24 @@ export class PixelFifo {
 
     get length(): number {
         return this.size;
+    }
+}
+
+export class SpritePixelFifo extends PixelFifo {
+    pushSpritePixel(newPixel: Pixel, index: number) {
+        if (this.size > index) {
+            const physicalIndex = (this.tail + index) & FIFO_MASK;
+            const existingPixel = this.buffer[physicalIndex];
+            if (this.shouldOverwritePixel(existingPixel, newPixel)) {
+                this.buffer[physicalIndex] = newPixel;
+            }
+            return;
+        }
+
+        super.push(newPixel);
+    }
+
+    private shouldOverwritePixel(existingPixel: Pixel, newPixel: Pixel): boolean {
+        return existingPixel.color === 0 || (existingPixel.spriteBgHasPriority! && !newPixel.spriteBgHasPriority!);
     }
 }

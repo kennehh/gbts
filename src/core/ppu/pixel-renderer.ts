@@ -1,6 +1,6 @@
 import { Memory } from "../memory/memory";
 import { IDisplay } from "./display";
-import { Pixel, PixelFifo } from "./pixel-fifo";
+import { Pixel, PixelFifo, SpritePixelFifo } from "./pixel-fifo";
 import { PpuState } from "./ppu-state";
 
 export class PixelRenderer {
@@ -17,7 +17,7 @@ export class PixelRenderer {
         private readonly ppuState: PpuState,
         private readonly display: IDisplay,
         private readonly bgPixelFifo: PixelFifo,
-        private readonly spritePixelFifo: PixelFifo
+        private readonly spritePixelFifo: SpritePixelFifo
     ) { }
 
     get finishedScanline() {
@@ -46,7 +46,7 @@ export class PixelRenderer {
             return;
         }
                 
-        const bgPixel = this.bgPixelFifo.shift()!;
+        const bgPixel = this.bgPixelFifo.shift();
         const spritePixel = this.spritePixelFifo.shift();
         
         const finalPixel = this.mixPixels(bgPixel, spritePixel);
@@ -60,12 +60,12 @@ export class PixelRenderer {
         }
     }
 
-    private mixPixels(bgPixel: Pixel, spritePixel: Pixel | null): Pixel {
-        if (!this.ppuState.spriteEnable || spritePixel === null || spritePixel.color === 0) {
+    private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {
+        if (!this.ppuState.spriteEnable || spritePixel.color === 0) {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }
 
-        if (spritePixel.bgSpritePriority && bgPixel.color !== 0) {
+        if (spritePixel.spriteBgHasPriority && bgPixel.color !== 0) {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }
 
