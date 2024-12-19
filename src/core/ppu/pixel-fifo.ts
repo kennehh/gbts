@@ -67,7 +67,7 @@ export class SpritePixelFifo extends PixelFifo {
 
     pushSpritePixel(newPixel: Pixel, index: number) {
         if (this.length > index) {
-            const physicalIndex = (this.tail + index) & FIFO_MASK;
+            const physicalIndex = (this.head + index) & FIFO_MASK;
             const existingPixel = this.buffer[physicalIndex];
 
             if (newPixel.color !== 0 && existingPixel.color === 0) {
