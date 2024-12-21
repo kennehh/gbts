@@ -88,18 +88,9 @@ export class Ppu {
             case 0xFF44: break;
             case 0xFF45: this.state.lyc = value; break;
             case 0xFF46: this.state.dma = value; break;
-            case 0xFF47: 
-                this.state.bgp = value; 
-                // update palette
-                break;
-            case 0xFF48:
-                this.state.obp0 = value;
-                // update palette
-                break;
-            case 0xFF49:
-                this.state.obp1 = value;
-                // update palette
-                break;
+            case 0xFF47: this.state.bgp = value; break;
+            case 0xFF48: this.state.obp0 = value; break;
+            case 0xFF49: this.state.obp1 = value; break;
             case 0xFF4A: this.state.wy = value; break;
             case 0xFF4B: this.state.wx = value; break;
             case 0xFF4F:
@@ -278,10 +269,7 @@ export class Ppu {
 
     private handleEndOfScanline() {
         if (this.state.tCycles === 452) {
-            this.state.ly = this.state.ly === 153 ? 0 : this.state.ly + 1;
-            if (this.state.lyCoincidence) {
-                this.checkStatInterrupt(StatInterruptSourceFlag.Lcdc);
-            }
+            this.state.ly = this.state.ly === 153 ? 0 : this.state.ly + 1;            
         } else if (this.state.tCycles >= 456) {
             this.state.scanline = this.state.scanline === 153 ? 0 : this.state.scanline + 1;
             this.state.tCycles = 0;
@@ -295,6 +283,10 @@ export class Ppu {
                 }
             } else {
                 this.state.status = PpuStatus.VBlank;
+            }
+
+            if (this.state.lyCoincidence) {
+                this.checkStatInterrupt(StatInterruptSourceFlag.Lcdc);
             }
         }
     }

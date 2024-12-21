@@ -35,6 +35,7 @@ export class PpuState {
     windowWasVisible = false;
     windowLineCounter = 0;
     scanline = 0;
+    ly = 0;
 
     tCycles = 0;
 
@@ -94,8 +95,6 @@ export class PpuState {
         // LyCompareFlag and status are read-only
     }
 
-    get ly() { return this._ly; }
-    set ly(value: number) { this._ly = value & 0xff; }
     get lyc() { return this._lyc; }
     set lyc(value: number) { this._lyc = value & 0xff; }
     get scx() { return this._scx; }
