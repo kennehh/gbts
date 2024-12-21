@@ -66,8 +66,8 @@ export class Mmu implements IMmu {
     }
 
     reset(): void {
-        this.wram.fill(0);
-        this.hram.fill(0);
+        this.wram.randomize();
+        this.hram.randomize();
         this.ioRegisters.fill(0);
         this._bootRomLoaded = false;
         this.dmaController.reset();

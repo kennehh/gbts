@@ -38,7 +38,7 @@ export class Ppu {
 
     reset() {
         this.state.reset();
-        this.oam.fill(0);
+        this.oam.randomize();
         this.vram.fill(0);
         this.oamScanner.reset();
         this.backgroundFetcher.reset();

@@ -61,6 +61,12 @@ export class Memory {
         this.data.set(data);
     }
 
+    randomize(): void {
+        for (let i = 0; i < this.data.length; i++) {
+            this.data[i] = Math.floor(Math.random() * 0x100);
+        }
+    }
+
     private static isPowerOfTwo(value: number): boolean {
         return (value & (value - 1)) === 0;
     }

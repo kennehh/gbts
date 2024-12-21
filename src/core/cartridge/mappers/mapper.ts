@@ -8,7 +8,12 @@ export abstract class Mapper {
 
     constructor(cartHeader: CartridgeHeader, rom: Uint8Array, ram: Uint8Array | null) {
         this.rom = new Memory(rom);
-        this.ram = new Memory(ram ?? cartHeader.ram.size);
+        if (ram === null) {
+            this.ram = new Memory(cartHeader.ram.size);
+            this.ram.fill(0xff);
+        } else {
+            this.ram = new Memory(ram);
+        }
         this.cartHeader = cartHeader;
     }
 

@@ -21,8 +21,8 @@ export class Timer {
         this.reset();
     }
 
-    reset(): void {
-        this.div = 0;
+    reset(bootRomLoaded: boolean = false): void {
+        this.div = bootRomLoaded ? 0 : 0xac00;
         this.tima = 0;
         this.tma = 0;
         this.tac = 0;

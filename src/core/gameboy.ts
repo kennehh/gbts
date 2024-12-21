@@ -71,11 +71,11 @@ export class GameBoy {
         this.lastTimestamp = 0;
         this.cyclesPending = 0;
 
+        this.mmu.reset();
         this.ppu.reset();
         this.interruptManager.reset();
         this.cpu.reset();
-        this.timer.reset();
-        this.mmu.reset();
+        this.timer.reset(this.mmu.bootRomLoaded);
         this.display.clear();
     }
 
