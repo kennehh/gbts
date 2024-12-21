@@ -8,9 +8,18 @@ export enum InterruptFlag {
 }
 
 export type InterruptWithVector = {
-    interrupt: InterruptFlag;
-    vector: number;
+    readonly interrupt: InterruptFlag;
+    readonly vector: number;
 };
+
+const INTERRUPT_VECTORS = {
+    [InterruptFlag.None]:    null,
+    [InterruptFlag.VBlank]:  { interrupt: InterruptFlag.VBlank,  vector: 0x40 },
+    [InterruptFlag.LcdStat]: { interrupt: InterruptFlag.LcdStat, vector: 0x48 },
+    [InterruptFlag.Timer]:   { interrupt: InterruptFlag.Timer,   vector: 0x50 },
+    [InterruptFlag.Serial]:  { interrupt: InterruptFlag.Serial,  vector: 0x58 }, 
+    [InterruptFlag.Joypad]:  { interrupt: InterruptFlag.Joypad,  vector: 0x60 },
+} as const;
 
 export class InterruptManager {
     ime: boolean = false;
@@ -49,19 +58,11 @@ export class InterruptManager {
     }
 
     get currentInterruptWithVector(): InterruptWithVector | null {
-        const interrupt = this.currentInterrupt;
-        switch (interrupt) {
-            case InterruptFlag.VBlank:  return { interrupt: interrupt, vector: 0x40 };
-            case InterruptFlag.LcdStat: return { interrupt: interrupt, vector: 0x48 };
-            case InterruptFlag.Timer:   return { interrupt: interrupt, vector: 0x50 };
-            case InterruptFlag.Serial:  return { interrupt: interrupt, vector: 0x58 };
-            case InterruptFlag.Joypad:  return { interrupt: interrupt, vector: 0x60 };
-            default: return null;
-        }
+        return INTERRUPT_VECTORS[this.currentInterrupt];
     }
 
     get anyInterruptRequested(): boolean {
-        return this.currentInterrupt !== InterruptFlag.None;
+        return (this.if & this.ie & 0x1f) !== 0;
     }
 
     requestInterrupt(interrupt: InterruptFlag) {

@@ -13,7 +13,9 @@ export interface IMmu {
     tickTCycle(): void;
     tickMCycle(): void;
     read(address: number): number;
+    readDma(address: number): number;
     write(address: number, value: number): void;
+    writeDma(address: number, value: number): void;
     reset(): void;
     loadBootRom(rom: Memory): void;
     loadCartridge(cart: ICartridge): void;
@@ -48,10 +50,10 @@ export class Mmu implements IMmu {
     }
 
     tickMCycle(): void {
-        //this.dmaController.tickMCycle();
         this.timer.tickMCycle();
         //this.serialController.tickTCycle();
         this.joypadController.checkForInputs();
+        this.dmaController.tickMCycle();
     }
 
     loadBootRom(rom: Memory): void {
@@ -72,10 +74,14 @@ export class Mmu implements IMmu {
         this.joypadController.reset();
     }
 
-    read(address: number): number {
+    readDma(address: number): number {
+        return this.read(address, true);
+    }
+
+    read(address: number, dma: boolean = false): number {
         address &= 0xFFFF;
 
-        if (this.ppu.state.dmaActive) {
+        if (this.ppu.state.dmaActive && !dma) {
             if (address >= 0xff80 && address <= 0xfffe) {
                 // only HRAM can be accessed during DMA
                 return this.hram.read(address);
@@ -128,11 +134,15 @@ export class Mmu implements IMmu {
         throw new Error(`Invalid read address: ${address.toString(16)}`);
     }
 
-    write(address: number, value: number): void {
+    writeDma(address: number, value: number): void {
+        this.write(address, value, true);
+    }
+
+    write(address: number, value: number, dma: boolean = true): void {
         address &= 0xFFFF;
         value &= 0xFF;
 
-        if (this.ppu.state.dmaActive) {
+        if (this.ppu.state.dmaActive && !dma) {
             if (address >= 0xff80 && address <= 0xfffe) {
                 // only HRAM can be accessed during DMA
                 return this.hram.write(address, value);
@@ -212,6 +222,17 @@ export class Mmu implements IMmu {
                 return this.timer.readRegister(address);
             case 0xff0f:
                 return this.interruptManager.if;
+            // case 0xff10:
+            case 0xff11: case 0xff12: case 0xff13: case 0xff14:
+            case 0xff16: case 0xff17: case 0xff18: case 0xff19: 
+            // case 0xff1a: 
+            case 0xff1b: 
+            // case 0xff1c:
+            case 0xff1d: case 0xff1e:
+            case 0xff24: case 0xff25:
+                return this.ioRegisters.read(address); // Sound Registers
+            case 0xff26:
+                return 0b11110000;
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
@@ -251,6 +272,16 @@ export class Mmu implements IMmu {
             case 0xff0f:
                 this.interruptManager.if = value;
                 return;
+            // case 0xff10: 
+            case 0xff11: case 0xff12: case 0xff13: case 0xff14:
+            case 0xff16: case 0xff17: case 0xff18: case 0xff19: 
+            // case 0xff1a: 
+            case 0xff1b: 
+            // case 0xff1c: 
+            case 0xff1d: case 0xff1e:
+            case 0xff24: case 0xff25: case 0xff26:
+                this.ioRegisters.write(address, value); // Wave Pattern RAM
+                return;
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
@@ -262,8 +293,7 @@ export class Mmu implements IMmu {
                 return;
             case 0xff46:
                 this.ppu.writeRegister(address, value); // OAM DMA
-                //this.dmaController.start(value);
-                this.dmaTransfer(value);
+                this.dmaController.start(value);
                 return;
             case 0xff4f:
                 this.ppu.writeRegister(address, value); // VRAM Bank
@@ -281,16 +311,5 @@ export class Mmu implements IMmu {
                 // WRAM Bank
                 return;
         }
-    }
-
-    private dmaTransfer(value: number): void {
-        const sourceAddress = value << 8;
-        const data = new Uint8Array(160);
-        
-        for (let i = 0; i < 160; i++) {
-            data[i] = this.read(sourceAddress + i);
-        }
-        
-        this.ppu.dmaTransfer(data);
     }
 }

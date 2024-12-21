@@ -1,5 +1,5 @@
 import { Memory } from "./memory";
-import { Mmu } from "./mmu";
+import { IMmu } from "./mmu";
 import { PpuState } from "../ppu/ppu-state";
 
 export class DmaController {
@@ -8,7 +8,7 @@ export class DmaController {
 
     constructor(
         private readonly ppuState: PpuState,
-        private readonly mmu: Mmu, 
+        private readonly mmu: IMmu, 
         private readonly oam: Memory
     ) {}
 
@@ -19,7 +19,6 @@ export class DmaController {
     }
 
     start(value: number) {
-        // Source address is value * $100
         this.sourceBaseAddress = value << 8;
         this.currentByte = 0;
         this.ppuState.dmaActive = true;
@@ -30,11 +29,9 @@ export class DmaController {
             return;
         }
 
-        const sourceAddress = this.sourceBaseAddress | this.currentByte;
-        const destAddress = 0xFE00 | this.currentByte;
-
-        const value = this.mmu.read(sourceAddress);
-        this.oam.write(destAddress, value);
+        const sourceAddress = this.sourceBaseAddress + this.currentByte;
+        const value = this.mmu.readDma(sourceAddress);
+        this.oam.write(this.currentByte, value);
 
         this.currentByte++;
 

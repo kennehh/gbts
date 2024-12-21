@@ -431,7 +431,11 @@ export class Cpu {
 
     private readImmediate8Bit() {
         const val = this.readMemory8Bit(this.state.pc);
-        this.state.pc++;
+        if (this.state.haltBugTriggered) {
+            this.state.haltBugTriggered = false;
+        } else {
+            this.state.pc++;
+        }
         return val;
     }
 
