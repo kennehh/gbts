@@ -1,9 +1,6 @@
 import { IDisplay } from '../core/ppu/display';
-import { FpsTracker } from './fps-tracker';
 
 export class CanvasDisplay implements IDisplay {
-    private readonly fpsTracker = new FpsTracker();
-    
     private readonly ctx: OffscreenCanvasRenderingContext2D;
     private readonly imageData: ImageData;
     private readonly frameBuffer: Uint8ClampedArray;
@@ -47,9 +44,6 @@ export class CanvasDisplay implements IDisplay {
         
         this.ctx.putImageData(this.imageData, 0, 0);
         this.dirty = false;
-
-        this.fpsTracker.track();
-        // console.log(this.fpsTracker.getFormattedFps());
     }
 
     setPalette(palette: Array<[number, number, number]>): void {

@@ -92,7 +92,7 @@ export class GameBoy {
         while (this.cyclesPending >= 4) {
             this.cyclesPending -= this.stepInstruction();
         }
-    
-        requestAnimationFrame(() => this.emulationLoop());
+
+        setTimeout(() => this.emulationLoop(), 0);
     }
 }

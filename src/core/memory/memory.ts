@@ -45,6 +45,14 @@ export class Memory {
         this.data[this.getWrappedAddress(address)] = value;
     }
 
+    readDirect(address: number): number {
+        return this.data[address];
+    }
+
+    writeDirect(address: number, value: number): void {
+        this.data[address] = value;
+    }
+
     fill(value: number): void {
         this.data.fill(value);
     }

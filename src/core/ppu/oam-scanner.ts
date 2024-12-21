@@ -57,17 +57,17 @@ export class OamScanner {
         const oamIndex = this.currentOamIndex;
         this.currentOamIndex += 4;
 
-        const x = this.oam.read(oamIndex + 1);
+        const x = this.oam.readDirect(oamIndex + 1);
         if (x === 0) {
             return;
         }
 
-        const y = this.oam.read(oamIndex);    
+        const y = this.oam.readDirect(oamIndex);    
         const lyAdjusted = this.state.ly + 16;
 
         if (lyAdjusted >= y && lyAdjusted < (y + this.state.spriteHeight)) {
-            const tileIndex = this.oam.read(oamIndex + 2);
-            const flags = this.oam.read(oamIndex + 3);
+            const tileIndex = this.oam.readDirect(oamIndex + 2);
+            const flags = this.oam.readDirect(oamIndex + 3);
 
             this.spriteBuffer.push({ 
                 y, 
