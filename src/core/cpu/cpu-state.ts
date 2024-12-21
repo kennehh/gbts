@@ -16,6 +16,7 @@ export class CpuState {
     
     status: CpuStatus = CpuStatus.Running;
     haltBugTriggered: boolean = false;
+    eiPending: boolean = false;
 
     currentInstructionCycles: number = 0;
     totalCycles: number = 0;

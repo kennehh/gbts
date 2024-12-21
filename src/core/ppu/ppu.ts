@@ -85,7 +85,7 @@ export class Ppu {
             case 0xFF41: this.state.stat = value; break;
             case 0xFF42: this.state.scy = value; break;
             case 0xFF43: this.state.scx = value; break;
-            case 0xFF44: break;
+            case 0xFF44: break; // ly is read-only
             case 0xFF45: this.state.lyc = value; break;
             case 0xFF46: this.state.dma = value; break;
             case 0xFF47: this.state.bgp = value; break;

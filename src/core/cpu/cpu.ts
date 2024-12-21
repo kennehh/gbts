@@ -42,6 +42,10 @@ export class Cpu {
         this.state.currentInstructionCycles = 0;
 
         if (this.state.status === CpuStatus.Running) {
+            if (this.state.eiPending) {
+                this.state.eiPending = false;
+                this.interruptManager.ime = true
+            }
             const opcode = this.readImmediate8Bit();
             this.execute(opcode);
         } else {
@@ -417,13 +421,26 @@ export class Cpu {
             this.tickMCycle();
 
             if (this.interruptManager.ime) {
-                const interruptVector = this.interruptManager.currentInterruptWithVector;
+                let interruptVector = this.interruptManager.currentInterruptWithVector;
                 if (interruptVector !== null) {
-                    this.interruptManager.clearInterrupt(interruptVector.interrupt);
                     this.interruptManager.ime = false;
-
                     this.tickMCycle();
-                    this.rst(interruptVector.vector);
+
+                    this.push_byte(this.state.pc >> 8);
+
+                    // Check if IE has been changed during the push
+                    interruptVector = this.interruptManager.currentInterruptWithVector;
+                    if (interruptVector === null) {
+                        // IE was overwritten during PCH push
+                        this.state.pc = 0;
+                        return;
+                    }
+
+                    this.push_byte(this.state.pc & 0xFF);
+                    this.tickMCycle();
+                    
+                    this.state.pc = interruptVector.vector;
+                    this.interruptManager.clearInterrupt(interruptVector.interrupt);
                 }
             }
         }
@@ -494,10 +511,11 @@ export class Cpu {
     }
 
     private ei() {
-        this.interruptManager.ime = true;
+        this.state.eiPending = true;
     }
 
     private reti() {
+        this.state
         this.interruptManager.ime = true;
         this.ret();
     }
@@ -931,6 +949,11 @@ export class Cpu {
 
     private push(operand: Operand16Bit) {
         this.push_val(this.readValue16Bit(operand));
+    }
+
+    private push_byte(value: number) {
+        this.state.sp -= 1;
+        this.writeMemory8Bit(this.state.sp, value);
     }
 
     private push_val(value: number) {
