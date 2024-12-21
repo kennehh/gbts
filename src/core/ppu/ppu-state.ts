@@ -34,6 +34,7 @@ export class PpuState {
 
     windowWasVisible = false;
     windowLineCounter = 0;
+    scanline = 0;
 
     tCycles = 0;
 
@@ -46,6 +47,8 @@ export class PpuState {
     windowEnabled: boolean = false;                  // lcdc bit 5
     windowTileMapAddress: number = 0x9800;          // lcdc bit 6
     lcdEnabled: boolean = false;                    // lcdc bit 7
+
+    firstFrameAfterLcdEnable: boolean = false;
 
     // CGB only
     isCgb: boolean = false;
@@ -121,6 +124,7 @@ export class PpuState {
     }
 
     reset() {
+        this.scanline = 0;
         this.ly = 0;
         this.lyc = 0;
         this.scx = 0;

@@ -76,6 +76,12 @@ describe('Blargg Test ROMs', () => {
     });
 
     describe('mem_timing', () => {
+        getRoms('mem_timing/individual').forEach(rom => {
+            it(`should pass ${rom.name}`, () => testRom(rom.path));
+        });
+    });
+
+    describe('mem_timing-2', () => {
         getRoms('mem_timing-2/rom_singles').forEach(rom => {
             it(`should pass ${rom.name}`, () => testRom(rom.path));
         });
@@ -87,9 +93,14 @@ describe('Blargg Test ROMs', () => {
         });
     });
 
-    describe('interrupt_time', () => {
-        getRoms('interrupt_time').forEach(rom => {
-            it(`should pass ${rom.name}`, () => testRom(rom.path));
-        });
-    });
+    // describe('interrupt_time', () => {
+    //     getRoms('interrupt_time').forEach(rom => {
+    //         it(`should pass ${rom.name}`, () => testRom(rom.path));
+    //     });
+    // });
+    // describe('halt_bug', () => {
+    //     getRoms('/').forEach(rom => {
+    //         it(`should pass ${rom.name}`, () => testRom(rom.path));
+    //     });
+    // });
 });

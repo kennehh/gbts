@@ -52,7 +52,7 @@ export class PixelRenderer {
         const finalPixel = this.mixPixels(bgPixel, spritePixel);
         const color = this.getFinalPixel(finalPixel);
 
-        this.display.setPixel(this.ppuState.ly, this._pixelX, color);
+        this.display.setPixel(this.ppuState.scanline, this._pixelX, color);
         this._pixelX++;
         
         if (this._pixelX === 160) {
@@ -61,6 +61,10 @@ export class PixelRenderer {
     }
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {
+        if (this.ppuState.firstFrameAfterLcdEnable) {
+            return PixelRenderer.bg0Pixel;
+        }
+
         if (!this.ppuState.spriteEnable || spritePixel.color === 0) {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }

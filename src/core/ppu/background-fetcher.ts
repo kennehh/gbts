@@ -129,7 +129,7 @@ export class BackgroundFetcher {
             tileMapBaseAddress = this.ppuState.bgTileMapAddress;
             offset += this.ppuState.scx >> 3;
             offset &= 0x1f;
-            offset += ((this.ppuState.ly + this.ppuState.scy) >> 3) << 5;
+            offset += ((this.ppuState.scanline + this.ppuState.scy) >> 3) << 5;
             offset &= 0x3ff;
         }
 
@@ -154,7 +154,7 @@ export class BackgroundFetcher {
         if (this._windowMode) {
             offset = (this.ppuState.windowLineCounter & 0x7) << 1;
         } else {
-            offset = ((this.ppuState.ly + this.ppuState.scy) & 0x7) << 1;
+            offset = ((this.ppuState.scanline + this.ppuState.scy) & 0x7) << 1;
         }
 
         let tileId = this.fetchedTileId;

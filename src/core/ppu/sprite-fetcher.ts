@@ -122,7 +122,7 @@ export class SpriteFetcher {
         if (this.ppuState.spriteHeight === 16) {
             this.fetchedTileId = tileNumber & 0xfe;
 
-            const spriteY = this.ppuState.ly - this.currentSprite!.y - 16;
+            const spriteY = this.ppuState.scanline - this.currentSprite!.y - 16;
             if (spriteY >= 8) {
                 this.fetchedTileId |= 1;
             }
@@ -145,7 +145,7 @@ export class SpriteFetcher {
         const tileDataAddress = 0x8000;
         const sprite = this.currentSprite!;
         
-        const line = this.ppuState.ly - sprite.y - 16;
+        const line = this.ppuState.scanline - sprite.y - 16;
         let offset = line & (this.ppuState.spriteHeight - 1);
         
         if (sprite.flipY) {

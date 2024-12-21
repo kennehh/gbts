@@ -63,7 +63,7 @@ export class OamScanner {
         }
 
         const y = this.oam.readDirect(oamIndex);    
-        const lyAdjusted = this.state.ly + 16;
+        const lyAdjusted = this.state.scanline + 16;
 
         if (lyAdjusted >= y && lyAdjusted < (y + this.state.spriteHeight)) {
             const tileIndex = this.oam.readDirect(oamIndex + 2);
