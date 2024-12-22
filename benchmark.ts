@@ -1,110 +1,110 @@
-// First, define both approaches
-enum MessageType {
-    Process = 0,
-    Cancel = 1,
-    Config = 2
-  }
-  
-  const MSG_PROCESS = 0;
-  const MSG_CANCEL = 1;
-  const MSG_CONFIG = 2;
-  
-  // Create test data
-  const ITERATIONS = 10_000_000;
-  const testData: Array<{type: number}> = [];
-  for (let i = 0; i < ITERATIONS; i++) {
-    testData.push({ type: i % 3 });
-  }
-  
-  // Benchmark functions
-  function withEnum() {
-    let count = 0;
-    for (const msg of testData) {
-      switch (msg.type) {
-        case MessageType.Process:
-          count++;
-          break;
-        case MessageType.Cancel:
-          count++;
-          break;
-        case MessageType.Config:
-          count++;
-          break;
-      }
+import { readFileSync } from "fs";
+import { GameBoy } from "./src/core/gameboy";
+import { CpuStatus } from "./src/core/cpu/cpu-state";
+
+// Original Game Boy CPU speed in Hz
+const GAMEBOY_CLOCK_SPEED = 4_194_304;
+
+interface BenchmarkResult {
+    executionTimeMs: number;
+    totalCycles: number;
+    instructionsExecuted: number;
+    averageCyclesPerInstruction: number;
+    cyclesPerSecond: number;
+    speedupFactor: number;  // How many times faster than original Game Boy
+}
+
+function benchmarkRom(romPath: string): BenchmarkResult {
+    const romBuffer = readFileSync(romPath);
+    const gb = new GameBoy();
+    gb.loadRom(romBuffer);
+
+    const startTime = process.hrtime.bigint();
+    let totalCycles = 0n;
+    let instructionsExecuted = 0;
+
+    while (true) {
+        const halted = gb.cpu.state.status === CpuStatus.Halted;
+        const lastPC = gb.cpu.state.pc;
+        
+        const cycles = gb.stepInstruction();
+        totalCycles += BigInt(cycles);
+        instructionsExecuted++;
+
+        if (lastPC === gb.cpu.state.pc && !halted) {
+            break;
+        }
     }
-    return count;
-  }
-  
-  function withNumbers() {
-    let count = 0;
-    for (const msg of testData) {
-      switch (msg.type) {
-        case MSG_PROCESS:
-          count++;
-          break;
-        case MSG_CANCEL:
-          count++;
-          break;
-        case MSG_CONFIG:
-          count++;
-          break;
-      }
+
+    const endTime = process.hrtime.bigint();
+    const executionTimeNs = endTime - startTime;
+    const executionTimeMs = Number(executionTimeNs) / 1_000_000;
+    const cyclesPerSecond = Number(totalCycles) / (Number(executionTimeNs) / 1_000_000_000);
+
+    return {
+        executionTimeMs,
+        totalCycles: Number(totalCycles),
+        instructionsExecuted,
+        averageCyclesPerInstruction: Number(totalCycles) / instructionsExecuted,
+        cyclesPerSecond,
+        speedupFactor: cyclesPerSecond / GAMEBOY_CLOCK_SPEED
+    };
+}
+
+function formatSpeedup(factor: number): string {
+    if (factor >= 1) {
+        return `${factor.toFixed(1)}x faster`;
+    } else {
+        return `${(1 / factor).toFixed(1)}x slower`;
     }
-    return count;
-  }
-  
-  function withLiterals() {
-    let count = 0;
-    for (const msg of testData) {
-      switch (msg.type) {
-        case 0:
-          count++;
-          break;
-        case 1:
-          count++;
-          break;
-        case 2:
-          count++;
-          break;
-      }
+}
+
+function getEmulationTimeOnRealGameBoy(cycles: number): number {
+    return (cycles / GAMEBOY_CLOCK_SPEED) * 1000; // Convert to milliseconds
+}
+
+function runBenchmarks(romPath: string, iterations: number = 5) {
+    console.log(`Running ${iterations} benchmarks for ${romPath}`);
+    console.log('----------------------------------------');
+    console.log(`Original Game Boy Clock Speed: ${(GAMEBOY_CLOCK_SPEED / 1_000_000).toFixed(2)} MHz`);
+    console.log('----------------------------------------');
+
+    const results: BenchmarkResult[] = [];
+
+    for (let i = 0; i < iterations; i++) {
+        const result = benchmarkRom(romPath);
+        results.push(result);
+        
+        const realGBTime = getEmulationTimeOnRealGameBoy(result.totalCycles);
+        
+        console.log(`\nIteration ${i + 1}:`);
+        console.log(`Execution time: ${result.executionTimeMs.toFixed(2)}ms`);
+        console.log(`Time on real Game Boy: ${realGBTime.toFixed(2)}ms`);
+        console.log(`Relative speed: ${formatSpeedup(result.speedupFactor)}`);
+        console.log(`Total cycles: ${result.totalCycles.toLocaleString()}`);
+        console.log(`Instructions executed: ${result.instructionsExecuted.toLocaleString()}`);
+        console.log(`Average cycles per instruction: ${result.averageCyclesPerInstruction.toFixed(2)}`);
+        console.log(`Cycles per second: ${result.cyclesPerSecond.toLocaleString()}`);
     }
-    return count;
-  }
-  
-  // Utility function for consistent timing
-  function benchmark(fn: () => number, name: string) {
-    // Warm up
-    for (let i = 0; i < 3; i++) {
-      fn();
-    }
-    
-    // Actual timing
-    const times: number[] = [];
-    for (let i = 0; i < 10; i++) {
-      const start = performance.now();
-      const result = fn();
-      const end = performance.now();
-      times.push(end - start);
-    }
-    
-    // Remove outliers (min and max)
-    times.sort((a, b) => a - b);
-    times.pop();
-    times.shift();
-    
-    // Calculate average
-    const avg = times.reduce((a, b) => a + b, 0) / times.length;
-    console.log(`${name}: ${avg.toFixed(2)}ms`);
-    return avg;
-  }
-  
-  // Run benchmarks
-  console.log(`Running ${ITERATIONS.toLocaleString()} iterations each...`);
-  const enumTime = benchmark(withEnum, 'Enum');
-  const constTime = benchmark(withNumbers, 'Const');
-  const literalTime = benchmark(withLiterals, 'Literal');
-  
-  console.log('\nRelative Performance:');
-  console.log(`Enum is ${((enumTime / literalTime - 1) * 100).toFixed(2)}% slower than literals`);
-  console.log(`Const is ${((constTime / literalTime - 1) * 100).toFixed(2)}% slower than literals`);
-  
+
+    // Calculate averages
+    const avgExecutionTime = results.reduce((sum, r) => sum + r.executionTimeMs, 0) / results.length;
+    const avgCycles = results.reduce((sum, r) => sum + r.totalCycles, 0) / results.length;
+    const avgInstructions = results.reduce((sum, r) => sum + r.instructionsExecuted, 0) / results.length;
+    const avgSpeedup = results.reduce((sum, r) => sum + r.speedupFactor, 0) / results.length;
+    const avgRealGBTime = getEmulationTimeOnRealGameBoy(avgCycles);
+
+    console.log('\nAverage Results:');
+    console.log('----------------------------------------');
+    console.log(`Execution time: ${avgExecutionTime.toFixed(2)}ms`);
+    console.log(`Time on real Game Boy: ${avgRealGBTime.toFixed(2)}ms`);
+    console.log(`Relative speed: ${formatSpeedup(avgSpeedup)}`);
+    console.log(`Total cycles: ${avgCycles.toFixed(0)}`);
+    console.log(`Instructions executed: ${avgInstructions.toFixed(0)}`);
+    console.log(`Average cycles per instruction: ${(avgCycles / avgInstructions).toFixed(2)}`);
+    console.log(`Average cycles per second: ${((avgCycles / avgExecutionTime) * 1000).toFixed(0)}`);
+}
+
+// Run the benchmark
+const romPath = 'tests/__fixtures__/roms/blargg/cpu_instrs/individual/09-op r,r.gb';
+runBenchmarks(romPath);

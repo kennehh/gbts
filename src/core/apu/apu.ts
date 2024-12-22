@@ -8,15 +8,15 @@ export class Apu {
         return 0xff;
     }
 
-    writeRegister(address: number, value: number): void {
+    writeRegister(_address: number, _value: number): void {
         
     }
 
-    readWavRam(address: number): number {
+    readWavRam(_address: number): number {
         return 0xff;
     }
 
-    writeWavRam(address: number, value: number): void {
+    writeWavRam(_address: number, _value: number): void {
         
     }
 }

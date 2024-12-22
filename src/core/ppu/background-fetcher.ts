@@ -183,13 +183,7 @@ export class BackgroundFetcher {
             const colorBit0 = (this.fetchedTileDataLow >> i) & 1;
             const color = (colorBit1 << 1) | colorBit0;
 
-            // Create new pixel
-            const pixel: Pixel = {
-                color,
-                isSprite: false
-            };
-
-            this.fifo.push(pixel);
+            this.fifo.push(color, false);
         }
 
         return true;
