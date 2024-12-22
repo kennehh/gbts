@@ -10,8 +10,8 @@ export type Pixel = {
 
 const FIFO_CAPACITY = 8;
 const FIFO_MASK = FIFO_CAPACITY - 1;
-const BG_PIXEL_ZERO: Pixel = { color: 0, isSprite: false };
-const SPRITE_PIXEL_ZERO: Pixel = { color: 0, isSprite: true };
+const BG_PIXEL_ZERO: Pixel = { color: 0, isSprite: false } as const;
+const SPRITE_PIXEL_ZERO: Pixel = { color: 0, isSprite: true } as const;
 
 
 export class PixelFifo {

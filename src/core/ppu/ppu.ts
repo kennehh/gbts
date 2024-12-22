@@ -187,10 +187,10 @@ export class Ppu {
             }
             this.oamScanner.reset();
             this.state.previousStatus = PpuStatus.OamScan;
+            this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
         }
 
         this.oamScanner.tick();
-        this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
 
         if (this.state.tCycles === 80) {
             this.state.status = PpuStatus.Drawing;
@@ -250,9 +250,9 @@ export class Ppu {
     private handleHBlank() {
         if (this.state.previousStatus !== PpuStatus.HBlank) {
             this.state.previousStatus = PpuStatus.HBlank;
+            this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
         }
 
-        this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
         this.handleEndOfScanline();
     }
 
@@ -261,9 +261,9 @@ export class Ppu {
             this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
             this.display.renderFrame();
             this.state.previousStatus = PpuStatus.VBlank;
+            this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
         }
 
-        this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
         this.handleEndOfScanline();
     }
 

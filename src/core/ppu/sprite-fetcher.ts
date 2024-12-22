@@ -157,7 +157,7 @@ export class SpriteFetcher {
 
     private pushSpriteToFifo() {
         const sprite = this.currentSprite!;
-        const start = sprite.x < 7 ? sprite.x : 7;
+        const start = sprite.x < 8 ? sprite.x - 1 : 7;
         let xPosition = 0;
 
         if (!sprite.flipX) {
@@ -166,7 +166,7 @@ export class SpriteFetcher {
                 xPosition++;
             }
         } else {
-            for (let i = 0; i <= start; i++) {
+            for (let i = 7 - start; i <= 7; i++) {
                 this.pushPixelToFifo(i, xPosition);
                 xPosition++;
             }
