@@ -233,17 +233,17 @@ export class Ppu {
         this.backgroundFetcher.tick();
         this.pixelRenderer.tick();
 
-        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
-            this.backgroundFetcher.reset(true);
-            this.bgPixelFifo.clear();
-            return;
-        }
-
         if (this.pixelRenderer.finishedScanline) {
             this.state.status = PpuStatus.HBlank;
             if (this.backgroundFetcher.windowMode) {
                 this.state.windowLineCounter++;
             }
+            return;
+        }
+
+        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
+            this.backgroundFetcher.reset(true);
+            this.bgPixelFifo.clear();
         }
     }
 

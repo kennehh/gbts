@@ -74,10 +74,7 @@ export class BackgroundFetcher {
             this.state = PixelFetcherState.FetchTileNumber;
         } else {
             this.state = PixelFetcherState.Sleep;
-        }        
-        
-        this.resetFetchedTileState();
-        return;
+        }
     }
 
     private resetFetchedTileState() {
@@ -142,19 +139,21 @@ export class BackgroundFetcher {
     }
 
     private getTileDataAddress() {
-        const tileDataBaseAddress = this.ppuState.useBgWindow8000AdressingMode ? 0x8000 : 0x9000;
-        let offset: number = 0;
+        let offset: number, tileId: number, tileDataBaseAddress: number;
 
         if (this._windowMode) {
             offset = (this.ppuState.windowLineCounter & 0x7) << 1;
         } else {
             offset = ((this.ppuState.scanline + this.ppuState.scy) & 0x7) << 1;
         }
-
-        let tileId = this.fetchedTileId;
-        if (!this.ppuState.useBgWindow8000AdressingMode) {
+        
+        if (this.ppuState.useBgWindow8000AdressingMode) {
+            tileId = this.fetchedTileId;
+            tileDataBaseAddress = 0x8000;
+        } else {
             // Signed tile id
-            tileId = tileId << 24 >> 24;
+            tileId = this.fetchedTileId << 24 >> 24;
+            tileDataBaseAddress = 0x9000;
         }
 
         return tileDataBaseAddress + offset + (tileId << 4);
@@ -162,29 +161,41 @@ export class BackgroundFetcher {
 
     private pushBgToFifo() {
         // Only push if FIFO is empty
-        if (!this.fifo.isEmpty()) {
+        if (this.fifo.length > 0) {
             return false;
         }
 
-        const pixelStart = 7 - this.pixelsToDiscard;
-        this.pixelsToDiscard = 0;
-        
-        // Get 8 pixels from the current tile data
-        for (let i = pixelStart; i >= 0; i--) {
-            // Get color bits from the high and low bytes
-            // TODO: Handle CGB tile flipping
-            const colorBit1 = (this.fetchedTileDataHigh >> i) & 1;
-            const colorBit0 = (this.fetchedTileDataLow >> i) & 1;
-            const color = (colorBit1 << 1) | colorBit0;
-
-            const pixel: Pixel = {
-                color,
-                isSprite: false
-            };
-
-            this.fifo.push(pixel);
+        if (this.pixelsToDiscard > 0) {
+            const pixelStart = 7 - this.pixelsToDiscard;
+            this.pixelsToDiscard = 0;
+            
+            for (let i = pixelStart; i >= 0; i--) {
+                this.pushPixelToFifo(i);
+            }
+            return true;
         }
 
+        // unroll loop if we know we have 8 pixels to push
+        this.pushPixelToFifo(7);
+        this.pushPixelToFifo(6);
+        this.pushPixelToFifo(5);
+        this.pushPixelToFifo(4);
+        this.pushPixelToFifo(3);
+        this.pushPixelToFifo(2);
+        this.pushPixelToFifo(1);
+        this.pushPixelToFifo(0);
+
         return true;
+    }
+
+    private pushPixelToFifo(index: number) {
+        const colorBit1 = (this.fetchedTileDataHigh >> index) & 1;
+        const colorBit0 = (this.fetchedTileDataLow >> index) & 1;
+        const color = (colorBit1 << 1) | colorBit0;
+
+        this.fifo.push({
+            color,
+            isSprite: false
+        });
     }
 }

@@ -15,14 +15,14 @@ export class PixelFifo {
     protected buffer: Pixel[] = new Array(FIFO_CAPACITY);
     protected head = 0;
     protected tail = 0;
-    protected length = 0;
+    length = 0;
 
     protected get defaultPixel(): Pixel {
         return BG_PIXEL_ZERO;
     }
 
     shift(): Pixel {
-        if (this.isEmpty()) {
+        if (this.length === 0) {
             return this.defaultPixel;
         }
 
@@ -33,21 +33,13 @@ export class PixelFifo {
     }
     
     push(pixel: Pixel) {
-        if (this.isFull()) {
-            return;
-        }
-
+        // Shouldn't happen, so we remove this check for performance
+        // if (this.isFull()) {
+        //     return;
+        // }
         this.buffer[this.tail] = pixel;
         this.tail = (this.tail + 1) & FIFO_MASK;
         this.length++;
-    }
-
-    isEmpty(): boolean {
-        return this.length === 0;
-    }
-
-    isFull(): boolean {
-        return this.length === FIFO_CAPACITY;
     }
 
     clear() {

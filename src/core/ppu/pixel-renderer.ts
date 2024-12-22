@@ -35,10 +35,7 @@ export class PixelRenderer {
     }
 
     tick() {
-        if (this._finishedScanline) {
-            return;
-        }
-        if (this.bgPixelFifo.isEmpty()) {
+        if (this.bgPixelFifo.length === 0) {
             return;
         }
         if (this.checkWindowTrigger()) {
@@ -49,8 +46,11 @@ export class PixelRenderer {
         const bgPixel = this.bgPixelFifo.shift();
         const spritePixel = this.spritePixelFifo.shift();
         
-        const finalPixel = this.mixPixels(bgPixel, spritePixel);
-        const color = this.getFinalPixel(finalPixel);
+        let color = 0;
+        if (!this.ppuState.firstFrameAfterLcdEnable) {
+            const finalPixel = this.mixPixels(bgPixel, spritePixel);
+            color = this.getFinalPixel(finalPixel);
+        }
 
         this.display.setPixel(this.ppuState.scanline, this._pixelX, color);
         this._pixelX++;
@@ -61,49 +61,25 @@ export class PixelRenderer {
     }
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {
-        if (this.ppuState.firstFrameAfterLcdEnable) {
-            return PixelRenderer.bg0Pixel;
-        }
-
-        if (!this.ppuState.spriteEnable || spritePixel.color === 0) {
+        if (!this.ppuState.spriteEnable || spritePixel.color === 0 || (spritePixel.spriteBgHasPriority && bgPixel.color !== 0)) {
             return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
         }
-
-        if (spritePixel.spriteBgHasPriority && bgPixel.color !== 0) {
-            return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
-        }
-
         return spritePixel;
     }
 
     private getFinalPixel(pixel: Pixel): number {
-        let palette: number;
-
+        let palette = this.ppuState.bgp;
         if (pixel.isSprite) {
             palette = pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0;
-        } else {
-            palette = this.ppuState.bgp;
         }
-
         return (palette >> (pixel.color << 1)) & 0b11;
     }
     
 
     private checkWindowTrigger() {
-        if (this._windowTriggered) {
-            return false;
-        }
-        if (!this.ppuState.windowEnabled) {
-            return false;
-        }
-        if (!this.ppuState.windowWasVisible) {
-            return false;
-        }
-        if (this._pixelX < this.ppuState.wx - 7) {
-            return false;
-        }
-    
-        this._windowTriggered = true;
-        return true;
+        return !this._windowTriggered && 
+                this.ppuState.windowEnabled && 
+                this.ppuState.windowWasVisible && 
+               (this._pixelX >= this.ppuState.wx - 7);
     }
 }

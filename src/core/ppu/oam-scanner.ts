@@ -30,16 +30,11 @@ export class OamScanner {
     }
 
     tick() {
-        if (this.state.dmaActive) {
-            return;
-        }
-        
-        if (this.spriteBuffer.length < 10) {
+        if (!this.state.dmaActive &&
+            this.spriteBuffer.length < 10 &&
+            (this.state.tCycles & 0x1) === 0) {
             // Only evaluate sprites every other cycle (we evaluate 40 sprites in 80 t-cycles)
-            const doEvaluate = (this.state.tCycles & 0x1) === 0;
-            if (doEvaluate) {
-                this.evaluateSprite();
-            }
+            this.evaluateSprite();
         }
     }
 
