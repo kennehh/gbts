@@ -1,5 +1,3 @@
-import { log } from "console";
-
 export type Pixel = {
     color: number;
     isSprite: boolean;
@@ -14,7 +12,7 @@ const SPRITE_PIXEL_ZERO: Pixel = { color: 0, isSprite: true } as const;
 
 
 export class PixelFifo {
-    protected buffer: Pixel[] = new Array(FIFO_CAPACITY).fill(this.defaultPixel);
+    protected buffer: Pixel[] = new Array(FIFO_CAPACITY);
     protected head = 0;
     protected tail = 0;
     protected length = 0;
@@ -34,17 +32,12 @@ export class PixelFifo {
         return pixel;
     }
     
-    push(color: number, isSprite: boolean, spriteBgHasPriority?: boolean, spritePalette?: number) {
+    push(pixel: Pixel) {
         if (this.isFull()) {
             return;
         }
 
-        const pixel = this.buffer[this.tail];
-        pixel.color = color;
-        pixel.isSprite = isSprite;
-        pixel.spriteBgHasPriority = spriteBgHasPriority;
-        pixel.spritePalette = spritePalette;
-
+        this.buffer[this.tail] = pixel;
         this.tail = (this.tail + 1) & FIFO_MASK;
         this.length++;
     }
@@ -69,21 +62,18 @@ export class SpritePixelFifo extends PixelFifo {
         return SPRITE_PIXEL_ZERO;
     }
 
-    pushSpritePixel(index: number, color: number, isSprite: boolean, spriteBgHasPriority: boolean, spritePalette: number) {
+    pushSpritePixel(newPixel: Pixel, index: number) {
         if (this.length > index) {
             const physicalIndex = (this.head + index) & FIFO_MASK;
             const existingPixel = this.buffer[physicalIndex];
 
-            if (color !== 0 && existingPixel.color === 0) {
-                existingPixel.color = color;
-                existingPixel.isSprite = isSprite;
-                existingPixel.spriteBgHasPriority = spriteBgHasPriority;
-                existingPixel.spritePalette = spritePalette;
+            if (newPixel.color !== 0 && existingPixel.color === 0) {
+                this.buffer[physicalIndex] = newPixel;
             }
 
             return;
         }
 
-        super.push(color, isSprite, spriteBgHasPriority, spritePalette);
+        super.push(newPixel);
     }
 }

@@ -12,7 +12,6 @@ enum PixelFetcherState {
 }
 
 export class BackgroundFetcher {
-    delay = 0;
     pixelsToDiscard = 0;
 
     private stepCycles = 0;
@@ -38,11 +37,6 @@ export class BackgroundFetcher {
 
     tick() {
         if (this.state === PixelFetcherState.Sleep) {
-            return;
-        }
-
-        if (this.delay > 0) {
-            this.delay--;
             return;
         }
 
@@ -149,7 +143,7 @@ export class BackgroundFetcher {
 
     private getTileDataAddress() {
         const tileDataBaseAddress = this.ppuState.useBgWindow8000AdressingMode ? 0x8000 : 0x9000;
-        let offset: number;
+        let offset: number = 0;
 
         if (this._windowMode) {
             offset = (this.ppuState.windowLineCounter & 0x7) << 1;
@@ -183,7 +177,12 @@ export class BackgroundFetcher {
             const colorBit0 = (this.fetchedTileDataLow >> i) & 1;
             const color = (colorBit1 << 1) | colorBit0;
 
-            this.fifo.push(color, false);
+            const pixel: Pixel = {
+                color,
+                isSprite: false
+            };
+
+            this.fifo.push(pixel);
         }
 
         return true;

@@ -180,6 +180,13 @@ export class SpriteFetcher {
         const colorBit0 = (this.fetchedTileDataLow >> index) & 1;
         const color = (colorBit1 << 1) | colorBit0;
 
-        this.fifo.pushSpritePixel(xPosition, color, true, sprite.priority, sprite.dmgPalette);
+        const pixel: Pixel = {
+            color,
+            isSprite: true,
+            spritePalette: sprite.dmgPalette,
+            spriteBgHasPriority: sprite.priority
+        };
+
+        this.fifo.pushSpritePixel(pixel, xPosition);
     }
 }
