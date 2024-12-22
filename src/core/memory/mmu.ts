@@ -7,6 +7,7 @@ import { EmptyCartridge } from "../cartridge/empty-cartridge";
 import { DmaController } from "./dma-controller";
 import { JoypadController } from "../joypad/joypad-controller";
 import { SerialController } from "../serial/serial-controller";
+import { Apu } from "../apu/apu";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
@@ -34,6 +35,7 @@ export class Mmu implements IMmu {
         private readonly interruptManager: InterruptManager,
         private readonly timer: Timer,
         private readonly ppu: Ppu,
+        private readonly apu: Apu,
         private readonly joypadController: JoypadController,
         private readonly serialController: SerialController
     ) {
@@ -222,21 +224,16 @@ export class Mmu implements IMmu {
                 return this.timer.readRegister(address);
             case 0xff0f:
                 return this.interruptManager.if;
-            // case 0xff10:
-            case 0xff11: case 0xff12: case 0xff13: case 0xff14:
+            case 0xff10: case 0xff11: case 0xff12: case 0xff13: case 0xff14:
             case 0xff16: case 0xff17: case 0xff18: case 0xff19: 
-            // case 0xff1a: 
-            case 0xff1b: 
-            // case 0xff1c:
-            case 0xff1d: case 0xff1e:
-            case 0xff24: case 0xff25:
-                return this.ioRegisters.read(address); // Sound Registers
-            case 0xff26:
-                return 0b11110000;
+            case 0xff1a: case 0xff1b: case 0xff1c: case 0xff1d: case 0xff1e:
+            case 0xff20: case 0xff21: case 0xff22: case 0xff23:
+            case 0xff24: case 0xff25: case 0xff26:
+                return this.apu.readRegister(address);
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
-                return this.ioRegisters.read(address); // Wave Pattern RAM
+                return this.apu.readWavRam(address);
             case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
             case 0xff46: case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:
                 return this.ppu.readRegister(address); // LCD Control Registers
@@ -272,21 +269,18 @@ export class Mmu implements IMmu {
             case 0xff0f:
                 this.interruptManager.if = value;
                 return;
-            // case 0xff10: 
-            case 0xff11: case 0xff12: case 0xff13: case 0xff14:
-            case 0xff16: case 0xff17: case 0xff18: case 0xff19: 
-            // case 0xff1a: 
-            case 0xff1b: 
-            // case 0xff1c: 
-            case 0xff1d: case 0xff1e:
-            case 0xff24: case 0xff25: case 0xff26:
-                this.ioRegisters.write(address, value); // Wave Pattern RAM
+            case 0xff10: case 0xff11: case 0xff12: case 0xff13: case 0xff14: // NR10 - NR14
+            case 0xff16: case 0xff17: case 0xff18: case 0xff19:  // NR21 - NR24
+            case 0xff1a: case 0xff1b: case 0xff1c: case 0xff1d: case 0xff1e: // NR30 - NR34
+            case 0xff20: case 0xff21: case 0xff22: case 0xff23: // NR41 - NR44
+            case 0xff24: case 0xff25: case 0xff26: // NR50 - NR52
+                this.apu.writeRegister(address, value);
                 return;
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
-                this.ioRegisters.write(address, value); // Wave Pattern RAM
-                return;
+                this.apu.writeWavRam(address, value);
+                break;
             case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
             case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:
                 this.ppu.writeRegister(address, value); // LCD Control Registers

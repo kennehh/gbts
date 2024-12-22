@@ -67,12 +67,18 @@ export class Emulator {
                 const button = KeyMap.get(e.key)!;
                 this.postMessage({ type: 'JOYPAD_DOWN', payload: { button } });
             }
+            if (e.key === ' ') {
+                this.postMessage({ type: 'UNTHROTTLE' });
+            }
         });
 
         window.addEventListener('keyup', (e) => {
             if (KeyMap.has(e.key)) {
                 const button = KeyMap.get(e.key)!;
                 this.postMessage({ type: 'JOYPAD_UP', payload: { button } });
+            }
+            if (e.key === ' ') {
+                this.postMessage({ type: 'THROTTLE' });
             }
         });
     }

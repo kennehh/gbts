@@ -6,4 +6,6 @@ export type WorkerMessage =
     | { type: "STOP" }
     | { type: "LOAD_ROM", payload: { rom: Uint8Array } }
     | { type: "JOYPAD_DOWN", payload: { button: JoypadButton } }
-    | { type: "JOYPAD_UP", payload: { button: JoypadButton } };
+    | { type: "JOYPAD_UP", payload: { button: JoypadButton } }
+    | { type: "THROTTLE" }
+    | { type: "UNTHROTTLE" };

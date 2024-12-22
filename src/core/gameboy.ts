@@ -10,15 +10,18 @@ import { Mmu } from "./memory/mmu";
 import { IDisplay, MockDisplay } from "./ppu/display";
 import { Ppu } from "./ppu/ppu";
 import { Timer } from "./timer/timer";
+import { Apu } from "./apu/apu";
+
+const GB_CLOCK_SPEED = 4_194_304; // Hz
+const CYCLES_PER_SECOND = GB_CLOCK_SPEED;
+const CYCLES_PER_MS = CYCLES_PER_SECOND / 1000;
+const MAX_CYCLES_TO_CATCH_UP = CYCLES_PER_MS * 34;
 
 export class GameBoy {
-    private static readonly GB_CLOCK_SPEED = 4_194_304; // Hz
-    private static readonly CYCLES_PER_SECOND = GameBoy.GB_CLOCK_SPEED;
-    private static readonly CYCLES_PER_MS = GameBoy.CYCLES_PER_SECOND / 1000;
-
     readonly cpu: Cpu;
     readonly mmu: Mmu;
     readonly ppu: Ppu;
+    readonly apu: Apu;
     readonly timer: Timer;
     readonly joypadController: JoypadController;
     readonly serialController: SerialController;
@@ -27,6 +30,7 @@ export class GameBoy {
     
     // Timing state
     private running: boolean = false;
+    private throttled: boolean = true;
     private lastTimestamp: number = 0;
     private cyclesPending: number = 0;
 
@@ -37,7 +41,8 @@ export class GameBoy {
         this.timer = new Timer(this.interruptManager);
         this.joypadController = new JoypadController(joypadHandler, this.interruptManager);
         this.ppu = new Ppu(this.interruptManager, display);
-        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.joypadController, this.serialController);
+        this.apu = new Apu();
+        this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.apu, this.joypadController, this.serialController);
         this.cpu = new Cpu(this.interruptManager, this.mmu);
         this.reset();
     }
@@ -50,10 +55,11 @@ export class GameBoy {
         if (this.running) return;
         
         this.running = true;
+        this.throttled = true;
         this.lastTimestamp = performance.now();
         this.cyclesPending = 0;
 
-        this.emulationLoop();
+        this.throttledEmulationLoop();
     }
 
     stop() {
@@ -79,20 +85,45 @@ export class GameBoy {
         this.display.clear();
     }
 
-    private emulationLoop() {
-        if (!this.running) {
-            return;
-        }
-    
+    throttle() {
+        this.throttled = true;
+    }
+
+    unthrottle() {
+        this.throttled = false;
+    }
+
+    private throttledEmulationLoop() {
         const now = performance.now();
         const elapsedMs = now - this.lastTimestamp;
         this.lastTimestamp = now;
-        this.cyclesPending += elapsedMs * GameBoy.CYCLES_PER_MS;
+        this.cyclesPending += elapsedMs * CYCLES_PER_MS;
+        this.cyclesPending = Math.min(this.cyclesPending, MAX_CYCLES_TO_CATCH_UP);
     
         while (this.cyclesPending >= 4) {
             this.cyclesPending -= this.stepInstruction();
         }
 
         setTimeout(() => this.emulationLoop(), 0);
+    }
+
+    private unthrottledEmulationLoop() {
+        for (let i = 0; i < CYCLES_PER_MS * 10; i++) {
+            this.stepInstruction();
+        }
+
+        setTimeout(() => this.emulationLoop(), 0);
+    }
+
+    private emulationLoop() {
+        if (!this.running) {
+            return;
+        }
+    
+        if (this.throttled) {
+            this.throttledEmulationLoop();
+        } else {
+            this.unthrottledEmulationLoop();
+        }
     }
 }
