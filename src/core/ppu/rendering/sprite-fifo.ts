@@ -31,54 +31,53 @@ export class SpriteFifo {
     setTileRow(sprite: OamSprite, tileDataHigh: number, tileDataLow: number) {
         const start = sprite.x < 8 ? sprite.x - 1 : 7;
         const existingPixelCount = this.size;
-        this.size = 8;
 
         if (!sprite.flipX) {
             if (start < 7) {
                 let arrayIndex = 0;
                 for (let i = start; i >= 0; i--) {
-                    this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, i, arrayIndex++);
+                    this.setPixel(sprite, tileDataHigh, tileDataLow, i, arrayIndex++);
                 }
                 return;
             }
 
             // unroll loop if we know we have 8 pixels to push
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 7, 0);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 6, 1);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 5, 2);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 4, 3);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 3, 4);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 2, 5);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 1, 6);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 0, 7);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 7, 0);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 6, 1);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 5, 2);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 4, 3);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 3, 4);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 2, 5);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 1, 6);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 0, 7);
         } else {
             if (start < 7) {
                 let arrayIndex = 0;
                 for (let i = 7 - start; i <= 7; i++) {
-                    this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, i, arrayIndex++);
+                    this.setPixel(sprite, tileDataHigh, tileDataLow, i, arrayIndex++);
                 }
                 return;
             }
 
             // unroll loop if we know we have 8 pixels to push
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 0, 0);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 1, 1);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 2, 2);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 3, 3);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 4, 4);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 5, 5);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 6, 6);
-            this.setPixel(existingPixelCount, sprite, tileDataHigh, tileDataLow, 7, 7);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 0, 0);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 1, 1);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 2, 2);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 3, 3);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 4, 4);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 5, 5);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 6, 6);
+            this.setPixel(sprite, tileDataHigh, tileDataLow, 7, 7);
         }
     }
 
-    private setPixel(existingPixelCount: number, sprite: OamSprite, tileDataHigh: number, tileDataLow: number, bit: number, index: number) {
+    private setPixel(sprite: OamSprite, tileDataHigh: number, tileDataLow: number, bit: number, index: number) {
         const colorBit1 = (tileDataHigh >> bit) & 1;
         const colorBit0 = (tileDataLow >> bit) & 1;
         const color = (colorBit1 << 1) | colorBit0;
         const physicalIndex = (this.head + index) & 7;
 
-        if (existingPixelCount > index) {
+        if (this.size > index) {
             const existingPixel = this.buffer[physicalIndex] & 0b11;
             if (color === 0 || existingPixel !== 0) {
                 return;
@@ -87,6 +86,7 @@ export class SpriteFifo {
 
         const priority = sprite.priority ? 1 : 0;
         this.buffer[physicalIndex] = color | (sprite.dmgPalette << 2) | (priority << 3);
+        this.size++;
     }
 
     private unpackPixel(pixel: number): Pixel {
