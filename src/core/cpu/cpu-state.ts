@@ -1,11 +1,11 @@
-export enum RegisterFlag {
+export const enum RegisterFlag {
     Zero = 1 << 7,
     Subtract = 1 << 6,
     HalfCarry = 1 << 5,
     Carry = 1 << 4,
 }
 
-export enum CpuStatus {
+export const enum CpuStatus {
     Running,
     Halted,
     Stopped,

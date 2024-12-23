@@ -2,7 +2,7 @@ import { IMmu } from "../memory/mmu";
 import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
 import { InterruptManager } from "./interrupt-manager";
 
-enum Operand8Bit {
+const enum Operand8Bit {
     B = 0,
     C = 1,
     D = 2,
@@ -19,7 +19,7 @@ enum Operand8Bit {
     IndirectC = 13
 }
 
-enum Operand16Bit {
+const enum Operand16Bit {
     SP = 0,
     AF = 1,
     PC = 2,
@@ -365,7 +365,7 @@ export class Cpu {
             case Operand8Bit.Immediate: return this.readImmediate8Bit();
             case Operand8Bit.IndirectImmediate8Bit: return this.readMemory8Bit(0xFF00 + this.readImmediate8Bit());
             case Operand8Bit.IndirectImmediate16Bit: return this.readMemory8Bit(this.readImmediate16Bit());
-            default: throw new Error(`Invalid operand when reading 8 bit value: ${Operand8Bit[operand]}`);
+            default: throw new Error(`Invalid operand when reading 8 bit value: ${operand}`);
         }
     }
 
@@ -384,7 +384,7 @@ export class Cpu {
             case Operand8Bit.IndirectC: this.writeMemory8Bit(0xFF00 + this.state.c, value); break;
             case Operand8Bit.IndirectImmediate8Bit: this.writeMemory8Bit(0xFF00 + this.readImmediate8Bit(), value); break;
             case Operand8Bit.IndirectImmediate16Bit: this.writeMemory8Bit(this.readImmediate16Bit(), value); break;
-            default: throw new Error(`Invalid operand when writing 8 bit value: ${Operand8Bit[operand]}`);            
+            default: throw new Error(`Invalid operand when writing 8 bit value: ${operand}`);            
         }
     }
 
@@ -398,7 +398,7 @@ export class Cpu {
             case Operand16Bit.SP: return this.state.sp;
             case Operand16Bit.Immediate: return this.readImmediate16Bit();
             case Operand16Bit.IndirectImmediate: return this.readMemory16Bit(this.readImmediate16Bit());
-            default: throw new Error(`Invalid operand when reading 16 bit value: ${Operand16Bit[operand]}`);
+            default: throw new Error(`Invalid operand when reading 16 bit value: ${operand}`);
         }
     }
 
@@ -411,7 +411,7 @@ export class Cpu {
             case Operand16Bit.PC: this.state.pc = value; break;
             case Operand16Bit.SP: this.state.sp = value; break;
             case Operand16Bit.IndirectImmediate: this.writeMemory16Bit(this.readImmediate16Bit(), value); break;
-            default: throw new Error(`Invalid operand when writing 16 bit value: ${Operand16Bit[operand]}`);
+            default: throw new Error(`Invalid operand when writing 16 bit value: ${operand}`);
         }
     }
     

@@ -1,4 +1,4 @@
-export enum JoypadButton {
+export const enum JoypadButton {
     None = 0,
 
     Right = 1 << 0,

@@ -4,6 +4,8 @@ import { BgFifo } from "./bg-fifo";
 import { SpriteFifo } from "./sprite-fifo";
 import { Pixel } from "./pixel";
 
+const PIXEL_BG0: Pixel = { color: 0, isSprite: false } as const;
+
 export class PixelRenderer {
     get pixelX() {
         return this._pixelX;
@@ -12,7 +14,6 @@ export class PixelRenderer {
     private _pixelX = 0;
     private _finishedScanline = false;
     private _windowTriggered = false;
-    private static bg0Pixel: Pixel = { color: 0, isSprite: false };
 
     constructor(
         private readonly ppuState: PpuState,
@@ -63,7 +64,7 @@ export class PixelRenderer {
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {
         if (!this.ppuState.spriteEnable || spritePixel.color === 0 || (spritePixel.spriteBgHasPriority && bgPixel.color !== 0)) {
-            return this.ppuState.bgWindowEnable ? bgPixel : PixelRenderer.bg0Pixel;
+            return this.ppuState.bgWindowEnable ? bgPixel : PIXEL_BG0;
         }
         return spritePixel;
     }
@@ -76,7 +77,6 @@ export class PixelRenderer {
         return (palette >> (pixel.color << 1)) & 0b11;
     }
     
-
     private checkWindowTrigger() {
         return !this._windowTriggered && 
                 this.ppuState.windowEnabled && 

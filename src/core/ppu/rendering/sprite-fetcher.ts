@@ -4,7 +4,7 @@ import { PpuState } from "../ppu-state";
 import { SpriteOrderedList } from "../oam/sprite-ordered-list";
 import { SpriteFifo } from "./sprite-fifo";
 
-enum PixelFetcherState {
+const enum PixelFetcherState {
     Sleep,
     FetchTileNumber,
     FetchTileDataLow,

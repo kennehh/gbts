@@ -1,6 +1,6 @@
 import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 
-enum TimaReloadState {
+const enum TimaReloadState {
     None = 0,
     Reloading = 1,
     Reloaded = 2

@@ -80,18 +80,13 @@ export class SpriteFifo {
 
         if (existingPixelCount > index) {
             const existingPixel = this.buffer[physicalIndex] & 0b11;
-            if (color !== 0 && existingPixel === 0) {
-                this.buffer[physicalIndex] = this.packPixel(sprite, color);
+            if (color === 0 || existingPixel !== 0) {
+                return;
             }
-            return;
         }
 
-        this.buffer[physicalIndex] = this.packPixel(sprite, color);
-    }
-
-    private packPixel(sprite: OamSprite, color: number) {
         const priority = sprite.priority ? 1 : 0;
-        return color | (sprite.dmgPalette << 2) | (priority << 3);
+        this.buffer[physicalIndex] = color | (sprite.dmgPalette << 2) | (priority << 3);
     }
 
     private unpackPixel(pixel: number): Pixel {

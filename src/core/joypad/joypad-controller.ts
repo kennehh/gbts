@@ -2,7 +2,7 @@ import { JoypadButton } from '../../common/enums';
 import { InterruptFlag, InterruptManager } from '../cpu/interrupt-manager';
 import { IJoypadHandler } from './joypad-handler';
 
-enum JoypadRegisterFlag {
+const enum JoypadRegisterFlag {
     DefaultState = 0b1100_1111,
 
     SelectActionNotSelected = 1 << 5,

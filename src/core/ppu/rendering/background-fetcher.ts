@@ -2,7 +2,7 @@ import { Memory } from "../../memory/memory";
 import { PpuState } from "../ppu-state";
 import { BgFifo } from "./bg-fifo";
 
-enum PixelFetcherState {
+const enum PixelFetcherState {
     Sleep,
     FetchTileNumber,
     FetchTileDataLow,

@@ -1,4 +1,4 @@
-export enum MemorySize {
+export const enum MemorySize {
     KB = 1024,
     MB = KB * 1024,
     Size2KB = 2 * KB,

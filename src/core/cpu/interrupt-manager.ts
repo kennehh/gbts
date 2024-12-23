@@ -1,4 +1,4 @@
-export enum InterruptFlag {
+export const enum InterruptFlag {
     None = 0,
     VBlank = 1 << 0,
     LcdStat = 1 << 1,

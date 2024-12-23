@@ -1,11 +1,11 @@
-export enum PpuStatus {
+export const enum PpuStatus {
     HBlank = 0,
     VBlank = 1,
     OamScan = 2,
     Drawing = 3,
 }
 
-export enum StatInterruptSourceFlag {
+export const enum StatInterruptSourceFlag {
     None = 0,
     HBlank = 1 << 3,
     VBlank = 1 << 4,

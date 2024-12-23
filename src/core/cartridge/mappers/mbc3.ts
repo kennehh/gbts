@@ -15,7 +15,7 @@ type RtcRegisters = {
     dayCarry: boolean;
 }
 
-enum RtcRegister {
+const enum RtcRegister {
     None = 0x00,
     Seconds = 0x08,
     Minutes = 0x09,
