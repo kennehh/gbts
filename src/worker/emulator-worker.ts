@@ -41,11 +41,8 @@ self.onmessage = (e: MessageEvent) => {
         case 'JOYPAD_UP':
             joypadHandler.buttonUp(message.payload.button);
             break;
-        case 'THROTTLE':
-            gameboy.throttle();
-            break;
-        case 'UNTHROTTLE':
-            gameboy.unthrottle();
+        case 'TURBO':
+            gameboy.turbo = message.payload.turbo;
             break;
     }
 };

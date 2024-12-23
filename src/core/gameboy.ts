@@ -13,11 +13,15 @@ import { Timer } from "./timer/timer";
 import { Apu } from "./apu/apu";
 
 const GB_CLOCK_SPEED = 4_194_304; // Hz
-const CYCLES_PER_SECOND = GB_CLOCK_SPEED;
-const CYCLES_PER_MS = CYCLES_PER_SECOND / 1000;
-const MAX_CYCLES_TO_CATCH_UP = CYCLES_PER_MS * 34;
+const CYCLES_PER_MS = GB_CLOCK_SPEED / 1000;
+const CYCLES_PER_MS_TURBO = CYCLES_PER_MS * 10;
+const CYCLES_PER_FRAME = GB_CLOCK_SPEED / 59.73;
+const MAX_CYCLES_TO_CATCH_UP = CYCLES_PER_FRAME * 2; 
+const MAX_CYCLES_TO_CATCH_UP_TURBO = CYCLES_PER_FRAME * 5;
 
 export class GameBoy {
+    turbo: boolean = false;
+
     readonly cpu: Cpu;
     readonly mmu: Mmu;
     readonly ppu: Ppu;
@@ -30,7 +34,6 @@ export class GameBoy {
     
     // Timing state
     private running: boolean = false;
-    private throttled: boolean = true;
     private lastTimestamp: number = 0;
     private cyclesPending: number = 0;
 
@@ -55,11 +58,11 @@ export class GameBoy {
         if (this.running) return;
         
         this.running = true;
-        this.throttled = true;
+        this.turbo = false;
         this.lastTimestamp = performance.now();
         this.cyclesPending = 0;
 
-        this.throttledEmulationLoop();
+        this.emulationLoop();
     }
 
     stop() {
@@ -85,45 +88,25 @@ export class GameBoy {
         this.display.clear();
     }
 
-    throttle() {
-        this.throttled = true;
-    }
+    private emulationLoop() {
+        if (!this.running) {
+            return;
+        }
 
-    unthrottle() {
-        this.throttled = false;
-    }
+        const cyclesPerMs = this.turbo ? CYCLES_PER_MS_TURBO : CYCLES_PER_MS;
+        const maxCycles = this.turbo ? MAX_CYCLES_TO_CATCH_UP_TURBO : MAX_CYCLES_TO_CATCH_UP;
 
-    private throttledEmulationLoop() {
         const now = performance.now();
         const elapsedMs = now - this.lastTimestamp;
         this.lastTimestamp = now;
-        this.cyclesPending += elapsedMs * CYCLES_PER_MS;
-        this.cyclesPending = Math.min(this.cyclesPending, MAX_CYCLES_TO_CATCH_UP);
+
+        this.cyclesPending += elapsedMs * cyclesPerMs;
+        this.cyclesPending = Math.min(this.cyclesPending, maxCycles);
     
         while (this.cyclesPending >= 4) {
             this.cyclesPending -= this.stepInstruction();
         }
 
         requestAnimationFrame(() => this.emulationLoop());
-    }
-
-    private unthrottledEmulationLoop() {
-        for (let i = 0; i < 100_000; i++) {
-            this.stepInstruction();
-        }
-
-        requestAnimationFrame(() => this.emulationLoop());
-    }
-
-    private emulationLoop() {
-        if (!this.running) {
-            return;
-        }
-    
-        if (this.throttled) {
-            this.throttledEmulationLoop();
-        } else {
-            this.unthrottledEmulationLoop();
-        }
     }
 }

@@ -55,7 +55,7 @@ export class OamScanner {
             const tileIndex = this.oam.readDirect(oamIndex + 2);
             const flags = this.oam.readDirect(oamIndex + 3);
 
-            this.sprites.add({ 
+            this.sprites.push({ 
                 y, 
                 x, 
                 tileIndex, 

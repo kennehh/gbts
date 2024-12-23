@@ -68,7 +68,7 @@ export class Emulator {
                 this.postMessage({ type: 'JOYPAD_DOWN', payload: { button } });
             }
             if (e.key === ' ') {
-                this.postMessage({ type: 'UNTHROTTLE' });
+                this.postMessage({ type: 'TURBO', payload: { turbo: true } });
             }
         });
 
@@ -78,7 +78,7 @@ export class Emulator {
                 this.postMessage({ type: 'JOYPAD_UP', payload: { button } });
             }
             if (e.key === ' ') {
-                this.postMessage({ type: 'THROTTLE' });
+                this.postMessage({ type: 'TURBO', payload: { turbo: false } });
             }
         });
     }

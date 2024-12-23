@@ -18,7 +18,7 @@ export class SpriteOrderedList {
         this.size = 0;
     }    
 
-    add(sprite: OamSprite) {
+    push(sprite: OamSprite) {
         const node = new SpriteNode(sprite);
         this.size++;
 
