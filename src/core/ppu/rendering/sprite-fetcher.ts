@@ -5,18 +5,20 @@ import { SpriteOrderedList } from "../oam/sprite-ordered-list";
 import { SpriteFifo } from "./sprite-fifo";
 
 const enum PixelFetcherState {
-    Sleep,
-    FetchTileNumber,
-    FetchTileDataLow,
-    FetchTileDataHigh,
-    PushToFifo
+    Sleep = 0,
+    FetchTileNumber0 = 1,
+    FetchTileNumber1 = 2,
+    FetchTileDataLow0 = 3,
+    FetchTileDataLow1 = 4,
+    FetchTileDataHigh0 = 5,
+    FetchTileDataHigh1 = 6,
+    PushToFifo = 7
 }
 
 export class SpriteFetcher {
     sprites: SpriteOrderedList | null = null;
 
-    private stepCycles = 0;
-    private state = PixelFetcherState.FetchTileNumber;
+    private state = PixelFetcherState.Sleep;
 
     private fetchedTileId = 0;
     private fetchedTileDataLow = 0;
@@ -31,7 +33,7 @@ export class SpriteFetcher {
     ) { }
 
     foundSpriteAt(pixelX: number) {
-        if (this.sprites!.length === 0 || this.state !== PixelFetcherState.Sleep) {
+        if (!this.ppuState.spriteEnable || this.sprites!.length === 0 || this.state !== PixelFetcherState.Sleep) {
             return false;
         }
 
@@ -39,7 +41,7 @@ export class SpriteFetcher {
 
         if (sprite != null) {
             this.currentSprite = sprite;
-            this.state = PixelFetcherState.FetchTileNumber;
+            this.state = PixelFetcherState.FetchTileNumber0;
             return true;
         }
         
@@ -51,17 +53,38 @@ export class SpriteFetcher {
             return;
         }
 
-        this.stepCycles++;
+        if (!this.ppuState.spriteEnable) {
+            this.state = PixelFetcherState.Sleep;
+            return;
+        }
 
-        if (this.state !== PixelFetcherState.PushToFifo) {
-            this.handleFetchStates();
-        } else {
-            this.handlePushState();
+        switch (this.state) {
+            case PixelFetcherState.FetchTileNumber0:
+            case PixelFetcherState.FetchTileDataLow0:
+            case PixelFetcherState.FetchTileDataHigh0:
+                this.state++;
+                break;
+            case PixelFetcherState.FetchTileNumber1:
+                this.fetchTileNumber();
+                this.state = PixelFetcherState.FetchTileDataLow0;
+                break;
+            case PixelFetcherState.FetchTileDataLow1:
+                this.fetchTileDataLow();
+                this.state = PixelFetcherState.FetchTileDataHigh0;
+                break;
+            case PixelFetcherState.FetchTileDataHigh1:
+                this.fetchTileDataHigh();
+                this.state = PixelFetcherState.PushToFifo;
+                break;
+            case PixelFetcherState.PushToFifo:
+                this.handlePushState();
+                break;
+            default:
+                throw new Error(`Invalid pixel fetcher state: ${this.state}`);
         }
     }
 
     reset() {
-        this.resetFetchedSpriteState();
         this.state = PixelFetcherState.Sleep;
     }
     
@@ -69,42 +92,9 @@ export class SpriteFetcher {
         return this.state !== PixelFetcherState.Sleep;
     }
 
-    private resetFetchedSpriteState() {
-        this.currentSprite = null;
-        this.fetchedTileId = 0;
-        this.fetchedTileDataLow = 0;
-        this.fetchedTileDataHigh = 0;
-        this.stepCycles = 0;
-    }
-
     private handlePushState() {
         this.fifo.setTileRow(this.currentSprite!, this.fetchedTileDataHigh, this.fetchedTileDataLow);
         this.state = PixelFetcherState.Sleep;
-    }
-
-    private handleFetchStates() {
-        if (this.stepCycles < 2) {
-            return;
-        }
-
-        switch (this.state) {
-            case PixelFetcherState.FetchTileNumber:
-                this.fetchTileNumber();
-                this.state = PixelFetcherState.FetchTileDataLow;
-                break;
-            case PixelFetcherState.FetchTileDataLow:
-                this.fetchTileDataLow();
-                this.state = PixelFetcherState.FetchTileDataHigh;
-                break;
-            case PixelFetcherState.FetchTileDataHigh:
-                this.fetchTileDataHigh();
-                this.state = PixelFetcherState.PushToFifo;
-                break;
-            default:
-                throw new Error(`Invalid pixel fetcher state: ${this.state}`);
-        }
-        
-        this.stepCycles = 0;
     }
 
     private fetchTileNumber() {
