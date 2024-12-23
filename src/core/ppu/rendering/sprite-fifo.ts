@@ -30,7 +30,6 @@ export class SpriteFifo {
 
     setTileRow(sprite: OamSprite, tileDataHigh: number, tileDataLow: number) {
         const start = sprite.x < 8 ? sprite.x - 1 : 7;
-        const existingPixelCount = this.size;
 
         if (!sprite.flipX) {
             if (start < 7) {
@@ -78,15 +77,27 @@ export class SpriteFifo {
         const physicalIndex = (this.head + index) & 7;
 
         if (this.size > index) {
-            const existingPixel = this.buffer[physicalIndex] & 0b11;
-            if (color === 0 || existingPixel !== 0) {
+            if (color === 0) {
                 return;
             }
+                
+            const existingPixel = this.buffer[physicalIndex];
+            const existingColor = existingPixel & 0b11;
+            const existingBgHasPriority = (existingPixel >> 3) === 1;
+
+            if (existingColor === 0 || (existingBgHasPriority && !sprite.bgHasPriority)) {
+                this.buffer[physicalIndex] = this.packPixel(sprite, color);
+            }
+            return;
         }
 
-        const priority = sprite.priority ? 1 : 0;
-        this.buffer[physicalIndex] = color | (sprite.dmgPalette << 2) | (priority << 3);
+        this.buffer[physicalIndex] = this.packPixel(sprite, color);
         this.size++;
+    }
+
+    private packPixel(sprite: OamSprite, color: number): number {
+        const priority = sprite.bgHasPriority ? 1 : 0;
+        return color | (sprite.dmgPalette << 2) | (priority << 3);
     }
 
     private unpackPixel(pixel: number): Pixel {

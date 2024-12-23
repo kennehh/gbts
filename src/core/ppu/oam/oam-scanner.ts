@@ -9,7 +9,7 @@ export type OamSprite = {
     oamIndex: number,
 
     // flags
-    priority: boolean,
+    bgHasPriority: boolean,
     flipX: boolean,
     flipY: boolean,
     dmgPalette: number,
@@ -59,7 +59,7 @@ export class OamScanner {
                 y, 
                 x, 
                 tileIndex, 
-                priority: (flags & 0x80) !== 0,
+                bgHasPriority: (flags & 0x80) !== 0,
                 flipY: (flags & 0x40) !== 0,
                 flipX: (flags & 0x20) !== 0,
                 dmgPalette: (flags & 0x10) >> 4,
