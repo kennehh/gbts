@@ -1,8 +1,8 @@
-import { Memory } from "../memory/memory";
-import { OamSprite } from "./oam-scanner";
+import { Memory } from "../../memory/memory";
+import { OamSprite } from "../oam/oam-scanner";
 import { Pixel, SpritePixelFifo } from "./pixel-fifo";
-import { PpuState } from "./ppu-state";
-import { SpriteOrderedList } from "./sprite-ordered-list";
+import { PpuState } from "../ppu-state";
+import { SpriteOrderedList } from "../oam/sprite-ordered-list";
 
 enum PixelFetcherState {
     Sleep,

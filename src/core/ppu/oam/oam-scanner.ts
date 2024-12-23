@@ -1,5 +1,5 @@
-import { Memory } from "../memory/memory";
-import { PpuState } from "./ppu-state";
+import { Memory } from "../../memory/memory";
+import { PpuState } from "../ppu-state";
 import { SpriteOrderedList } from "./sprite-ordered-list";
 
 export type OamSprite = {

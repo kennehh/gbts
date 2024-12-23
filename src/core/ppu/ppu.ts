@@ -1,12 +1,12 @@
 import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "../memory/memory";
-import { IDisplay } from "./display";
-import { OamScanner } from "./oam-scanner";
-import { BackgroundFetcher } from "./background-fetcher";
-import { PixelFifo, SpritePixelFifo } from "./pixel-fifo";
-import { PixelRenderer } from "./pixel-renderer";
+import { IDisplay } from "./rendering/display";
+import { OamScanner } from "./oam/oam-scanner";
+import { BackgroundFetcher } from "./rendering/background-fetcher";
+import { PixelFifo, SpritePixelFifo } from "./rendering/pixel-fifo";
+import { PixelRenderer } from "./rendering/pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
-import { SpriteFetcher } from "./sprite-fetcher";
+import { SpriteFetcher } from "./rendering/sprite-fetcher";
 
 export class Ppu {
     readonly state = new PpuState();

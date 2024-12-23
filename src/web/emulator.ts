@@ -1,6 +1,6 @@
 import { JoypadButton } from '../common/enums';
 import { WorkerMessage } from '../common/types';
-import Worker from '../worker/emulator-worker?worker'
+import Worker from '../worker/emulator-worker?worker&inline';
 import { unzipSync } from 'fflate';
 
 const KeyMap = new Map<string, JoypadButton>([

@@ -3,7 +3,7 @@
 
 import { WorkerMessage } from '../common/types';
 import { GameBoy } from '../core/gameboy';
-import { IDisplay } from '../core/ppu/display';
+import { IDisplay } from '../core/ppu/rendering/display';
 import { CanvasDisplay } from './canvas-display';
 import { JoypadHandler } from './joypad-handler';
 import { WebGLDisplay } from './webgl-display';

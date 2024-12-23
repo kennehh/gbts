@@ -1,4 +1,4 @@
-import { IDisplay } from '../core/ppu/display';
+import { IDisplay } from '../core/ppu/rendering/display';
 
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;

@@ -1,7 +1,6 @@
-import { Memory } from "../memory/memory";
 import { IDisplay } from "./display";
 import { Pixel, PixelFifo, SpritePixelFifo } from "./pixel-fifo";
-import { PpuState } from "./ppu-state";
+import { PpuState } from "../ppu-state";
 
 export class PixelRenderer {
     get pixelX() {

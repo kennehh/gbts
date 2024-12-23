@@ -1,7 +1,7 @@
-import { Memory } from "../memory/memory";
-import { OamSprite } from "./oam-scanner";
+import { Memory } from "../../memory/memory";
+import { OamSprite } from "../oam/oam-scanner";
 import { Pixel, PixelFifo } from "./pixel-fifo";
-import { PpuState } from "./ppu-state";
+import { PpuState } from "../ppu-state";
 
 enum PixelFetcherState {
     Sleep,

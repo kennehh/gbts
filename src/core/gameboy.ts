@@ -7,7 +7,7 @@ import { JoypadController } from "./joypad/joypad-controller";
 import { IJoypadHandler, MockJoypadHandler } from "./joypad/joypad-handler";
 import { SerialController } from "./serial/serial-controller";
 import { Mmu } from "./memory/mmu";
-import { IDisplay, MockDisplay } from "./ppu/display";
+import { IDisplay, MockDisplay } from "./ppu/rendering/display";
 import { Ppu } from "./ppu/ppu";
 import { Timer } from "./timer/timer";
 import { Apu } from "./apu/apu";
