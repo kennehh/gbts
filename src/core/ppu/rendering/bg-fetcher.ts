@@ -13,7 +13,7 @@ const enum PixelFetcherState {
     PushToFifo = 7
 }
 
-export class BackgroundFetcher {
+export class BgFetcher {
     pixelsToDiscard = 0;
 
     private state = PixelFetcherState.FetchTileNumber0;

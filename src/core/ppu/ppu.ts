@@ -2,7 +2,7 @@ import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
 import { Memory } from "../memory/memory";
 import { IDisplay } from "./rendering/display";
 import { OamScanner } from "./oam/oam-scanner";
-import { BackgroundFetcher } from "./rendering/background-fetcher";
+import { BgFetcher } from "./rendering/bg-fetcher";
 import { PixelRenderer } from "./rendering/pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 import { SpriteFetcher } from "./rendering/sprite-fetcher";
@@ -16,7 +16,7 @@ export class Ppu {
     readonly oam: Memory = new Memory(0xA0);
 
     private readonly oamScanner: OamScanner;
-    private readonly backgroundFetcher: BackgroundFetcher;
+    private readonly bgFetcher: BgFetcher;
     private readonly spriteFetcher: SpriteFetcher;
     private readonly pixelRenderer: PixelRenderer;
     private readonly bgPixelFifo = new BgFifo();
@@ -32,7 +32,7 @@ export class Ppu {
         this.oamScanner = new OamScanner(this.state, this.oam);
         this.display = display;
 
-        this.backgroundFetcher = new BackgroundFetcher(this.state, this.vram, this.bgPixelFifo);
+        this.bgFetcher = new BgFetcher(this.state, this.vram, this.bgPixelFifo);
         this.spriteFetcher = new SpriteFetcher(this.state, this.vram, this.spritePixelFifo);
         this.pixelRenderer = new PixelRenderer(this.state, this.display, this.bgPixelFifo, this.spritePixelFifo);
     }
@@ -42,7 +42,7 @@ export class Ppu {
         this.oam.randomize();
         this.vram.fill(0);
         this.oamScanner.reset();
-        this.backgroundFetcher.reset();
+        this.bgFetcher.reset();
         this.spriteFetcher.reset();
         this.pixelRenderer.reset();
         this.display.clear();
@@ -201,14 +201,14 @@ export class Ppu {
     private handleDrawing() {
         if (this.state.previousStatus !== PpuStatus.Drawing) {
             this.pixelRenderer.reset();
-            this.backgroundFetcher.reset();
+            this.bgFetcher.reset();
             this.spriteFetcher.reset();
             this.bgPixelFifo.clear();
             this.spritePixelFifo.clear();
             
             this.spriteFetcher.sprites = this.oamScanner.sprites;
-            this.backgroundFetcher.pixelsToDiscard = this.state.scx & 0x7;
-            this.state.drawingInitialScanlineDelay = 6 + this.backgroundFetcher.pixelsToDiscard;
+            this.bgFetcher.pixelsToDiscard = this.state.scx & 0x7;
+            this.state.drawingInitialScanlineDelay = 6 + this.bgFetcher.pixelsToDiscard;
 
             this.state.previousStatus = PpuStatus.Drawing;
         }
@@ -219,31 +219,31 @@ export class Ppu {
         }
 
         if (this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
-            this.backgroundFetcher.pause();
+            this.bgFetcher.pause();
             return;
         }
 
         if (this.spriteFetcher.fetchingSprite) {
             this.spriteFetcher.tick();
             if (!this.spriteFetcher.fetchingSprite && !this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
-                this.backgroundFetcher.resume();
+                this.bgFetcher.resume();
             }
             return;
         }
 
-        this.backgroundFetcher.tick();
+        this.bgFetcher.tick();
         this.pixelRenderer.tick();
 
         if (this.pixelRenderer.finishedScanline) {
             this.state.status = PpuStatus.HBlank;
-            if (this.backgroundFetcher.windowMode) {
+            if (this.bgFetcher.windowMode) {
                 this.state.windowLineCounter++;
             }
             return;
         }
 
-        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.backgroundFetcher.windowMode) {
-            this.backgroundFetcher.reset(true);
+        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.bgFetcher.windowMode) {
+            this.bgFetcher.reset(true);
             this.bgPixelFifo.clear();
         }
     }
