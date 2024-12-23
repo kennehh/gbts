@@ -79,7 +79,7 @@ export class PixelRenderer {
     private checkWindowTrigger() {
         return !this._windowTriggered && 
                 this.ppuState.windowEnabled && 
-                this.ppuState.windowWasVisible && 
+                this.ppuState.windowVisibleOnScanline && 
                (this._pixelX >= this.ppuState.wx - 7);
     }
 }

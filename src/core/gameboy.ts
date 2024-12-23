@@ -104,15 +104,15 @@ export class GameBoy {
             this.cyclesPending -= this.stepInstruction();
         }
 
-        setTimeout(() => this.emulationLoop(), 0);
+        requestAnimationFrame(() => this.emulationLoop());
     }
 
     private unthrottledEmulationLoop() {
-        for (let i = 0; i < CYCLES_PER_MS * 10; i++) {
+        for (let i = 0; i < 100_000; i++) {
             this.stepInstruction();
         }
 
-        setTimeout(() => this.emulationLoop(), 0);
+        requestAnimationFrame(() => this.emulationLoop());
     }
 
     private emulationLoop() {

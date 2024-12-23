@@ -109,7 +109,7 @@ export class PpuState {
     previousStatus: PpuStatus = PpuStatus.HBlank;
     dmaActive = false;
 
-    windowWasVisible = false;
+    windowVisibleOnScanline = false;
     windowLineCounter = 0;
     scanline = 0;
 
@@ -138,7 +138,7 @@ export class PpuState {
         this.statInterruptSource = StatInterruptSourceFlag.None;
         this.pendingLcdStatInterrupt = false;
         this.dmaActive = false;
-        this.windowWasVisible = false;
+        this.windowVisibleOnScanline = false;
         this.windowLineCounter = 0;
         this.tCycles = 0;
         this.drawingInitialScanlineDelay = 0;

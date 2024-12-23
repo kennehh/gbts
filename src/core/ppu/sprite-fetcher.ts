@@ -2,6 +2,7 @@ import { Memory } from "../memory/memory";
 import { OamSprite } from "./oam-scanner";
 import { Pixel, SpritePixelFifo } from "./pixel-fifo";
 import { PpuState } from "./ppu-state";
+import { SpriteOrderedList } from "./sprite-ordered-list";
 
 enum PixelFetcherState {
     Sleep,
@@ -12,7 +13,7 @@ enum PixelFetcherState {
 }
 
 export class SpriteFetcher {
-    spriteBuffer: OamSprite[] = [];
+    sprites: SpriteOrderedList | null = null;
 
     private stepCycles = 0;
     private state = PixelFetcherState.FetchTileNumber;
@@ -30,11 +31,12 @@ export class SpriteFetcher {
     ) { }
 
     foundSpriteAt(pixelX: number) {
-        if (this.state !== PixelFetcherState.Sleep) {
+        if (this.sprites!.length === 0 || this.state !== PixelFetcherState.Sleep) {
             return false;
         }
 
-        const sprite = this.findNextSprite(pixelX);
+        const sprite = this.sprites!.findNext(pixelX);
+
         if (sprite != null) {
             this.currentSprite = sprite;
             this.state = PixelFetcherState.FetchTileNumber;
@@ -62,7 +64,7 @@ export class SpriteFetcher {
         this.resetFetchedSpriteState();
         this.state = PixelFetcherState.Sleep;
     }
-
+    
     get fetchingSprite() {
         return this.state !== PixelFetcherState.Sleep;
     }
@@ -73,17 +75,6 @@ export class SpriteFetcher {
         this.fetchedTileDataLow = 0;
         this.fetchedTileDataHigh = 0;
         this.stepCycles = 0;
-    }
-    
-    private findNextSprite(pixelX: number) {
-        const x = pixelX + 8;
-        for (const sprite of this.spriteBuffer) {
-            if (!sprite.fetched && sprite.x <= x) {
-                sprite.fetched = true;
-                return sprite;
-            }
-        }        
-        return null;
     }
 
     private handlePushState() {

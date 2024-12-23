@@ -182,8 +182,8 @@ export class Ppu {
 
     private handleOamScan() {
         if (this.state.previousStatus !== PpuStatus.OamScan) {
-            if (this.state.windowEnabled && !this.state.windowWasVisible && this.state.scanline === this.state.wy) {
-                this.state.windowWasVisible = true;
+            if (this.state.windowEnabled && !this.state.windowVisibleOnScanline && this.state.scanline === this.state.wy) {
+                this.state.windowVisibleOnScanline = true;
             }
             this.oamScanner.reset();
             this.state.previousStatus = PpuStatus.OamScan;
@@ -205,7 +205,7 @@ export class Ppu {
             this.bgPixelFifo.clear();
             this.spritePixelFifo.clear();
             
-            this.spriteFetcher.spriteBuffer = this.oamScanner.getSprites();
+            this.spriteFetcher.sprites = this.oamScanner.sprites;
             this.backgroundFetcher.pixelsToDiscard = this.state.scx & 0x7;
             this.state.drawingInitialScanlineDelay = 6 + this.backgroundFetcher.pixelsToDiscard;
 
@@ -278,7 +278,7 @@ export class Ppu {
                 this.state.status = PpuStatus.OamScan;
                 if (this.state.scanline === 0) {
                     this.state.windowLineCounter = 0;
-                    this.state.windowWasVisible = false;
+                    this.state.windowVisibleOnScanline = false;
                     this.state.firstFrameAfterLcdEnable = false;
                 }
             } else {

@@ -1,5 +1,6 @@
 import { Memory } from "../memory/memory";
 import { PpuState } from "./ppu-state";
+import { SpriteOrderedList } from "./sprite-ordered-list";
 
 export type OamSprite = {
     y: number,
@@ -19,33 +20,23 @@ export type OamSprite = {
 }
 
 export class OamScanner {
-    private spriteBuffer: OamSprite[] = new Array(10);
+    readonly sprites = new SpriteOrderedList();
     private currentOamIndex = 0;
 
     constructor(private readonly state: PpuState, private readonly oam: Memory) { }
 
     reset() {
-        this.spriteBuffer = [];
+        this.sprites.clear();
         this.currentOamIndex = 0;
     }
 
     tick() {
         if (!this.state.dmaActive &&
-            this.spriteBuffer.length < 10 &&
+            this.sprites.length < 10 &&
             (this.state.tCycles & 0x1) === 0) {
             // Only evaluate sprites every other cycle (we evaluate 40 sprites in 80 t-cycles)
             this.evaluateSprite();
         }
-    }
-
-    getSprites() {
-        return this.spriteBuffer.sort((a, b) => {
-            const xDifference = a.x - b.x;
-            if (xDifference !== 0) {
-                return xDifference;
-            }
-            return a.oamIndex - b.oamIndex;
-        });
     }
 
     private evaluateSprite() {
@@ -64,7 +55,7 @@ export class OamScanner {
             const tileIndex = this.oam.readDirect(oamIndex + 2);
             const flags = this.oam.readDirect(oamIndex + 3);
 
-            this.spriteBuffer.push({ 
+            this.sprites.add({ 
                 y, 
                 x, 
                 tileIndex, 

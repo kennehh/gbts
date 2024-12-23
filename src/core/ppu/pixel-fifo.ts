@@ -15,20 +15,24 @@ export class PixelFifo {
     protected buffer: Pixel[] = new Array(FIFO_CAPACITY);
     protected head = 0;
     protected tail = 0;
-    length = 0;
+    protected size = 0;
+
+    get length() {
+        return this.size;
+    }
 
     protected get defaultPixel(): Pixel {
         return BG_PIXEL_ZERO;
     }
 
     shift(): Pixel {
-        if (this.length === 0) {
+        if (this.size === 0) {
             return this.defaultPixel;
         }
 
         const pixel = this.buffer[this.head];
         this.head = (this.head + 1) & FIFO_MASK;
-        this.length--;
+        this.size--;
         return pixel;
     }
     
@@ -39,13 +43,13 @@ export class PixelFifo {
         // }
         this.buffer[this.tail] = pixel;
         this.tail = (this.tail + 1) & FIFO_MASK;
-        this.length++;
+        this.size++;
     }
 
     clear() {
         this.head = 0;
         this.tail = 0;
-        this.length = 0;
+        this.size = 0;
     }
 }
 
