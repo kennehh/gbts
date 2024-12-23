@@ -1,6 +1,8 @@
 import { IDisplay } from "./display";
-import { Pixel, PixelFifo, SpritePixelFifo } from "./pixel-fifo";
 import { PpuState } from "../ppu-state";
+import { BgFifo } from "./bg-fifo";
+import { SpriteFifo } from "./sprite-fifo";
+import { Pixel } from "./pixel";
 
 export class PixelRenderer {
     get pixelX() {
@@ -15,8 +17,8 @@ export class PixelRenderer {
     constructor(
         private readonly ppuState: PpuState,
         private readonly display: IDisplay,
-        private readonly bgPixelFifo: PixelFifo,
-        private readonly spritePixelFifo: SpritePixelFifo
+        private readonly bgPixelFifo: BgFifo,
+        private readonly spritePixelFifo: SpriteFifo
     ) { }
 
     get finishedScanline() {

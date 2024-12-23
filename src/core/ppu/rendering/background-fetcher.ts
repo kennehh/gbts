@@ -1,7 +1,6 @@
 import { Memory } from "../../memory/memory";
-import { OamSprite } from "../oam/oam-scanner";
-import { Pixel, PixelFifo } from "./pixel-fifo";
 import { PpuState } from "../ppu-state";
+import { BgFifo } from "./bg-fifo";
 
 enum PixelFetcherState {
     Sleep,
@@ -32,7 +31,7 @@ export class BackgroundFetcher {
     constructor(
         private readonly ppuState: PpuState,
         private readonly vram: Memory,
-        private readonly fifo: PixelFifo
+        private readonly fifo: BgFifo
     ) { }
 
     tick() {
@@ -165,37 +164,9 @@ export class BackgroundFetcher {
             return false;
         }
 
-        if (this.pixelsToDiscard > 0) {
-            const pixelStart = 7 - this.pixelsToDiscard;
-            this.pixelsToDiscard = 0;
-            
-            for (let i = pixelStart; i >= 0; i--) {
-                this.pushPixelToFifo(i);
-            }
-            return true;
-        }
-
-        // unroll loop if we know we have 8 pixels to push
-        this.pushPixelToFifo(7);
-        this.pushPixelToFifo(6);
-        this.pushPixelToFifo(5);
-        this.pushPixelToFifo(4);
-        this.pushPixelToFifo(3);
-        this.pushPixelToFifo(2);
-        this.pushPixelToFifo(1);
-        this.pushPixelToFifo(0);
+        this.fifo.setTileRow(this.fetchedTileDataHigh, this.fetchedTileDataLow, this.pixelsToDiscard);
+        this.pixelsToDiscard = 0;
 
         return true;
-    }
-
-    private pushPixelToFifo(index: number) {
-        const colorBit1 = (this.fetchedTileDataHigh >> index) & 1;
-        const colorBit0 = (this.fetchedTileDataLow >> index) & 1;
-        const color = (colorBit1 << 1) | colorBit0;
-
-        this.fifo.push({
-            color,
-            isSprite: false
-        });
     }
 }

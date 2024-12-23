@@ -3,10 +3,11 @@ import { Memory } from "../memory/memory";
 import { IDisplay } from "./rendering/display";
 import { OamScanner } from "./oam/oam-scanner";
 import { BackgroundFetcher } from "./rendering/background-fetcher";
-import { PixelFifo, SpritePixelFifo } from "./rendering/pixel-fifo";
 import { PixelRenderer } from "./rendering/pixel-renderer";
 import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 import { SpriteFetcher } from "./rendering/sprite-fetcher";
+import { BgFifo } from "./rendering/bg-fifo";
+import { SpriteFifo } from "./rendering/sprite-fifo";
 
 export class Ppu {
     readonly state = new PpuState();
@@ -18,8 +19,8 @@ export class Ppu {
     private readonly backgroundFetcher: BackgroundFetcher;
     private readonly spriteFetcher: SpriteFetcher;
     private readonly pixelRenderer: PixelRenderer;
-    private readonly bgPixelFifo = new PixelFifo();
-    private readonly spritePixelFifo = new SpritePixelFifo();
+    private readonly bgPixelFifo = new BgFifo();
+    private readonly spritePixelFifo = new SpriteFifo();
 
     private readonly interruptManager: InterruptManager;
     private readonly display: IDisplay;

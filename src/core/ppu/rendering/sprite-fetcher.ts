@@ -1,8 +1,8 @@
 import { Memory } from "../../memory/memory";
 import { OamSprite } from "../oam/oam-scanner";
-import { Pixel, SpritePixelFifo } from "./pixel-fifo";
 import { PpuState } from "../ppu-state";
 import { SpriteOrderedList } from "../oam/sprite-ordered-list";
+import { SpriteFifo } from "./sprite-fifo";
 
 enum PixelFetcherState {
     Sleep,
@@ -27,7 +27,7 @@ export class SpriteFetcher {
     constructor(
         private readonly ppuState: PpuState,
         private readonly vram: Memory,
-        private readonly fifo: SpritePixelFifo
+        private readonly fifo: SpriteFifo
     ) { }
 
     foundSpriteAt(pixelX: number) {
@@ -78,7 +78,7 @@ export class SpriteFetcher {
     }
 
     private handlePushState() {
-        this.pushSpriteToFifo();
+        this.fifo.setTileRow(this.currentSprite!, this.fetchedTileDataHigh, this.fetchedTileDataLow);
         this.state = PixelFetcherState.Sleep;
     }
 
@@ -143,66 +143,5 @@ export class SpriteFetcher {
         }
 
         return tileDataAddress + (offset << 1) + (this.fetchedTileId << 4);
-    }
-
-    private pushSpriteToFifo() {
-        const sprite = this.currentSprite!;
-        const start = sprite.x < 8 ? sprite.x - 1 : 7;
-
-        if (!sprite.flipX) {
-            if (start < 7) {
-                let xPosition = 0;
-                for (let i = start; i >= 0; i--) {
-                    this.pushPixelToFifo(i, xPosition);
-                    xPosition++;
-                }
-                return;
-            }
-
-            // unroll loop if we know we have 8 pixels to push
-            this.pushPixelToFifo(7, 0);
-            this.pushPixelToFifo(6, 1);
-            this.pushPixelToFifo(5, 2);
-            this.pushPixelToFifo(4, 3);
-            this.pushPixelToFifo(3, 4);
-            this.pushPixelToFifo(2, 5);
-            this.pushPixelToFifo(1, 6);
-            this.pushPixelToFifo(0, 7);
-
-        } else {
-            if (start < 7) {
-                let xPosition = 0;
-                for (let i = 7 - start; i <= 7; i++) {
-                    this.pushPixelToFifo(i, xPosition);
-                    xPosition++;
-                }
-                return;
-            }
-
-            // unroll loop if we know we have 8 pixels to push
-            this.pushPixelToFifo(0, 0);
-            this.pushPixelToFifo(1, 1);
-            this.pushPixelToFifo(2, 2);
-            this.pushPixelToFifo(3, 3);
-            this.pushPixelToFifo(4, 4);
-            this.pushPixelToFifo(5, 5);
-            this.pushPixelToFifo(6, 6);
-            this.pushPixelToFifo(7, 7);
-        }
-    }
-
-    private pushPixelToFifo(index: number, xPosition: number) {
-        const sprite = this.currentSprite!;
-
-        const colorBit1 = (this.fetchedTileDataHigh >> index) & 1;
-        const colorBit0 = (this.fetchedTileDataLow >> index) & 1;
-        const color = (colorBit1 << 1) | colorBit0;
-
-        this.fifo.pushSpritePixel({
-            color,
-            isSprite: true,
-            spritePalette: sprite.dmgPalette,
-            spriteBgHasPriority: sprite.priority
-        }, xPosition);
     }
 }
