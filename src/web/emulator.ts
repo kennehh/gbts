@@ -11,7 +11,7 @@ const KeyMap = new Map<string, JoypadButton>([
     ['x',           JoypadButton.A],
     ['z',           JoypadButton.B],
     ['Enter',       JoypadButton.Start],
-    ['Shift',       JoypadButton.Select],
+    ['Backspace',   JoypadButton.Select],
 ]);
 
 
@@ -70,6 +70,7 @@ export class Emulator {
             if (e.key === ' ') {
                 this.postMessage({ type: 'TURBO', payload: { turbo: true } });
             }
+            e.preventDefault();
         });
 
         window.addEventListener('keyup', (e) => {
@@ -80,6 +81,7 @@ export class Emulator {
             if (e.key === ' ') {
                 this.postMessage({ type: 'TURBO', payload: { turbo: false } });
             }
+            e.preventDefault();
         });
     }
 
