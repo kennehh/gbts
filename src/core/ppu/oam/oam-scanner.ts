@@ -15,8 +15,6 @@ export type OamSprite = {
     dmgPalette: number,
     bank: number,
     cgbPalette: number,
-    
-    fetched: boolean
 }
 
 export class OamScanner {
@@ -65,8 +63,7 @@ export class OamScanner {
                 dmgPalette: (flags & 0x10) >> 4,
                 bank: (flags & 0x8) >> 3,
                 cgbPalette: flags & 0x7,
-                oamIndex, 
-                fetched: false 
+                oamIndex
             });
         }     
     }
