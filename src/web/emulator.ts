@@ -14,7 +14,6 @@ const KeyMap = new Map<string, JoypadButton>([
     ['Backspace',   JoypadButton.Select],
 ]);
 
-
 export class Emulator {
     private worker = new Worker();
 
@@ -66,22 +65,25 @@ export class Emulator {
             if (KeyMap.has(e.key)) {
                 const button = KeyMap.get(e.key)!;
                 this.postMessage({ type: 'JOYPAD_DOWN', payload: { button } });
+                e.preventDefault();
             }
             if (e.key === ' ') {
                 this.postMessage({ type: 'TURBO', payload: { turbo: true } });
+                e.preventDefault();
             }
-            e.preventDefault();
+            
         });
 
         window.addEventListener('keyup', (e) => {
             if (KeyMap.has(e.key)) {
                 const button = KeyMap.get(e.key)!;
                 this.postMessage({ type: 'JOYPAD_UP', payload: { button } });
+                e.preventDefault();
             }
             if (e.key === ' ') {
                 this.postMessage({ type: 'TURBO', payload: { turbo: false } });
+                e.preventDefault();
             }
-            e.preventDefault();
         });
     }
 

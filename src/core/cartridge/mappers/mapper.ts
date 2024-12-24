@@ -3,8 +3,8 @@ import { Memory } from "../../memory/memory";
 
 export abstract class Mapper {
     protected readonly cartHeader: CartridgeHeader;
-    protected readonly rom: Memory;
-    protected readonly ram: Memory;
+    readonly rom: Memory;
+    readonly ram: Memory;
 
     constructor(cartHeader: CartridgeHeader, rom: Uint8Array, ram: Uint8Array | null) {
         this.rom = new Memory(rom);

@@ -1,3 +1,4 @@
+import { SaveManager } from "../save/save-manager";
 import { CartridgeHeader } from "./cartridge-header";
 import { Mapper } from "./mappers/mapper";
 import { MapperFactory } from "./mappers/mapper-factory";
@@ -11,12 +12,17 @@ export interface ICartridge {
 }
 
 export class Cartridge implements ICartridge {
-    readonly header: CartridgeHeader;
-    readonly mapper: Mapper;
+    private constructor(
+        readonly header: CartridgeHeader,
+        readonly mapper: Mapper,
+        private readonly saveManager: SaveManager
+    ) {}
 
-    constructor(rom: Uint8Array, ram: Uint8Array | null = null) {
-        this.header = new CartridgeHeader(rom);
-        this.mapper = MapperFactory.create(this.header, rom, ram);
+    static async create(rom: Uint8Array, saveManager: SaveManager): Promise<Cartridge> {
+        const header = new CartridgeHeader(rom);
+        const ram = await saveManager.loadRam(header);
+        const mapper = MapperFactory.create(header, rom, ram);
+        return new Cartridge(header, mapper, saveManager);
     }
 
     readRom(address: number) {
@@ -30,6 +36,9 @@ export class Cartridge implements ICartridge {
     }
     writeRam(address: number, value: number) {
         this.mapper.writeRam(address, value);
+        if (this.header.type.hasBattery) {
+            this.saveManager.saveRam(this.header, this.mapper.ram.bytes);
+        }
     }
 
     reset() {

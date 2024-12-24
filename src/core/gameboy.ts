@@ -11,10 +11,12 @@ import { IDisplay, MockDisplay } from "./ppu/rendering/display";
 import { Ppu } from "./ppu/ppu";
 import { Timer } from "./timer/timer";
 import { Apu } from "./apu/apu";
+import { ISaveStore, MockSaveStore } from "./save/save-store";
+import { SaveManager } from "./save/save-manager";
 
 const GB_CLOCK_SPEED = 4_194_304; // Hz
 const CYCLES_PER_MS = GB_CLOCK_SPEED / 1000;
-const CYCLES_PER_MS_TURBO = CYCLES_PER_MS * 10;
+const CYCLES_PER_MS_TURBO = CYCLES_PER_MS * 50;
 const CYCLES_PER_FRAME = GB_CLOCK_SPEED / 59.73;
 const MAX_CYCLES_TO_CATCH_UP = CYCLES_PER_FRAME * 2; 
 const MAX_CYCLES_TO_CATCH_UP_TURBO = CYCLES_PER_FRAME * 5;
@@ -31,13 +33,18 @@ export class GameBoy {
     readonly serialController: SerialController;
     readonly interruptManager: InterruptManager;
     readonly display: IDisplay;
+    private readonly saveManager: SaveManager;
     
     // Timing state
     private running: boolean = false;
     private lastTimestamp: number = 0;
     private cyclesPending: number = 0;
 
-    constructor(display: IDisplay = new MockDisplay(), joypadHandler: IJoypadHandler = new MockJoypadHandler()) {
+    constructor(
+        display: IDisplay = new MockDisplay(),
+        joypadHandler: IJoypadHandler = new MockJoypadHandler(),
+        saveStore: ISaveStore = new MockSaveStore()
+    ) {
         this.display = display;
         this.serialController = new SerialController();
         this.interruptManager = new InterruptManager();
@@ -47,6 +54,7 @@ export class GameBoy {
         this.apu = new Apu();
         this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.apu, this.joypadController, this.serialController);
         this.cpu = new Cpu(this.interruptManager, this.mmu);
+        this.saveManager = new SaveManager(saveStore);
         this.reset();
     }
 
@@ -69,9 +77,9 @@ export class GameBoy {
         this.running = false;
     }
 
-    loadRom(rom: Uint8Array) {
+    async loadRom(rom: Uint8Array) {
+        const cart = await Cartridge.create(rom, this.saveManager)
         this.reset();
-        const cart = new Cartridge(rom);
         this.mmu.loadCartridge(cart);
     }
 

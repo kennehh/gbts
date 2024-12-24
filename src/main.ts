@@ -4,7 +4,7 @@ import './style.css'
 import { Emulator } from './web/emulator.ts';
 
 // Main entry point
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const emulator = new Emulator(document.getElementById('app')!);
     // Set up file input handling
     const fileInput = document.getElementById('rom-input') as HTMLInputElement;
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await emulator.loadRom(file);
-            emulator.run();
         } catch (error) {
             console.error('Error loading ROM:', error);
             alert('Failed to load ROM file');

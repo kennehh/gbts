@@ -23,6 +23,10 @@ export class Memory {
     private data: Uint8Array;
     private getWrappedAddress: (address: number) => number;
 
+    get bytes(): Uint8Array {
+        return this.data;
+    }
+
     constructor(param: Uint8Array | number) {
         this.data = param instanceof Uint8Array ? param : new Uint8Array(param);
 

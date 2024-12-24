@@ -4,16 +4,19 @@
 import { WorkerMessage } from '../common/types';
 import { GameBoy } from '../core/gameboy';
 import { IDisplay } from '../core/ppu/rendering/display';
+import { ISaveStore } from '../core/save/save-store';
 import { CanvasDisplay } from './canvas-display';
+import { IndexedDBSaveStore } from './indexeddb-save-store';
 import { JoypadHandler } from './joypad-handler';
 import { WebGLDisplay } from './webgl-display';
 
 let display: IDisplay;
 let gameboy: GameBoy;
 let joypadHandler: JoypadHandler;
+let saveStore: ISaveStore;
 
 // Handle worker messages
-self.onmessage = (e: MessageEvent) => {
+self.onmessage = async (e: MessageEvent) => {
     const message = e.data as WorkerMessage;
     switch (message?.type) {
         case 'INIT':
@@ -23,8 +26,9 @@ self.onmessage = (e: MessageEvent) => {
                 console.warn('WebGL not supported, falling back to Canvas2D');
                 display = new CanvasDisplay(message.payload.canvas);
             }
+            saveStore = await IndexedDBSaveStore.create();
             joypadHandler = new JoypadHandler();
-            gameboy = new GameBoy(display, joypadHandler);
+            gameboy = new GameBoy(display, joypadHandler, saveStore);
             break;
         case 'RUN':
             gameboy.run();
@@ -33,7 +37,8 @@ self.onmessage = (e: MessageEvent) => {
             gameboy.stop();
             break;
         case 'LOAD_ROM':
-            gameboy.loadRom(message.payload.rom);
+            await gameboy.loadRom(message.payload.rom);
+            gameboy.run();
             break;
         case 'JOYPAD_DOWN':
             joypadHandler.buttonDown(message.payload.button);
