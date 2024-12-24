@@ -21,19 +21,19 @@ export class Mbc5 extends MbcBase {
     }
 
     override writeRom(address: number, value: number): void {
-        switch (address & 0xF000) {
-            case 0x0000:
-            case 0x1000:
+        switch (address >> 12) {
+            case 0x0:
+            case 0x1:
                 this._ramEnabled = (value & 0x0F) === 0x0A;
                 break;
-            case 0x2000:
+            case 0x2:
                 this.currentLowerRomBank = value;
                 break;
-            case 0x3000:
+            case 0x3:
                 this.currentUpperRomBank = value & 0x01;
                 break;
-            case 0x4000:
-            case 0x5000:
+            case 0x4:
+            case 0x5:
                 if (this.cartHeader.type.hasRumble) {
                     //this.rumbleEnabled = (value & 0x08) !== 0;
                     this._currentRamBank = value & 0x07;

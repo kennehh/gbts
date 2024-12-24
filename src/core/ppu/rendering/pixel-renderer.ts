@@ -13,7 +13,6 @@ export class PixelRenderer {
 
     private _pixelX = 0;
     private _finishedScanline = false;
-    private _windowTriggered = false;
 
     constructor(
         private readonly ppuState: PpuState,
@@ -26,25 +25,12 @@ export class PixelRenderer {
         return this._finishedScanline;
     }
 
-    get windowTriggered() {
-        return this._windowTriggered
-    }
-
     reset() {
         this._pixelX = 0;
         this._finishedScanline = false;
-        this._windowTriggered = false;
     }
 
     tick() {
-        if (this.bgPixelFifo.length === 0) {
-            return;
-        }
-        if (this.checkWindowTrigger()) {
-            this._windowTriggered = true;
-            return;
-        }
-                
         const bgPixel = this.bgPixelFifo.shift();
         const spritePixel = this.spritePixelFifo.shift();
         
@@ -77,10 +63,9 @@ export class PixelRenderer {
         return (palette >> (pixel.color << 1)) & 0b11;
     }
     
-    private checkWindowTrigger() {
-        return !this._windowTriggered && 
-                this.ppuState.windowEnabled && 
-                this.ppuState.windowVisibleOnScanline && 
+    checkWindowTrigger() {
+        return  this.ppuState.windowEnabled && 
+                this.ppuState.scanlineReachedWindow && 
                (this._pixelX >= this.ppuState.wx - 7);
     }
 }

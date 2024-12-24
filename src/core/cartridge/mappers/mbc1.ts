@@ -45,27 +45,27 @@ export class Mbc1 extends MbcBase {
     }
 
     override writeRom(address: number, value: number): void {
-        switch (address & 0xF000) {
-            case 0x0000:
-            case 0x1000:
+        switch (address >> 12) {
+            case 0x0:
+            case 0x1:
                 // RAM Enable
                 this._ramEnabled = (value & 0x0F) === 0x0A;
                 break;
-            case 0x2000:
-            case 0x3000:
+            case 0x2:
+            case 0x3:
                 const bankNumber = value & 0x1F; 
                 this.currentLowerRomBank = bankNumber === 0 ? 1 : bankNumber;
                 break;
-            case 0x4000:
-            case 0x5000:
+            case 0x4:
+            case 0x5:
                 if (this.cartHeader.rom.size >= MemorySize.Size1MB) {                    
                     this.currentUpperRomBank = value & 0x03;
                 } else if (this.cartHeader.ram.size >= MemorySize.Size32KB) {
                     this._currentRamBank = value & 0x03;
                 }
                 break;
-            case 0x6000:
-            case 0x7000:
+            case 0x6:
+            case 0x7:
                 if (this.cartHeader.rom.size >= MemorySize.Size1MB) {
                     this.zeroBankingMode = (value & 0x01) === 0x01;
                 } else if (this.cartHeader.ram.size >= MemorySize.Size32KB) {

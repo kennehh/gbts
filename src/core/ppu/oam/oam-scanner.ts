@@ -20,12 +20,18 @@ export type OamSprite = {
 export class OamScanner {
     readonly sprites = new SpriteOrderedList();
     private currentOamIndex = 0;
+    
+    private _spritesFoundOnScanline = false;
+    get spritesFoundOnScanline() {
+        return this._spritesFoundOnScanline;
+    }
 
     constructor(private readonly state: PpuState, private readonly oam: Memory) { }
 
     reset() {
         this.sprites.clear();
         this.currentOamIndex = 0;
+        this._spritesFoundOnScanline = false;
     }
 
     tick() {
@@ -65,6 +71,8 @@ export class OamScanner {
                 cgbPalette: flags & 0x7,
                 oamIndex
             });
+
+            this._spritesFoundOnScanline = true;
         }     
     }
 }

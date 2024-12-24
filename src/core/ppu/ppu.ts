@@ -183,8 +183,8 @@ export class Ppu {
 
     private handleOamScan() {
         if (this.state.previousStatus !== PpuStatus.OamScan) {
-            if (this.state.windowEnabled && !this.state.windowVisibleOnScanline && this.state.scanline === this.state.wy) {
-                this.state.windowVisibleOnScanline = true;
+            if (this.state.windowEnabled && !this.state.scanlineReachedWindow && this.state.scanline === this.state.wy) {
+                this.state.scanlineReachedWindow = true;
             }
             this.oamScanner.reset();
             this.state.previousStatus = PpuStatus.OamScan;
@@ -218,20 +218,33 @@ export class Ppu {
             return;
         }
 
-        if (this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
-            this.bgFetcher.pause();
-            return;
-        }
-
-        if (this.spriteFetcher.fetchingSprite) {
-            this.spriteFetcher.tick();
-            if (!this.spriteFetcher.fetchingSprite && !this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
-                this.bgFetcher.resume();
+        if (this.oamScanner.spritesFoundOnScanline) {
+            if (this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
+                this.bgFetcher.pause();
+                return;
             }
-            return;
+
+            if (this.spriteFetcher.fetchingSprite) {
+                this.spriteFetcher.tick();
+                if (!this.spriteFetcher.fetchingSprite && !this.spriteFetcher.foundSpriteAt(this.pixelRenderer.pixelX)) {
+                    this.bgFetcher.resume();
+                }
+                return;
+            }
         }
 
         this.bgFetcher.tick();
+
+        if (this.bgPixelFifo.length === 0) {
+            return;
+        }
+
+        if (!this.bgFetcher.windowMode && this.pixelRenderer.checkWindowTrigger()) {
+            this.bgFetcher.reset(true);
+            this.bgPixelFifo.clear();
+            return;
+        }
+        
         this.pixelRenderer.tick();
 
         if (this.pixelRenderer.finishedScanline) {
@@ -239,12 +252,6 @@ export class Ppu {
             if (this.bgFetcher.windowMode) {
                 this.state.windowLineCounter++;
             }
-            return;
-        }
-
-        if (this.state.windowEnabled && this.pixelRenderer.windowTriggered && !this.bgFetcher.windowMode) {
-            this.bgFetcher.reset(true);
-            this.bgPixelFifo.clear();
         }
     }
 
@@ -279,7 +286,7 @@ export class Ppu {
                 this.state.status = PpuStatus.OamScan;
                 if (this.state.scanline === 0) {
                     this.state.windowLineCounter = 0;
-                    this.state.windowVisibleOnScanline = false;
+                    this.state.scanlineReachedWindow = false;
                     this.state.firstFrameAfterLcdEnable = false;
                 }
             } else {

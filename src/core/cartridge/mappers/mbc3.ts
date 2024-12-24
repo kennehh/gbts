@@ -65,18 +65,18 @@ export class Mbc3 extends MbcBase {
     }
 
     override writeRom(address: number, value: number): void {
-        switch (address & 0xF000) {
-            case 0x0000:
-            case 0x1000:
+        switch (address >> 12) {
+            case 0x0:
+            case 0x1:
                 // RAM and Timer Enable
                 this.ramAndTimerEnabled = (value & 0x0F) === 0x0A;
                 break;
-            case 0x2000:
-            case 0x3000:
+            case 0x2:
+            case 0x3:
                 this.romBankNumber = value === 0 ? 1 : value & 0x7F;
                 break;
-            case 0x4000:
-            case 0x5000:
+            case 0x4:
+            case 0x5:
                 if (value <= 0x03) {
                     this.ramBankNumber = value;
                     this.isRtcSelected = false;
@@ -85,8 +85,8 @@ export class Mbc3 extends MbcBase {
                     this.currentRtcRegister = value;
                 }
                 break;
-            case 0x6000:
-            case 0x7000:
+            case 0x6:
+            case 0x7:
                 if (value === 0x00) {
                     this.rtcLatchPending = true;
                 } else if (value === 0x01) {

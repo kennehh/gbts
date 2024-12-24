@@ -92,26 +92,26 @@ export class Mmu implements IMmu {
         }
         
         // Use upper 4 bits for primary switching
-        switch (address & 0xF000) {
+        switch (address >> 12) {
             // ROM Banks (0x0000 - 0x7FFF)
-            case 0x0000: case 0x1000: case 0x2000: case 0x3000:
-            case 0x4000: case 0x5000: case 0x6000: case 0x7000:
+            case 0x0: case 0x1: case 0x2: case 0x3:
+            case 0x4: case 0x5: case 0x6: case 0x7:
                 return this.readRomRegion(address);
 
             // VRAM (0x8000 - 0x9FFF)
-            case 0x8000: case 0x9000:
+            case 0x8: case 0x9:
                 return this.ppu.readVram(address);
 
             // External RAM (0xA000 - 0xBFFF)
-            case 0xa000: case 0xb000:
+            case 0xa: case 0xb:
                 return this.cartridge.readRam(address);
 
             // WRAM and Echo (0xC000 - 0xFDFF)
-            case 0xc000: case 0xd000: case 0xe000: 
+            case 0xc: case 0xd: case 0xe: 
                 return this.wram.read(address);
 
             // Special F range
-            case 0xf000:
+            case 0xf:
                 if (address <= 0xfdff) {
                     return this.wram.read(address);
                 }
@@ -152,30 +152,30 @@ export class Mmu implements IMmu {
             return;
         }
 
-        switch (address & 0xF000) {
+        switch (address >> 12) {
             // ROM Banks (0x0000 - 0x7FFF)
-            case 0x0000: case 0x1000: case 0x2000: case 0x3000:
-            case 0x4000: case 0x5000: case 0x6000: case 0x7000:
+            case 0x0: case 0x1: case 0x2: case 0x3:
+            case 0x4: case 0x5: case 0x6: case 0x7:
                 this.cartridge.writeRom(address, value);
                 return;
 
             // VRAM (0x8000 - 0x9FFF)
-            case 0x8000: case 0x9000:
+            case 0x8: case 0x9:
                 this.ppu.writeVram(address, value);
                 return;
 
             // External RAM (0xA000 - 0xBFFF)
-            case 0xa000: case 0xb000:
+            case 0xa: case 0xb:
                 this.cartridge.writeRam(address, value);
                 return;
 
             // WRAM and Echo (0xC000 - 0xFDFF)
-            case 0xc000: case 0xd000: case 0xe000:
+            case 0xc: case 0xd: case 0xe:
                 this.wram.write(address, value);
                 return;
 
             // Special F range
-            case 0xf000:
+            case 0xf:
                 if (address <= 0xfdff) {
                     this.wram.write(address, value);
                     return;
