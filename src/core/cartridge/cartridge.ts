@@ -19,7 +19,7 @@ export class Cartridge implements ICartridge {
     ) {}
 
     static async create(rom: Uint8Array, saveManager: SaveManager): Promise<Cartridge> {
-        const header = new CartridgeHeader(rom);
+        const header = await CartridgeHeader.fromRom(rom);
         const ram = await saveManager.loadRam(header);
         const mapper = MapperFactory.create(header, rom, ram);
         return new Cartridge(header, mapper, saveManager);

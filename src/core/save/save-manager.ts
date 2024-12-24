@@ -1,7 +1,6 @@
 import { CartridgeHeader } from "../cartridge/cartridge-header";
 import { GameBoyState } from "../gameboy-state";
 import { ISaveStore } from "./save-store";
-import xxhash from "xxhash-wasm";
 
 export class SaveManager {
     private currentRamSavePromise: Promise<void> | null = null;
@@ -17,10 +16,9 @@ export class SaveManager {
             try {
                 // Delay to ensure that all writes are complete before saving
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                const cartId = await this.getCartId(header);
 
                 await this.storage.saveRam({
-                    cartId,
+                    cartId: header.cartId,
                     timestamp: new Date(),
                     data: ram
                 });
@@ -37,13 +35,11 @@ export class SaveManager {
             return null;
         }
 
-        const cartId = await this.getCartId(header);
-        const save = await this.storage.loadRam(cartId);
+        const save = await this.storage.loadRam(header.cartId);
         return save?.data ?? null;
     }
 
-    async saveState(header: CartridgeHeader, slot: number, state: GameBoyState) {
-        const cartId = await this.getCartId(header);
+    async saveState(cartId: number, slot: number, state: GameBoyState) {
         await this.storage.saveState({
             cartId,
             slot: slot,
@@ -52,15 +48,8 @@ export class SaveManager {
         });
     }
 
-    async loadState(header: CartridgeHeader, slot: number): Promise<GameBoyState | null> {
-        const cartId = await this.getCartId(header);
+    async loadState(cartId: number, slot: number): Promise<GameBoyState | null> {
         const save = await this.storage.loadState(cartId, slot);
         return save?.data ?? null;
-    }
-
-    private async getCartId(header: CartridgeHeader): Promise<number> {
-        const input = `${header.title}::${header.headerChecksum.value}::${header.globalChecksum.value}`;
-        const { h32 } = await xxhash();
-        return h32(input);
     }
 }

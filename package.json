@@ -16,7 +16,6 @@
     "vitest": "^2.1.5"
   },
   "dependencies": {
-    "fflate": "^0.8.2",
-    "xxhash-wasm": "^1.1.0"
+    "fflate": "^0.8.2"
   }
 }

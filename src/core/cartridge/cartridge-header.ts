@@ -67,7 +67,12 @@ export class CartridgeHeader {
     readonly globalChecksum: CartridgeChecksum;
     readonly romSizeDoesNotMatch: boolean;
 
-    constructor(rom: Uint8Array) {
+    private _cartId: number = 0;
+    get cartId(): number {
+        return this._cartId;
+    }
+
+    private constructor(rom: Uint8Array) {
         this.title = this.parseTitle(rom);
         this.licensee = this.parseLicensee(rom);
         this.cgbFlag = this.parseCgbFlag(rom);
@@ -80,6 +85,36 @@ export class CartridgeHeader {
         this.headerChecksum = this.parseHeaderChecksum(rom);
         this.globalChecksum = this.parseGlobalChecksum(rom);
         this.romSizeDoesNotMatch = rom.length !== this.rom.size;
+    }
+
+    static async fromRom(rom: Uint8Array): Promise<CartridgeHeader> {
+        const header = new CartridgeHeader(rom);
+        header._cartId = await CartridgeHeader.generateCartId(header);
+        return header;
+    }
+
+    private static async generateCartId(header: CartridgeHeader): Promise<number> {
+        const encoder = new TextEncoder();
+        const title = header.title.trim().toUpperCase().padEnd(16, '\0');
+        const data = new Uint8Array([
+            ...encoder.encode(title),
+            header.type.rawValue,
+            header.rom.rawValue,
+            header.ram.rawValue,
+            header.maskRomVersion,
+            header.destinationCode,
+            header.cgbFlag,
+        ]);
+
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const view = new DataView(hashBuffer);
+
+        // Get as much of the hash as we can that can fit in a javascript number (53 bits)
+        const lower32 = view.getUint32(0);
+        const upper21 = view.getUint32(4) & 0x1FFFFF;
+
+        // Bitwise operations are done in 32 bit, so we need to use Number operations to get the full 53 bits
+        return lower32 + (upper21 * 0x100000000); // 2^32
     }
 
     private parseTitle(rom: Uint8Array): string {
