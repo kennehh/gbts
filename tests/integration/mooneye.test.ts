@@ -15,10 +15,10 @@ function getRoms(relativePath: string) {
         }));
 }
 
-function testRom(romPath: string) {
+async function testRom(romPath: string) {
     const romBuffer = readFileSync(romPath);
     const gb = new GameBoy();
-    gb.loadRom(romBuffer);
+    await gb.loadRom(romBuffer);
 
     const start = Date.now();
     while (gb.mmu.read(gb.cpu.state.pc) !== 0x40) {

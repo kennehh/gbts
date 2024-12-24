@@ -16,10 +16,10 @@ function getRoms(relativePath: string) {
         }));
 }
 
-function testRom(romPath: string) {
+async function testRom(romPath: string) {
     const romBuffer = readFileSync(romPath);
     const gb = new GameBoy();
-    gb.loadRom(romBuffer);
+    await gb.loadRom(romBuffer);
     let message = '';
 
     const start = Date.now();
