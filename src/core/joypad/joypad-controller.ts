@@ -15,25 +15,36 @@ const enum JoypadRegisterFlag {
 
 export class JoypadController {
     private register = JoypadRegisterFlag.DefaultState;
+    private lastRegister = JoypadRegisterFlag.DefaultState;
+    private selectActionSelected = true;
+    private selectDirectionSelected = true;
+    private lastPressedButtons = JoypadButton.None;
+
     constructor(
         private readonly handler: IJoypadHandler,
         private readonly interruptManager: InterruptManager
     ) {}
 
     checkForInputs() {
-        const oldState = this.register;
+        const pressedButtons = this.handler.getPressedButtons();
+        const buttonsChanged = pressedButtons !== this.lastPressedButtons;
+        const registerChanged = this.register !== this.lastRegister;
+
+        if (!buttonsChanged && !registerChanged) {
+            return;
+        }
+
+        this.lastPressedButtons = pressedButtons;
 
         let state = 0x0f;
-        if ((this.register & JoypadRegisterFlag.SelectActionNotSelected) === 0) {
-            state = this.checkButtons(true);
-        } else if ((this.register & JoypadRegisterFlag.SelectDirectionNotSelected) === 0) {
-            state = this.checkButtons(false);
+        if (this.selectActionSelected) {
+            state = this.checkButtons(true, pressedButtons);
+        } else if (this.selectDirectionSelected) {
+            state = this.checkButtons(false, pressedButtons);
         }
-        this.register = (this.register & 0xf0) | state;
 
-        if (oldState !== this.register) {
-            this.interruptManager.requestInterrupt(InterruptFlag.Joypad);
-        }
+        this.register = (this.register & 0xf0) | state;
+        this.interruptManager.requestInterrupt(InterruptFlag.Joypad);
     }
 
     readRegister() {
@@ -41,15 +52,17 @@ export class JoypadController {
     }
 
     writeRegister(value: number) {
+        this.lastRegister = this.register;
         this.register = (this.register & 0b1100_1111) | (value & 0b0011_0000);
+        this.selectActionSelected = (value & JoypadRegisterFlag.SelectActionNotSelected) === 0;
+        this.selectDirectionSelected = (value & JoypadRegisterFlag.SelectDirectionNotSelected) === 0;
     }
 
     reset() {
         this.register = JoypadRegisterFlag.DefaultState;
     }
 
-    private checkButtons(isAction: boolean) {
-        const pressedButtons = this.handler.getPressedButtons();
+    private checkButtons(isAction: boolean, pressedButtons: number) {
         const state = isAction ? pressedButtons >> 4 : pressedButtons & 0x0f;
         return ~state & 0x0f;
     }

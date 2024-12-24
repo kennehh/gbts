@@ -14,10 +14,10 @@ interface BenchmarkResult {
     speedupFactor: number;  // How many times faster than original Game Boy
 }
 
-function benchmarkRom(romPath: string): BenchmarkResult {
+async function benchmarkRom(romPath: string): Promise<BenchmarkResult> {
     const romBuffer = readFileSync(romPath);
     const gb = new GameBoy();
-    gb.loadRom(romBuffer);
+    await gb.loadRom(romBuffer);
 
     const startTime = process.hrtime.bigint();
     let totalCycles = 0n;
@@ -63,7 +63,7 @@ function getEmulationTimeOnRealGameBoy(cycles: number): number {
     return (cycles / GAMEBOY_CLOCK_SPEED) * 1000; // Convert to milliseconds
 }
 
-function runBenchmarks(romPath: string, iterations: number = 5) {
+async function runBenchmarks(romPath: string, iterations: number = 5) {
     console.log(`Running ${iterations} benchmarks for ${romPath}`);
     console.log('----------------------------------------');
     console.log(`Original Game Boy Clock Speed: ${(GAMEBOY_CLOCK_SPEED / 1_000_000).toFixed(2)} MHz`);
@@ -72,7 +72,7 @@ function runBenchmarks(romPath: string, iterations: number = 5) {
     const results: BenchmarkResult[] = [];
 
     for (let i = 0; i < iterations; i++) {
-        const result = benchmarkRom(romPath);
+        const result = await benchmarkRom(romPath);
         results.push(result);
         
         const realGBTime = getEmulationTimeOnRealGameBoy(result.totalCycles);
