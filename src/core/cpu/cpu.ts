@@ -748,14 +748,16 @@ export class Cpu {
     }
 
     private inc_16(operand: Operand16Bit) {
-        this.triggerOamBug(operand);
-        this.writeValue16Bit(operand, this.readValue16Bit(operand) + 1);
+        const value = this.readValue16Bit(operand);
+        this.triggerOamBugAtAddress(value);
+        this.writeValue16Bit(operand, value + 1);
         this.tickMCycle();
     }
 
     private dec_16(operand: Operand16Bit) {
-        this.triggerOamBug(operand);
-        this.writeValue16Bit(operand, this.readValue16Bit(operand) - 1);
+        const value = this.readValue16Bit(operand);
+        this.triggerOamBugAtAddress(value);
+        this.writeValue16Bit(operand, value - 1);
         this.tickMCycle();
     }
 

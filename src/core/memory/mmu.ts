@@ -208,7 +208,6 @@ export class Mmu implements IMmu {
     triggerOamBug(address: number) {
         // CGB: no OAM bug, return early
         // https://github.com/LIJI32/SameBoy/blob/master/Core/memory.c#L93
-
         if (address >= 0xfe00 && address < 0xff00) {
             const oamIndex = this.ppu.getCurrentOamIndexBeingScanned();
             if (oamIndex >= 8) {
