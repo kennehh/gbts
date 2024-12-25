@@ -25,7 +25,23 @@ export class JoypadController {
         private readonly interruptManager: InterruptManager
     ) {}
 
-    checkForInputs() {
+    readRegister() {
+        this.checkForInputs();
+        return this.register;
+    }
+
+    writeRegister(value: number) {
+        this.lastRegister = this.register;
+        this.register = (this.register & 0b1100_1111) | (value & 0b0011_0000);
+        this.selectActionSelected = (value & JoypadRegisterFlag.SelectActionNotSelected) === 0;
+        this.selectDirectionSelected = (value & JoypadRegisterFlag.SelectDirectionNotSelected) === 0;
+    }
+
+    reset() {
+        this.register = JoypadRegisterFlag.DefaultState;
+    }
+
+    private checkForInputs() {
         const pressedButtons = this.handler.getPressedButtons();
         const buttonsChanged = pressedButtons !== this.lastPressedButtons;
         const registerChanged = this.register !== this.lastRegister;
@@ -45,21 +61,6 @@ export class JoypadController {
 
         this.register = (this.register & 0xf0) | state;
         this.interruptManager.requestInterrupt(InterruptFlag.Joypad);
-    }
-
-    readRegister() {
-        return this.register;
-    }
-
-    writeRegister(value: number) {
-        this.lastRegister = this.register;
-        this.register = (this.register & 0b1100_1111) | (value & 0b0011_0000);
-        this.selectActionSelected = (value & JoypadRegisterFlag.SelectActionNotSelected) === 0;
-        this.selectDirectionSelected = (value & JoypadRegisterFlag.SelectDirectionNotSelected) === 0;
-    }
-
-    reset() {
-        this.register = JoypadRegisterFlag.DefaultState;
     }
 
     private checkButtons(isAction: boolean, pressedButtons: number) {

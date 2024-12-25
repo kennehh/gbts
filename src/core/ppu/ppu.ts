@@ -186,9 +186,9 @@ export class Ppu {
             if (this.state.windowEnabled && !this.state.scanlineReachedWindow && this.state.scanline === this.state.wy) {
                 this.state.scanlineReachedWindow = true;
             }
+            this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
             this.oamScanner.reset();
             this.state.previousStatus = PpuStatus.OamScan;
-            this.checkStatInterrupt(StatInterruptSourceFlag.Oam);
         }
 
         this.oamScanner.tick();
@@ -261,40 +261,44 @@ export class Ppu {
             this.checkStatInterrupt(StatInterruptSourceFlag.HBlank);
         }
 
-        this.handleEndOfScanline();
+        this.checkIfEndOfScanline();
     }
 
     private handleVBlank() {
         if (this.state.previousStatus !== PpuStatus.VBlank) {
             this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
+            this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
             this.display.renderFrame();
             this.state.previousStatus = PpuStatus.VBlank;
-            this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
         }
 
-        this.handleEndOfScanline();
+        this.checkIfEndOfScanline();
     }
 
-    private handleEndOfScanline() {
+    private checkIfEndOfScanline() {
         if (this.state.tCycles === 452) {
             this.state.ly = this.state.ly === 153 ? 0 : this.state.ly + 1;            
-        } else if (this.state.tCycles >= 456) {
+            return;
+        }
+        if (this.state.tCycles >= 456) {
             this.state.scanline = this.state.scanline === 153 ? 0 : this.state.scanline + 1;
             this.state.tCycles = 0;
 
-            if (this.state.scanline < 144) {
-                this.state.status = PpuStatus.OamScan;
-                if (this.state.scanline === 0) {
-                    this.state.windowLineCounter = 0;
-                    this.state.scanlineReachedWindow = false;
-                    this.state.firstFrameAfterLcdEnable = false;
-                }
-            } else {
-                this.state.status = PpuStatus.VBlank;
-            }
-
             if (this.state.lyCoincidence) {
                 this.checkStatInterrupt(StatInterruptSourceFlag.Lcdc);
+            }
+
+            if (this.state.scanline >= 144) {
+                this.state.status = PpuStatus.VBlank;
+                return;
+            }
+
+            this.state.status = PpuStatus.OamScan;
+
+            if (this.state.scanline === 0) {
+                this.state.windowLineCounter = 0;
+                this.state.scanlineReachedWindow = false;
+                this.state.firstFrameAfterLcdEnable = false;
             }
         }
     }

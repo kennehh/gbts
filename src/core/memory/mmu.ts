@@ -54,7 +54,6 @@ export class Mmu implements IMmu {
     tickMCycle(): void {
         this.timer.tickMCycle();
         //this.serialController.tickTCycle();
-        this.joypadController.checkForInputs();
         this.dmaController.tickMCycle();
     }
 

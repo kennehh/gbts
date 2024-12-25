@@ -30,18 +30,23 @@ export class PixelRenderer {
         this._finishedScanline = false;
     }
 
+    checkWindowTrigger() {
+        return  this.ppuState.windowEnabled && 
+                this.ppuState.scanlineReachedWindow && 
+               (this._pixelX >= this.ppuState.wx - 7);
+    }
+
     tick() {
         const bgPixel = this.bgPixelFifo.shift();
         const spritePixel = this.spritePixelFifo.shift();
         
         let color = 0;
         if (!this.ppuState.firstFrameAfterLcdEnable) {
-            const finalPixel = this.mixPixels(bgPixel, spritePixel);
-            color = this.getFinalPixel(finalPixel);
+            const pixel = this.mixPixels(bgPixel, spritePixel);
+            color = this.getFinalPixel(pixel);
         }
 
-        this.display.setPixel(this.ppuState.scanline, this._pixelX, color);
-        this._pixelX++;
+        this.display.setPixel(this.ppuState.scanline, this._pixelX++, color);
         
         if (this._pixelX === 160) {
             this._finishedScanline = true;
@@ -56,16 +61,9 @@ export class PixelRenderer {
     }
 
     private getFinalPixel(pixel: Pixel): number {
-        let palette = this.ppuState.bgp;
-        if (pixel.isSprite) {
-            palette = pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0;
-        }
+        const palette = pixel.isSprite ? 
+            (pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0) :
+            this.ppuState.bgp;
         return (palette >> (pixel.color << 1)) & 0b11;
-    }
-    
-    checkWindowTrigger() {
-        return  this.ppuState.windowEnabled && 
-                this.ppuState.scanlineReachedWindow && 
-               (this._pixelX >= this.ppuState.wx - 7);
     }
 }

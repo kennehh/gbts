@@ -42,8 +42,7 @@ export class SpriteOrderedList {
             return null;
         }
 
-        const x = pixelX + 8;
-        if (this.head.sprite.x > x) {
+        if (this.head.sprite.x > pixelX + 8) {
             return null;    
         }
 

@@ -75,9 +75,10 @@ export class WebGLDisplay implements IDisplay {
     }
 
     setPixel(y: number, x: number, colorId: number): void {
-        if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
-            return;
-        }
+        // Assume x and y are within bounds
+        // if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+        //     return;
+        // }
         const offset = y * SCREEN_WIDTH + x;
         if (this.frameData[offset] !== colorId) {
             this.frameData[offset] = colorId;
