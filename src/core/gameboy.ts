@@ -50,7 +50,7 @@ export class GameBoy {
         this.interruptManager = new InterruptManager();
         this.timer = new Timer(this.interruptManager);
         this.joypadController = new JoypadController(joypadHandler, this.interruptManager);
-        this.ppu = new Ppu(this.interruptManager, display);
+        this.ppu = new Ppu(this.interruptManager, display, this.joypadController);
         this.apu = new Apu();
         this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.apu, this.joypadController, this.serialController);
         this.cpu = new Cpu(this.interruptManager, this.mmu);

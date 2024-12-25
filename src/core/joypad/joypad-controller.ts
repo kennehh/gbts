@@ -39,28 +39,38 @@ export class JoypadController {
 
     reset() {
         this.register = JoypadRegisterFlag.DefaultState;
+        this.lastRegister = JoypadRegisterFlag.DefaultState;
+        this.selectActionSelected = true;
+        this.selectDirectionSelected = true;
+        this.lastPressedButtons = JoypadButton.None;
     }
 
-    private checkForInputs() {
+    checkForInputs() {
         const pressedButtons = this.handler.getPressedButtons();
-        const buttonsChanged = pressedButtons !== this.lastPressedButtons;
-        const registerChanged = this.register !== this.lastRegister;
-
-        if (!buttonsChanged && !registerChanged) {
+        if (pressedButtons === this.lastPressedButtons && this.register === this.lastRegister) {
             return;
         }
 
+        this.lastRegister = this.register;
         this.lastPressedButtons = pressedButtons;
+        const oldState = this.register & 0x0f;
+        const actionState = this.checkButtons(true, pressedButtons);
+        const directionState = this.checkButtons(false, pressedButtons);
 
-        let state = 0x0f;
-        if (this.selectActionSelected) {
-            state = this.checkButtons(true, pressedButtons);
-        } else if (this.selectDirectionSelected) {
-            state = this.checkButtons(false, pressedButtons);
+        const highToLowTransitions = (oldState & ~(actionState & directionState)) & 0x0f
+        if (highToLowTransitions !== 0) {
+            this.interruptManager.requestInterrupt(InterruptFlag.Joypad);
         }
 
-        this.register = (this.register & 0xf0) | state;
-        this.interruptManager.requestInterrupt(InterruptFlag.Joypad);
+        let newState = 0x0f;
+        if (this.selectActionSelected) {
+            newState &= actionState;
+        }
+        if (this.selectDirectionSelected) {
+            newState &= directionState;
+        }
+
+        this.register = (this.register & 0xf0) | newState;
     }
 
     private checkButtons(isAction: boolean, pressedButtons: number) {

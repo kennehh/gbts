@@ -8,6 +8,7 @@ import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
 import { SpriteFetcher } from "./rendering/sprite-fetcher";
 import { BgFifo } from "./rendering/bg-fifo";
 import { SpriteFifo } from "./rendering/sprite-fifo";
+import { JoypadController } from "../joypad/joypad-controller";
 
 export class Ppu {
     readonly state = new PpuState();
@@ -27,7 +28,11 @@ export class Ppu {
 
     private previousEnableLcd = false;
 
-    constructor(interruptManager: InterruptManager, display: IDisplay) {
+    constructor(
+        interruptManager: InterruptManager,
+        display: IDisplay,
+        private readonly joypadController: JoypadController
+    ) {
         this.interruptManager = interruptManager;
         this.oamScanner = new OamScanner(this.state, this.oam);
         this.display = display;
@@ -281,6 +286,9 @@ export class Ppu {
             return;
         }
         if (this.state.tCycles >= 456) {
+            // Check for joypad interrupt every LY instead of every frame to pass Telling LYs
+            this.joypadController.checkForInputs();
+
             this.state.scanline = this.state.scanline === 153 ? 0 : this.state.scanline + 1;
             this.state.tCycles = 0;
 
