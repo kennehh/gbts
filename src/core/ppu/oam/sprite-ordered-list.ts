@@ -53,6 +53,7 @@ export class SpriteOrderedList {
     }
 
     private compare(a: OamSprite, b: OamSprite) {
+        // CGB: Only OAM index is used for sorting
         const xDifference = a.x - b.x;
         return xDifference !== 0 ? xDifference : a.oamIndex - b.oamIndex;
     }

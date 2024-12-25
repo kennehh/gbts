@@ -165,6 +165,13 @@ export class Ppu {
         }
     }
 
+    getCurrentOamIndexBeingScanned() {
+        if (this.state.status !== PpuStatus.OamScan) {
+            return -1;
+        }
+        return this.oamScanner.currentOamIndex;
+    }
+
     private handleLcdEnabledChange() {
         this.state.ly = 0;
         this.state.scanline = 0;

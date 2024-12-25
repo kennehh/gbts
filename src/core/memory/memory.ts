@@ -57,6 +57,24 @@ export class Memory {
         this.data[address] = value;
     }
 
+    read16(address: number): number {
+        return (this.read(address + 1) << 8) | this.read(address);
+    }
+
+    write16(address: number, value: number): void {
+        this.write(address, value & 0xff);
+        this.write(address + 1, value >> 8);
+    }
+
+    readDirect16(address: number): number {
+        return (this.readDirect(address + 1) << 8) | this.readDirect(address);
+    }
+    
+    writeDirect16(address: number, value: number): void {
+        this.writeDirect(address, value & 0xff);
+        this.writeDirect(address + 1, value >> 8);
+    }
+
     fill(value: number): void {
         this.data.fill(value);
     }

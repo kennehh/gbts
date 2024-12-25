@@ -20,6 +20,7 @@ export interface IMmu {
     reset(): void;
     loadBootRom(rom: Memory): void;
     loadCartridge(cart: ICartridge): void;
+    triggerOamBug(address: number): void;
 }
 
 export class Mmu implements IMmu {
@@ -202,6 +203,30 @@ export class Mmu implements IMmu {
                 throw new Error(`Invalid write address: ${address.toString(16)}`);
         }
         throw new Error(`Invalid write address: ${address.toString(16)}`);
+    }
+
+    triggerOamBug(address: number) {
+        // CGB: no OAM bug, return early
+        // https://github.com/LIJI32/SameBoy/blob/master/Core/memory.c#L93
+
+        if (address >= 0xfe00 && address < 0xff00) {
+            const oamIndex = this.ppu.getCurrentOamIndexBeingScanned();
+            if (oamIndex >= 8) {
+                const a = this.ppu.oam.readDirect16(oamIndex);
+                const b = this.ppu.oam.readDirect16(oamIndex - 4);
+                const c = this.ppu.oam.readDirect16(oamIndex - 2);
+                this.ppu.oam.writeDirect16(oamIndex, this.bitwiseGlitch(a, b, c));
+
+                for (let i = 2; i < 8; i++) {
+                    this.ppu.oam.writeDirect(oamIndex + i, this.ppu.oam.readDirect(oamIndex - 8 + i));
+                }
+            }
+        }
+    }
+
+    private bitwiseGlitch(a: number, b: number, c: number): number {
+        // https://github.com/LIJI32/SameBoy/blob/master/Core/memory.c#L29
+        return ((a ^ c) & (b ^ c)) ^ c;
     }
 
     private readRomRegion(address: number): number {

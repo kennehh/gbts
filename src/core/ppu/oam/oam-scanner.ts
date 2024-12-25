@@ -19,8 +19,12 @@ export type OamSprite = {
 
 export class OamScanner {
     readonly sprites = new SpriteOrderedList();
-    private currentOamIndex = 0;
     private doEvaluate = false;
+
+    private _currentOamIndex = 0;
+    get currentOamIndex() {
+        return this._currentOamIndex;
+    }
     
     private _spritesFoundOnScanline = false;
     get spritesFoundOnScanline() {
@@ -31,7 +35,7 @@ export class OamScanner {
 
     reset() {
         this.sprites.clear();
-        this.currentOamIndex = 0;
+        this._currentOamIndex = 0;
         this._spritesFoundOnScanline = false;
         this.doEvaluate = false;
     }
@@ -47,8 +51,8 @@ export class OamScanner {
     }
 
     private evaluateSprite() {
-        const oamIndex = this.currentOamIndex;
-        this.currentOamIndex += 4;
+        const oamIndex = this._currentOamIndex;
+        this._currentOamIndex += 4;
 
         if (this.state.dmaActive) {
             return;

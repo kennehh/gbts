@@ -748,11 +748,13 @@ export class Cpu {
     }
 
     private inc_16(operand: Operand16Bit) {
+        this.triggerOamBug(operand);
         this.writeValue16Bit(operand, this.readValue16Bit(operand) + 1);
         this.tickMCycle();
     }
 
     private dec_16(operand: Operand16Bit) {
+        this.triggerOamBug(operand);
         this.writeValue16Bit(operand, this.readValue16Bit(operand) - 1);
         this.tickMCycle();
     }
@@ -855,6 +857,7 @@ export class Cpu {
     }
 
     private ld_a_hl(inc: number) {
+        this.triggerOamBugAtAddress(this.state.hl);
         this.state.a = this.readMemory8Bit(this.state.hl);
         this.state.hl += inc;
     }
@@ -948,6 +951,7 @@ export class Cpu {
     // Stack Instructions
 
     private push(operand: Operand16Bit) {
+        this.triggerOamBugAtAddress(this.state.sp);
         this.push_val(this.readValue16Bit(operand));
     }
 
@@ -963,6 +967,7 @@ export class Cpu {
     }
 
     private pop(operand: Operand16Bit) {
+        this.triggerOamBug(operand);
         this.writeValue16Bit(operand, this.pop_val());
     }
 
@@ -988,5 +993,13 @@ export class Cpu {
 
         this.tickMCycle();
         return result & 0xFFFF;
+    }
+
+    private triggerOamBug(operand: Operand16Bit) {
+        this.triggerOamBugAtAddress(this.readValue16Bit(operand));
+    }
+
+    private triggerOamBugAtAddress(address: number) {
+        this.mmu.triggerOamBug(address);
     }
 }
