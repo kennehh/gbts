@@ -1,10 +1,12 @@
 // emulator.worker.ts
 /// <reference lib="webworker" />
 
-import { WorkerMessage } from '../common/types';
+import { ToWorkerMessage } from '../common/types';
+import { IAudioOutput, MockAudioOutput } from '../core/apu/audio-output';
 import { GameBoy } from '../core/gameboy';
 import { IDisplay } from '../core/ppu/rendering/display';
 import { ISaveStore } from '../core/save/save-store';
+import { AudioOutput } from './audio-output';
 import { CanvasDisplay } from './canvas-display';
 import { IndexedDBSaveStore } from './indexeddb-save-store';
 import { JoypadHandler } from './joypad-handler';
@@ -14,10 +16,11 @@ let display: IDisplay;
 let gameboy: GameBoy;
 let joypadHandler: JoypadHandler;
 let saveStore: ISaveStore;
+let audioOutput: IAudioOutput
 
 // Handle worker messages
-self.onmessage = async (e: MessageEvent) => {
-    const message = e.data as WorkerMessage;
+self.onmessage = async (e: MessageEvent<ToWorkerMessage>) => {
+    const message = e.data;
     switch (message?.type) {
         case 'INIT':
             try {
@@ -28,7 +31,9 @@ self.onmessage = async (e: MessageEvent) => {
             }
             saveStore = await IndexedDBSaveStore.create();
             joypadHandler = new JoypadHandler();
-            gameboy = new GameBoy(display, joypadHandler, saveStore);
+            // audioOutput = new AudioOutput();
+            audioOutput = new MockAudioOutput();
+            gameboy = new GameBoy(display, joypadHandler, saveStore, audioOutput);
             break;
         case 'RUN':
             gameboy.run();

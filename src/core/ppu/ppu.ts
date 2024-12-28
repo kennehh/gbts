@@ -140,7 +140,7 @@ export class Ppu {
         this.oam.write(address, value);
     }    
     
-    tickTCycle() {        
+    tick() {        
         if (this.state.lcdEnabled !== this.previousEnableLcd) {
             this.handleLcdEnabledChange();
         }
@@ -256,10 +256,8 @@ export class Ppu {
             this.bgPixelFifo.clear();
             return;
         }
-        
-        this.pixelRenderer.tick();
 
-        if (this.pixelRenderer.finishedScanline) {
+        if (this.pixelRenderer.tick()) {
             this.state.status = PpuStatus.HBlank;
             if (this.bgFetcher.windowMode) {
                 this.state.windowLineCounter++;

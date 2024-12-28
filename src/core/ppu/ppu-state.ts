@@ -75,31 +75,43 @@ export class PpuState {
     }
 
     // LCDC register
-    private _lcdc: number = 0;
-    bgWindowEnable: boolean = false;
-    spriteEnable: boolean = false;
-    spriteHeight: number = 8;
-    bgTileMapAddress: number = 0x9800;
-    useBgWindow8000AdressingMode: boolean = false;
-    windowEnabled: boolean = false;
-    windowTileMapAddress: number = 0x9800;         
-    lcdEnabled: boolean = false;
-
-    get lcdc(): number {
-        return this._lcdc;
-    }
-
+    private _lcdc: number = 0;    
+    get lcdc(): number { return this._lcdc; }
     set lcdc(value: number) {
         this._lcdc = value & 0xff;
-        this.bgWindowEnable =               (value & 0b0000_0001) !== 0;
-        this.spriteEnable =                 (value & 0b0000_0010) !== 0;
-        this.spriteHeight =                 (value & 0b0000_0100) !== 0 ? 16 : 8;
-        this.bgTileMapAddress =             (value & 0b0000_1000) !== 0 ? 0x9C00 : 0x9800;
-        this.useBgWindow8000AdressingMode = (value & 0b0001_0000) !== 0;
-        this.windowEnabled =                (value & 0b0010_0000) !== 0;
-        this.windowTileMapAddress =         (value & 0b0100_0000) !== 0 ? 0x9C00 : 0x9800;
-        this.lcdEnabled =                   (value & 0b1000_0000) !== 0;
+        this._bgWindowEnable =               (value & 0b0000_0001) !== 0;
+        this._spriteEnable =                 (value & 0b0000_0010) !== 0;
+        this._spriteHeight =                 (value & 0b0000_0100) !== 0 ? 16 : 8;
+        this._bgTileMapAddress =             (value & 0b0000_1000) !== 0 ? 0x9C00 : 0x9800;
+        this._useBgWindow8000AdressingMode = (value & 0b0001_0000) !== 0;
+        this._windowEnabled =                (value & 0b0010_0000) !== 0;
+        this._windowTileMapAddress =         (value & 0b0100_0000) !== 0 ? 0x9C00 : 0x9800;
+        this._lcdEnabled =                   (value & 0b1000_0000) !== 0;
     }
+
+    private _bgWindowEnable: boolean = false;
+    get bgWindowEnable(): boolean { return this._bgWindowEnable; }
+
+    private _spriteEnable: boolean = false;
+    get spriteEnable(): boolean { return this._spriteEnable; }
+
+    private _spriteHeight: number = 8;
+    get spriteHeight(): number { return this._spriteHeight; }
+
+    private _bgTileMapAddress: number = 0x9800;
+    get bgTileMapAddress(): number { return this._bgTileMapAddress; }
+
+    private _useBgWindow8000AdressingMode: boolean = false;
+    get useBgWindow8000AdressingMode(): boolean { return this._useBgWindow8000AdressingMode; }
+
+    private _windowEnabled: boolean = false;
+    get windowEnabled(): boolean { return this._windowEnabled }
+
+    private _windowTileMapAddress: number = 0x9800;
+    get windowTileMapAddress(): number { return this._windowTileMapAddress; }
+
+    private _lcdEnabled: boolean = false;
+    get lcdEnabled(): boolean { return this._lcdEnabled; }
 
     // Internal states
 

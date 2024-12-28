@@ -1,5 +1,5 @@
 import { JoypadButton } from '../common/enums';
-import { WorkerMessage } from '../common/types';
+import { FromWorkerMessage, ToWorkerMessage } from '../common/types';
 import Worker from '../worker/emulator-worker?worker&inline';
 import { unzipSync } from 'fflate';
 
@@ -16,6 +16,7 @@ const KeyMap = new Map<string, JoypadButton>([
 
 export class Emulator {
     private worker = new Worker();
+    private audioContext?: AudioContext;
 
     constructor(parent: HTMLElement, scale: number = 4) {
         if (!parent) throw new Error('Parent element not found');
@@ -28,10 +29,22 @@ export class Emulator {
         canvas.style.imageRendering = 'pixelated';
         parent.appendChild(canvas);
 
-        this.setupInputEventListeners();
-
         const offscreen = canvas.transferControlToOffscreen();
         this.postMessage({ type: 'INIT', payload: { canvas: offscreen } }, [offscreen]);
+
+        this.setupInputEventListeners();
+        this.setupWorkerMessageListeners();
+    }
+
+    createAudioContext() {
+        if (this.audioContext) {
+            return;
+        }
+
+        this.audioContext = new AudioContext({
+            latencyHint: 'interactive',
+            sampleRate: 44100
+        });
     }
 
     async loadRom(romFile: File) {
@@ -87,7 +100,46 @@ export class Emulator {
         });
     }
 
-    private postMessage(message: WorkerMessage, transfer: Transferable[] = []) {
+    private setupWorkerMessageListeners() {
+        this.worker.onmessage = (e: MessageEvent<FromWorkerMessage>) => {
+            const message = e.data;
+            switch (message?.type) {
+                case 'AUDIO_BUFFER':
+                    if (message.payload.left.every(v => v === 0) && message.payload.right.every(v => v === 0)) {
+                        console.log('Audio buffer received but all zeros');
+                        return;
+                    }
+                    const buffer = this.createAudioBuffer(message.payload.left, message.payload.right);
+                    if (buffer) {
+                        this.playAudioBuffer(buffer);
+                    }
+                    break;
+            }
+        };
+    }
+
+    private createAudioBuffer(left: Float32Array, right: Float32Array) {
+        if (!this.audioContext) {
+            return null;
+        }
+
+        const buffer = this.audioContext.createBuffer(2, left.length, this.audioContext.sampleRate);
+        buffer.copyToChannel(left, 0);
+        buffer.copyToChannel(right, 1);
+        return buffer;
+    }
+
+    private playAudioBuffer(buffer: AudioBuffer) {
+        if (!this.audioContext) {
+            return;
+        }
+        const source = this.audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.audioContext.destination);
+        source.start();
+    }
+
+    private postMessage(message: ToWorkerMessage, transfer: Transferable[] = []) {
         this.worker.postMessage(message, transfer);
     }
 }

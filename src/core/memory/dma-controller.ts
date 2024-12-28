@@ -27,7 +27,7 @@ export class DmaController {
         this.initialDelay = true;
     }
 
-    tickMCycle() {
+    tick4() {
         if (!this.ppuState.dmaActive) {
             return;
         }

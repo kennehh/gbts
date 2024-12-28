@@ -49,7 +49,7 @@ export class Cpu {
             const opcode = this.readImmediate8Bit();
             this.execute(opcode);
         } else {
-            this.tickMCycle();
+            this.tick4();
         }
 
         this.checkInterrupts();
@@ -335,18 +335,21 @@ export class Cpu {
         }
     }
 
-    private tickTCycle() {
+    private tick() {
         this.state.currentInstructionCycles++;
         this.state.totalCycles++;
-        this.mmu.tickTCycle();
+        this.mmu.tick();
     }
 
-    private tickMCycle() {
-        this.tickTCycle();
-        this.tickTCycle();
-        this.tickTCycle();
-        this.tickTCycle();
-        this.mmu.tickMCycle();
+    private tick2() {
+        this.tick();
+        this.tick();
+    }
+
+    private tick4() {
+        this.tick2();
+        this.tick2();
+        this.mmu.tick4();
     }
 
     private readValue8Bit(operand: Operand8Bit) {
@@ -418,13 +421,13 @@ export class Cpu {
     private checkInterrupts() {
         if (this.interruptManager.anyInterruptRequested) {
             this.state.status = CpuStatus.Running;
-            this.tickMCycle();
+            this.tick4();
 
             if (this.interruptManager.ime) {
                 let interruptVector = this.interruptManager.currentInterruptWithVector;
                 if (interruptVector !== null) {
                     this.interruptManager.ime = false;
-                    this.tickMCycle();
+                    this.tick4();
 
                     this.push_byte(this.state.pc >> 8);
 
@@ -437,7 +440,7 @@ export class Cpu {
                     }
 
                     this.push_byte(this.state.pc & 0xFF);
-                    this.tickMCycle();
+                    this.tick4();
                     
                     this.state.pc = interruptVector.vector;
                     this.interruptManager.clearInterrupt(interruptVector.interrupt);
@@ -468,13 +471,13 @@ export class Cpu {
 
     private readMemory8Bit(address: number) {
         const val = this.mmu.read(address);
-        this.tickMCycle();
+        this.tick4();
         return val;
     }
 
     private writeMemory8Bit(address: number, value: number) {
         this.mmu.write(address, value);
-        this.tickMCycle();
+        this.tick4();
     }
 
     private readMemory16Bit(address: number) {
@@ -496,14 +499,14 @@ export class Cpu {
         } else {
             this.state.status = CpuStatus.Halted;
         }
-        this.tickMCycle();
-        this.tickMCycle();
+        this.tick4();
+        this.tick4();
     }
     
     private stop() {
         this.state.status = CpuStatus.Stopped;
-        this.tickMCycle();
-        this.tickMCycle();
+        this.tick4();
+        this.tick4();
     }
 
     private di() {
@@ -535,7 +538,7 @@ export class Cpu {
                        (result > 0xFFFF ? RegisterFlag.Carry : 0);
         this.state.hl = result & 0xFFFF;
 
-        this.tickMCycle();
+        this.tick4();
     }
 
     private add_a(operand: Operand8Bit) {
@@ -547,7 +550,7 @@ export class Cpu {
 
     private add_sp_i8() {
         this.state.sp = this.sp_i8();
-        this.tickMCycle();
+        this.tick4();
     }
 
     private adc_a(operand: Operand8Bit) {
@@ -751,14 +754,14 @@ export class Cpu {
         const value = this.readValue16Bit(operand);
         this.triggerOamBugAtAddress(value);
         this.writeValue16Bit(operand, value + 1);
-        this.tickMCycle();
+        this.tick4();
     }
 
     private dec_16(operand: Operand16Bit) {
         const value = this.readValue16Bit(operand);
         this.triggerOamBugAtAddress(value);
         this.writeValue16Bit(operand, value - 1);
-        this.tickMCycle();
+        this.tick4();
     }
 
     private daa() {
@@ -875,7 +878,7 @@ export class Cpu {
 
     private ld_sp_hl() {
         this.state.sp = this.state.hl;
-        this.tickMCycle();
+        this.tick4();
     }
 
     // Jump Instructions
@@ -883,7 +886,7 @@ export class Cpu {
     private jr_i8() {
         const increment = this.readImmediate8BitSigned();
         this.state.pc = this.readValue16Bit(Operand16Bit.PC) + increment;
-        this.tickMCycle();
+        this.tick4();
     }
 
     private jr_i8_cond(flag: RegisterFlag, condition: boolean) {
@@ -892,13 +895,13 @@ export class Cpu {
         } else {
             // simulate an immediate read
             this.state.pc++;
-            this.tickMCycle();
+            this.tick4();
         }
     }
 
     private jp_i16() {
         this.state.pc = this.readImmediate16Bit();
-        this.tickMCycle();
+        this.tick4();
     }
 
     private jp_i16_cond(flag: RegisterFlag, condition: boolean) {
@@ -907,8 +910,8 @@ export class Cpu {
         } else {
             // simulate an immediate read
             this.state.pc += 2;
-            this.tickMCycle();
-            this.tickMCycle();
+            this.tick4();
+            this.tick4();
         }
     }
 
@@ -928,18 +931,18 @@ export class Cpu {
         } else {
             // simulate an immediate read
             this.state.pc += 2;
-            this.tickMCycle();
-            this.tickMCycle();
+            this.tick4();
+            this.tick4();
         }
     }
 
     private ret() {
         this.state.pc = this.pop_val();
-        this.tickMCycle();
+        this.tick4();
     }
 
     private ret_cond(flag: RegisterFlag, condition: boolean) {
-        this.tickMCycle();
+        this.tick4();
         if (this.state.hasFlag(flag) === condition) {
             this.ret();
         }
@@ -965,7 +968,7 @@ export class Cpu {
     private push_val(value: number) {
         this.state.sp -= 2;
         this.writeMemory16Bit(this.state.sp, value);
-        this.tickMCycle();
+        this.tick4();
     }
 
     private pop(operand: Operand16Bit) {
@@ -993,7 +996,7 @@ export class Cpu {
         const halfCarryResult = (this.state.sp & 0x0F) + (value & 0x0F);
         this.state.f = (halfCarryResult > 0x0F ? RegisterFlag.HalfCarry : 0) | (carryResult > 0xFF ? RegisterFlag.Carry : 0);
 
-        this.tickMCycle();
+        this.tick4();
         return result & 0xFFFF;
     }
 

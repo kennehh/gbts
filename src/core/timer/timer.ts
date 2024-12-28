@@ -32,7 +32,7 @@ export class Timer {
         this.lastDivBitAndEnabled = false;
     }
 
-    tickMCycle() {
+    tick4() {
         if (this.timaReloadState !== TimaReloadState.None) {
             if (this.timaReloadState === TimaReloadState.Reloading) {
                 this.tima = this.tma;

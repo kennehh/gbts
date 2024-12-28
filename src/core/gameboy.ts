@@ -13,6 +13,7 @@ import { Timer } from "./timer/timer";
 import { Apu } from "./apu/apu";
 import { ISaveStore, MockSaveStore } from "./save/save-store";
 import { SaveManager } from "./save/save-manager";
+import { IAudioOutput, MockAudioOutput } from "./apu/audio-output";
 
 const GB_CLOCK_SPEED = 4_194_304; // Hz
 const CYCLES_PER_MS = GB_CLOCK_SPEED / 1000;
@@ -43,7 +44,8 @@ export class GameBoy {
     constructor(
         display: IDisplay = new MockDisplay(),
         joypadHandler: IJoypadHandler = new MockJoypadHandler(),
-        saveStore: ISaveStore = new MockSaveStore()
+        saveStore: ISaveStore = new MockSaveStore(),
+        audioOutput: IAudioOutput = new MockAudioOutput()
     ) {
         this.display = display;
         this.serialController = new SerialController();
@@ -51,7 +53,7 @@ export class GameBoy {
         this.timer = new Timer(this.interruptManager);
         this.joypadController = new JoypadController(joypadHandler, this.interruptManager);
         this.ppu = new Ppu(this.interruptManager, display, this.joypadController);
-        this.apu = new Apu();
+        this.apu = new Apu(audioOutput);
         this.mmu = new Mmu(this.interruptManager, this.timer, this.ppu, this.apu, this.joypadController, this.serialController);
         this.cpu = new Cpu(this.interruptManager, this.mmu);
         this.saveManager = new SaveManager(saveStore);

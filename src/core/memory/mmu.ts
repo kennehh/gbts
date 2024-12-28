@@ -11,8 +11,8 @@ import { Apu } from "../apu/apu";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
-    tickTCycle(): void;
-    tickMCycle(): void;
+    tick(): void;
+    tick4(): void;
     read(address: number): number;
     readDma(address: number): number;
     write(address: number, value: number): void;
@@ -48,14 +48,14 @@ export class Mmu implements IMmu {
         return this._bootRomLoaded;
     }
 
-    tickTCycle(): void {
-        this.ppu.tickTCycle();
+    tick(): void {
+        this.ppu.tick();
     }
 
-    tickMCycle(): void {
-        this.timer.tickMCycle();
-        //this.serialController.tickTCycle();
-        this.dmaController.tickMCycle();
+    tick4(): void {
+        this.timer.tick4();
+        this.dmaController.tick4();
+        this.apu.tick4();
     }
 
     loadBootRom(rom: Memory): void {
@@ -256,7 +256,7 @@ export class Mmu implements IMmu {
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
-                return this.apu.readWavRam(address);
+                return this.apu.readWaveTable(address);
             case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
             case 0xff46: case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:
                 return this.ppu.readRegister(address); // LCD Control Registers
@@ -302,7 +302,7 @@ export class Mmu implements IMmu {
             case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34:
             case 0xff35: case 0xff36: case 0xff37: case 0xff38: case 0xff39:
             case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
-                this.apu.writeWavRam(address, value);
+                this.apu.writeWaveTable(address, value);
                 break;
             case 0xff40: case 0xff41: case 0xff42: case 0xff43: case 0xff44: case 0xff45: 
             case 0xff47: case 0xff48: case 0xff49: case 0xff4a: case 0xff4b:

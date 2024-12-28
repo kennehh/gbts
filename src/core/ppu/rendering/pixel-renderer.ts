@@ -7,12 +7,10 @@ import { Pixel } from "./pixel";
 const PIXEL_BG0: Pixel = { color: 0, isSprite: false } as const;
 
 export class PixelRenderer {
+    private _pixelX = 0;
     get pixelX() {
         return this._pixelX;
     }
-
-    private _pixelX = 0;
-    private _finishedScanline = false;
 
     constructor(
         private readonly ppuState: PpuState,
@@ -21,13 +19,8 @@ export class PixelRenderer {
         private readonly spritePixelFifo: SpriteFifo
     ) { }
 
-    get finishedScanline() {
-        return this._finishedScanline;
-    }
-
     reset() {
         this._pixelX = 0;
-        this._finishedScanline = false;
     }
 
     checkWindowTrigger() {
@@ -49,8 +42,9 @@ export class PixelRenderer {
         this.display.setPixel(this.ppuState.scanline, this._pixelX++, color);
         
         if (this._pixelX === 160) {
-            this._finishedScanline = true;
+            return true;
         }
+        return false;
     }
 
     private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {

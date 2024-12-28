@@ -26,4 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         target.value = '';
     });
+
+    fileInput.addEventListener('click', (e) => {
+        console.log('click');
+        emulator.createAudioContext();
+    });
 });
