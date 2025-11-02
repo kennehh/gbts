@@ -4,10 +4,10 @@ export class NoiseChannel {
     }
     reset(): void {
     }
-    readRegister(address: number): number {
+    readRegister(_address: number): number {
         return 0xff;
     }
-    writeRegister(address: number, value: number): void {
+    writeRegister(_address: number, _value: number): void {
     }
 
     tick4() {

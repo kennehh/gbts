@@ -9,6 +9,7 @@ describe('Timer', () => {
     beforeEach(() => {
         interruptManager = new InterruptManager();
         timer = new Timer(interruptManager);
+        timer.reset(true);
     });
 
     describe('registers', () => {
@@ -40,19 +41,19 @@ describe('Timer', () => {
     describe('tick', () => {
         it('should increment DIV register', () => {
             for (let i = 0; i < 256 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
             expect(timer.readRegister(0xFF04)).toBe(1);
         });
 
         it('should reset DIV register when it overflows', () => {
             for (let i = 0; i < 256 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
             expect(timer.readRegister(0xFF04)).toBe(1);
 
             for (let i = 0; i < 256 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
             expect(timer.readRegister(0xFF04)).toBe(2);
         });
@@ -60,7 +61,7 @@ describe('Timer', () => {
         it('should increment TIMA register when enabled', () => {
             timer.writeRegister(0xFF07, 0b101); // Enable timer with clock 16
             for (let i = 0; i < 16 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
             expect(timer.readRegister(0xFF05)).toBe(1);
         });
@@ -68,7 +69,7 @@ describe('Timer', () => {
         it('should not increment TIMA register when disabled', () => {
             timer.writeRegister(0xFF07, 0b100); // Disable timer
             for (let i = 0; i < 16 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
             expect(timer.readRegister(0xFF05)).toBe(0);
         });
@@ -81,13 +82,13 @@ describe('Timer', () => {
             timer.writeRegister(0xFF06, 0xAA); // Set TMA to 170
 
             for (let i = 0; i < 16 / 4; i++) {
-                timer.tickMCycle();
+                timer.tick4();
             }
 
             // TIMA should be zero after overflowing for 4 cycles
             expect(timer.readRegister(0xFF05)).toBe(0);
 
-            timer.tickMCycle();
+            timer.tick4();
 
             // TIMA should now be reloaded with TMA value and requests interrupt
             expect(timer.readRegister(0xFF05)).toBe(0xAA);

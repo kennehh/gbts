@@ -4,16 +4,16 @@ export class WaveChannel {
     }
     reset(): void {
     }
-    readRegister(address: number): number {
+    readRegister(_address: number): number {
         return 0xff;
     }
-    writeRegister(address: number, value: number): void {
+    writeRegister(_address: number, _value: number): void {
     }
 
-    writeWaveTable(address: number, value: number): void {
+    writeWaveTable(_address: number, _value: number): void {
     }
 
-    readWaveTable(address: number): number {
+    readWaveTable(_address: number): number {
         return 0xff;
     }
 

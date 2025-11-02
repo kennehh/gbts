@@ -44,7 +44,7 @@ export class Mixer {
         private readonly capacitorFactor = 0.999958 // CGB: change this to 0.998943
     ) {}
 
-    mix(ch1: number, ch2: number, ch3: number, ch4: number): [number, number] {
+    mix(ch1: number, _ch2: number, ch3: number, ch4: number): [number, number] {
         let left = 0;
         let right = 0;
 

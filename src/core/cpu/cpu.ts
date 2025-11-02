@@ -44,7 +44,7 @@ export class Cpu {
         if (this.state.status === CpuStatus.Running) {
             if (this.state.eiPending) {
                 this.state.eiPending = false;
-                this.interruptManager.ime = true
+                this.interruptManager.ime = true;
             }
             const opcode = this.readImmediate8Bit();
             this.execute(opcode);

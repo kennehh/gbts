@@ -47,8 +47,8 @@ class MmuMock implements IMmu {
         return false;
     }
 
-    tickTCycle(): void {}
-    tickMCycle(): void {}
+    tick(): void {}
+    tick4(): void {}
 
     loadBootRom(_rom: Memory): void {}
     loadCartridge(_cart: ICartridge): void {}
@@ -64,6 +64,8 @@ class MmuMock implements IMmu {
     write(address: number, value: number) {
         this.view.setUint8(address, value);
     }
+
+    triggerOamBug(): void {}
 }
 
 function getDebugState(cpu: Cpu, mmu: IMmu, test: CpuTest): string {

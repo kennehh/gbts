@@ -56,7 +56,7 @@ export class Emulator {
                 filter: (file) => file.name.endsWith('.gb')// || file.name.endsWith('.gbc'),
             })
 
-            data = Object.entries(unzipped)[0]?.[1];
+            data = Object.entries(unzipped)[0]?.[1].slice(0);
             if (!data) {
                 throw new Error('No ROM found in ZIP file');
             }
@@ -118,7 +118,7 @@ export class Emulator {
         };
     }
 
-    private createAudioBuffer(left: Float32Array, right: Float32Array) {
+    private createAudioBuffer(left: Float32Array<ArrayBuffer>, right: Float32Array<ArrayBuffer>) {
         if (!this.audioContext) {
             return null;
         }

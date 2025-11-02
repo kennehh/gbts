@@ -6,7 +6,7 @@ describe('InterruptManager', () => {
         const manager = new InterruptManager();
         expect(manager.ime).toBe(false);
         expect(manager.ie).toBe(InterruptFlag.None);
-        expect(manager.if).toBe(InterruptFlag.None);
+        expect(manager.if).toBe(0xe0 | InterruptFlag.None);
     });
 
     it('should set and get ie correctly', () => {
@@ -18,7 +18,7 @@ describe('InterruptManager', () => {
     it('should set and get if correctly', () => {
         const manager = new InterruptManager();
         manager.if = InterruptFlag.LcdStat | InterruptFlag.Serial;
-        expect(manager.if).toBe(InterruptFlag.LcdStat | InterruptFlag.Serial);
+        expect(manager.if).toBe(0xe0 | (InterruptFlag.LcdStat | InterruptFlag.Serial));
     });
 
     it('should return the correct currentInterrupt', () => {
@@ -51,13 +51,13 @@ describe('InterruptManager', () => {
     it('should request an interrupt correctly', () => {
         const manager = new InterruptManager();
         manager.requestInterrupt(InterruptFlag.Timer);
-        expect(manager.if).toBe(InterruptFlag.Timer);
+        expect(manager.if).toBe(0xe0 | InterruptFlag.Timer);
     });
 
     it('should clear an interrupt correctly', () => {
         const manager = new InterruptManager();
         manager.requestInterrupt(InterruptFlag.Timer);
         manager.clearInterrupt(InterruptFlag.Timer);
-        expect(manager.if).toBe(InterruptFlag.None);
+        expect(manager.if).toBe(0xe0 | InterruptFlag.None);
     });
 });
