@@ -518,7 +518,6 @@ export class Cpu {
     }
 
     private reti() {
-        this.state
         this.interruptManager.ime = true;
         this.ret();
     }
