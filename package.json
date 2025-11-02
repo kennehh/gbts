@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "benchmark": "tsx ./benchmark.ts"
   },
   "devDependencies": {
     "@types/node": "^24.9.2",
     "sharp": "^0.34.4",
+    "tsx": "^4.20.6",
     "typescript": "~5.9.3",
     "vite": "^7.1.12",
     "vitest": "^4.0.6"
