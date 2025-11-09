@@ -2,7 +2,7 @@ import { CpuState } from "./cpu/cpu-state"
 import { PpuState } from "./ppu/ppu-state"
 import { Timer } from "./timer/timer"
 
-export type GameBoyState = {
+export interface GameBoyState {
     cpu: CpuState,
     ppu: PpuState,
     timer: Timer,

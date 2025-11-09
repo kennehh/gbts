@@ -368,7 +368,6 @@ export class Cpu {
             case Operand8Bit.Immediate: return this.readImmediate8Bit();
             case Operand8Bit.IndirectImmediate8Bit: return this.readMemory8Bit(0xFF00 + this.readImmediate8Bit());
             case Operand8Bit.IndirectImmediate16Bit: return this.readMemory8Bit(this.readImmediate16Bit());
-            default: throw new Error(`Invalid operand when reading 8 bit value: ${operand}`);
         }
     }
 
@@ -401,7 +400,6 @@ export class Cpu {
             case Operand16Bit.SP: return this.state.sp;
             case Operand16Bit.Immediate: return this.readImmediate16Bit();
             case Operand16Bit.IndirectImmediate: return this.readMemory16Bit(this.readImmediate16Bit());
-            default: throw new Error(`Invalid operand when reading 16 bit value: ${operand}`);
         }
     }
 

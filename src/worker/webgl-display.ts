@@ -34,7 +34,7 @@ const FRAGMENT_SHADER = `#version 300 es
     }
 `;
 
-type WebGLResources = {
+interface WebGLResources {
     program: WebGLProgram;
     frameTexture: WebGLTexture;
     vertexBuffer: WebGLBuffer;
@@ -118,7 +118,7 @@ export class WebGLDisplay implements IDisplay {
         this.dirty = false;
     }
 
-    setPalette(palette: Array<[number, number, number]>): void {
+    setPalette(palette: [number, number, number][]): void {
         if (palette.length !== COLORS_PER_PALETTE) {
             throw new Error(`Palette must contain exactly ${COLORS_PER_PALETTE} colors`);
         }

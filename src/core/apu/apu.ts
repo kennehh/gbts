@@ -7,7 +7,7 @@ import { FrameSequencer } from "./frame-sequencer";
 import { Mixer } from "./mixer";
 
 export class Apu {
-    private audioEnabled: boolean = true;
+    private audioEnabled = true;
     private readonly mixer = new Mixer();
     private readonly channel1 = new SquareWithSweepChannel();
     private readonly channel2 = new SquareChannel();

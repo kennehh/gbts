@@ -1,11 +1,11 @@
 import { MemorySize } from "../memory/memory";
 
-type CartridgeChecksum = {
+interface CartridgeChecksum {
     value: number;
     valid: boolean;
 }
 
-type CartridgeType = {
+interface CartridgeType {
     rawValue: number;
     mapper: CartridgeMapperType;
     hasRam: boolean;
@@ -15,13 +15,13 @@ type CartridgeType = {
     hasSensor: boolean;
 }
 
-type CartridgeLicensee = {
+interface CartridgeLicensee {
     oldCode: number;
     newCode: string | null;
     name: string;
 }
 
-type CartridgeMemoryConfig = {
+interface CartridgeMemoryConfig {
     rawValue: number;
     size: number;
     banks: number;
@@ -67,7 +67,7 @@ export class CartridgeHeader {
     readonly globalChecksum: CartridgeChecksum;
     readonly romSizeDoesNotMatch: boolean;
 
-    private _cartId: number = 0;
+    private _cartId = 0;
     get cartId(): number {
         return this._cartId;
     }

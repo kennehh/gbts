@@ -1,5 +1,5 @@
 export class LengthCounter {
-    enabled: boolean = false;
+    enabled = false;
     private length = 0;
 
     constructor(private readonly maxLength: number) {

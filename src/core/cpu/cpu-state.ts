@@ -15,25 +15,25 @@ export class CpuState {
     private static readonly SERIALIZED_SIZE = 15;
     
     status: CpuStatus = CpuStatus.Running;
-    haltBugTriggered: boolean = false;
-    eiPending: boolean = false;
+    haltBugTriggered = false;
+    eiPending = false;
 
-    currentInstructionCycles: number = 0;
-    totalCycles: number = 0;
+    currentInstructionCycles = 0;
+    totalCycles = 0;
 
-    private _a: number = 0;
-    private _b: number = 0;
-    private _c: number = 0;
-    private _d: number = 0;
-    private _e: number = 0;
-    private _f: number = 0;
-    private _h: number = 0;
-    private _l: number = 0;
+    private _a = 0;
+    private _b = 0;
+    private _c = 0;
+    private _d = 0;
+    private _e = 0;
+    private _f = 0;
+    private _h = 0;
+    private _l = 0;
 
-    private _pc: number = 0;
-    private _sp: number = 0;
+    private _pc = 0;
+    private _sp = 0;
 
-    reset(bootRomLoaded: boolean = false) {
+    reset(bootRomLoaded = false) {
         if (!bootRomLoaded) {
             this.af = 0x01b0;
             this.bc = 0x0013;
@@ -101,7 +101,7 @@ export class CpuState {
     set pc(value: number) { this._pc = value & 0xFFFF; }
 
     hasFlag(flag: RegisterFlag) {
-        return (this.f & flag) === flag;
+        return (this.f & flag) === (flag as number);
     }
 
     serialize(): Uint8Array {

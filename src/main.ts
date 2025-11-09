@@ -4,17 +4,15 @@ import './style.css'
 import { Emulator } from './web/emulator.ts';
 
 // Main entry point
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', function () {
     const emulator = new Emulator(document.getElementById('app')!);
     // Set up file input handling
     const fileInput = document.getElementById('rom-input') as HTMLInputElement;
 
-    fileInput.addEventListener('change', async function () {
-        const file = this.files?.[0];
-        
-        if (!file) {
-            return;
-        }
+    async function handleFileChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
 
         try {
             await emulator.loadRom(file);
@@ -23,8 +21,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             alert('Failed to load ROM file');
         }
 
-        this.value = '';
-    });
+        input.value = '';
+    }
+
+    fileInput.addEventListener('change', e => void handleFileChange(e));
     
     // fileInput.addEventListener('click', (e) => {
     //     console.log('click');

@@ -61,12 +61,10 @@ export class BgFetcher {
             case PixelFetcherState.PushToFifo:
                 this.handlePushState();
                 break;
-            default:
-                throw new Error(`Invalid pixel fetcher state: ${this.state}`);
         }
     }
 
-    reset(windowMode: boolean = false) {
+    reset(windowMode = false) {
         this.fetcherTileX = 0;
         this.state = PixelFetcherState.FetchTileNumber0;
         this._windowMode = windowMode;

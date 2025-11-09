@@ -7,10 +7,10 @@ export const enum InterruptFlag {
     Joypad = 1 << 4,
 }
 
-export type InterruptWithVector = {
+export interface InterruptWithVector {
     readonly interrupt: InterruptFlag;
     readonly vector: number;
-};
+}
 
 const INTERRUPT_VECTORS = {
     [InterruptFlag.None]:    null,
@@ -22,7 +22,7 @@ const INTERRUPT_VECTORS = {
 } as const;
 
 export class InterruptManager {
-    ime: boolean = false;
+    ime = false;
     private _ie: InterruptFlag = InterruptFlag.None;
     private _if: InterruptFlag = InterruptFlag.None;
 

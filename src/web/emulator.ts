@@ -1,5 +1,6 @@
 import { JoypadButton } from '../common/enums';
 import { FromWorkerMessage, ToWorkerMessage } from '../common/types';
+// eslint-disable-next-line import-x/default
 import Worker from '../worker/emulator-worker?worker&inline';
 import { unzipSync } from 'fflate';
 
@@ -18,7 +19,7 @@ export class Emulator {
     private worker = new Worker();
     private audioContext?: AudioContext;
 
-    constructor(parent: HTMLElement, scale: number = 4) {
+    constructor(parent: HTMLElement, scale = 4) {
         if (!parent) throw new Error('Parent element not found');
 
         const canvas = document.createElement('canvas');
@@ -104,7 +105,7 @@ export class Emulator {
         this.worker.onmessage = (e: MessageEvent<FromWorkerMessage>) => {
             const message = e.data;
             switch (message?.type) {
-                case 'AUDIO_BUFFER':
+                case 'AUDIO_BUFFER': {
                     if (message.payload.left.every(v => v === 0) && message.payload.right.every(v => v === 0)) {
                         console.log('Audio buffer received but all zeros');
                         return;
@@ -114,6 +115,7 @@ export class Emulator {
                         this.playAudioBuffer(buffer);
                     }
                     break;
+                }
             }
         };
     }

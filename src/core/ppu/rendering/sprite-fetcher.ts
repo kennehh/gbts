@@ -79,8 +79,6 @@ export class SpriteFetcher {
             case PixelFetcherState.PushToFifo:
                 this.handlePushState();
                 break;
-            default:
-                throw new Error(`Invalid pixel fetcher state: ${this.state}`);
         }
     }
 

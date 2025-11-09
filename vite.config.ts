@@ -4,6 +4,6 @@ export default {
     base: '/gbts/',
     build: {
         target: 'esnext',        
-        minify: 'esbuild'
+        minify: 'terser'
     }
 } satisfies UserConfig

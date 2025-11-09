@@ -15,43 +15,43 @@ export const enum StatInterruptSourceFlag {
 
 export class PpuState {
     // Registers
-    private _ly: number = 0;
+    private _ly = 0;
     get ly() { return this._ly; }
     set ly(value: number) { this._ly = value & 0xff; }
 
-    private _lyc: number = 0;
+    private _lyc = 0;
     get lyc() { return this._lyc; }
     set lyc(value: number) { this._lyc = value & 0xff; }
 
-    private _scx: number = 0;
+    private _scx = 0;
     get scx() { return this._scx; }
     set scx(value: number) { this._scx = value & 0xff; }
 
-    private _scy: number = 0;
+    private _scy = 0;
     get scy() { return this._scy; }
     set scy(value: number) { this._scy = value & 0xff; }
 
-    private _wx: number = 0;
+    private _wx = 0;
     get wx() { return this._wx; }
     set wx(value: number) { this._wx = value & 0xff; }
 
-    private _wy: number = 0;
+    private _wy = 0;
     get wy() { return this._wy; }
     set wy(value: number) { this._wy = value & 0xff; }
 
-    private _bgp: number = 0;
+    private _bgp = 0;
     get bgp() { return this._bgp; }
     set bgp(value: number) { this._bgp = value & 0xff; }
 
-    private _obp0: number = 0;
+    private _obp0 = 0;
     get obp0() { return this._obp0; }
     set obp0(value: number) { this._obp0 = value & 0xff; }
 
-    private _obp1: number = 0;
+    private _obp1 = 0;
     get obp1() { return this._obp1; }
     set obp1(value: number) { this._obp1 = value & 0xff; }
 
-    private _dma: number = 0;
+    private _dma = 0;
     get dma() { return this._dma; }
     set dma(value: number) { this._dma = value & 0xff; }
 
@@ -75,7 +75,7 @@ export class PpuState {
     }
 
     // LCDC register
-    private _lcdc: number = 0;    
+    private _lcdc = 0;    
     get lcdc(): number { return this._lcdc; }
     set lcdc(value: number) {
         this._lcdc = value & 0xff;
@@ -89,34 +89,34 @@ export class PpuState {
         this._lcdEnabled =                   (value & 0b1000_0000) !== 0;
     }
 
-    private _bgWindowEnable: boolean = false;
+    private _bgWindowEnable = false;
     get bgWindowEnable(): boolean { return this._bgWindowEnable; }
 
-    private _spriteEnable: boolean = false;
+    private _spriteEnable = false;
     get spriteEnable(): boolean { return this._spriteEnable; }
 
-    private _spriteHeight: number = 8;
+    private _spriteHeight = 8;
     get spriteHeight(): number { return this._spriteHeight; }
 
-    private _bgTileMapAddress: number = 0x9800;
+    private _bgTileMapAddress = 0x9800;
     get bgTileMapAddress(): number { return this._bgTileMapAddress; }
 
-    private _useBgWindow8000AdressingMode: boolean = false;
+    private _useBgWindow8000AdressingMode = false;
     get useBgWindow8000AdressingMode(): boolean { return this._useBgWindow8000AdressingMode; }
 
-    private _windowEnabled: boolean = false;
+    private _windowEnabled = false;
     get windowEnabled(): boolean { return this._windowEnabled }
 
-    private _windowTileMapAddress: number = 0x9800;
+    private _windowTileMapAddress = 0x9800;
     get windowTileMapAddress(): number { return this._windowTileMapAddress; }
 
-    private _lcdEnabled: boolean = false;
+    private _lcdEnabled = false;
     get lcdEnabled(): boolean { return this._lcdEnabled; }
 
     // Internal states
 
-    drawingInitialScanlineDelay: number = 0;
-    firstFrameAfterLcdEnable: boolean = false;
+    drawingInitialScanlineDelay = 0;
+    firstFrameAfterLcdEnable = false;
 
     previousStatus: PpuStatus = PpuStatus.HBlank;
     dmaActive = false;
@@ -128,8 +128,8 @@ export class PpuState {
     tCycles = 0;
 
     // CGB only
-    isCgb: boolean = false;
-    isDoubleSpeed: boolean = false;
+    isCgb = false;
+    isDoubleSpeed = false;
 
     reset() {
         this.scanline = 0;

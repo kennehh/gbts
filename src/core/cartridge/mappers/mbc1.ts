@@ -52,10 +52,11 @@ export class Mbc1 extends MbcBase {
                 this._ramEnabled = (value & 0x0F) === 0x0A;
                 break;
             case 0x2:
-            case 0x3:
+            case 0x3: {
                 const bankNumber = value & 0x1F; 
                 this.currentLowerRomBank = bankNumber === 0 ? 1 : bankNumber;
                 break;
+            }
             case 0x4:
             case 0x5:
                 if (this.cartHeader.rom.size >= MemorySize.Size1MB) {                    

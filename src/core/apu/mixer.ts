@@ -1,6 +1,6 @@
 export class Mixer {
     // NR51
-    private _nr51: number = 0xff;
+    private _nr51 = 0xff;
     get nr51(): number { return this._nr51; }
     set nr51(value: number) {
         this.ch4LeftEnabled  = (value & 0b10000000) !== 0;
@@ -13,17 +13,17 @@ export class Mixer {
         this.ch1RightEnabled = (value & 0b00000001) !== 0;
     }
 
-    private ch1LeftEnabled: boolean = true;
-    private ch2LeftEnabled: boolean = true;
-    private ch3LeftEnabled: boolean = true;
-    private ch4LeftEnabled: boolean = true;
-    private ch1RightEnabled: boolean = true;
-    private ch2RightEnabled: boolean = true;
-    private ch3RightEnabled: boolean = true;
-    private ch4RightEnabled: boolean = true;
+    private ch1LeftEnabled = true;
+    private ch2LeftEnabled = true;
+    private ch3LeftEnabled = true;
+    private ch4LeftEnabled = true;
+    private ch1RightEnabled = true;
+    private ch2RightEnabled = true;
+    private ch3RightEnabled = true;
+    private ch4RightEnabled = true;
 
     // NR50
-    private _nr50: number = 0x77;
+    private _nr50 = 0x77;
     get nr50(): number { return this._nr50; }
     set nr50(value: number) {
         this.vinPanLeft =  (value & 0b10000000) !== 0;
@@ -32,10 +32,10 @@ export class Mixer {
         this.rightVolume = (value & 0b00000111);
     }
 
-    private vinPanLeft: boolean = false;
-    private leftVolume: number = 0b111;
-    private vinPanRight: boolean = false;
-    private rightVolume: number = 0b111;
+    private vinPanLeft = false;
+    private leftVolume = 0b111;
+    private vinPanRight = false;
+    private rightVolume = 0b111;
 
     private leftCapacitor = 0;
     private rightCapacitor = 0;

@@ -12,15 +12,15 @@ export class SquareChannel {
     get isEnabled(): boolean {
         return this.enabled;
     }
-    private dacOn: boolean = false;
-    private enabled: boolean = false;
-    private duty: number = 0;
+    private dacOn = false;
+    private enabled = false;
+    private duty = 0;
     private currentWaveform: number = DUTY_CYCLES[0];
     private lengthCounter = new LengthCounter(64);
     private volumeEnvelope = new VolumeEnvelope();
-    private frequency: number = 0;
+    private frequency = 0;
     private frequencyTimer = 0;
-    private currentWaveValue: number = 0;
+    private currentWaveValue = 0;
 
 
     readRegister(address: number): number {
@@ -29,14 +29,16 @@ export class SquareChannel {
                 return this.readSweepRegister();
             case 1: // NR11/NR21
                 return (this.duty << 6) | 0b00111111;
-            case 2: // NR12/NR22
+            case 2: { // NR12/NR22
                 const increaseBit = this.volumeEnvelope.increase ? 1 << 3 : 0;
-                return this.volumeEnvelope.startingVolume << 4 | increaseBit | this.volumeEnvelope.period;
+                return this.volumeEnvelope.startingVolume << 4 | increaseBit | this.volumeEnvelope.period; 
+            }
             case 3: // NR13/NR23
                 return 0xff; // write-only
-            case 4: // NR14/NR24
+            case 4: { // NR14/NR24
                 const lengthEnabledBit = this.lengthCounter.enabled ? 1 << 6 : 0;
                 return 0b10111111 | lengthEnabledBit;
+            }
             default:
                 return 0xff;
         }

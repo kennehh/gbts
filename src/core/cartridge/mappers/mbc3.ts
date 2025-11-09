@@ -1,6 +1,6 @@
 import { MbcBase } from "./mbc-base";
 
-type RtcRegisters = {
+interface RtcRegisters {
     seconds: number;
     minutes: number;
     hours: number;  
@@ -155,7 +155,7 @@ export class Mbc3 extends MbcBase {
                 this.rtc.daysLow = value;
                 this.rtc.days = this.rtc.daysHigh << 8 | this.rtc.daysLow;
                 break;
-            case RtcRegister.DaysHighControl:
+            case RtcRegister.DaysHighControl: {
                 value &= 0b1100_0001;
                 const oldHalt = this.rtc.halt;
 
@@ -173,6 +173,7 @@ export class Mbc3 extends MbcBase {
                 }
                 
                 break;
+            }
         }
     }
 

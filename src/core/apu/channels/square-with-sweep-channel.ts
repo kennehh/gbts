@@ -1,9 +1,9 @@
 import { SquareChannel } from "./square-channel";
 
 export class SquareWithSweepChannel extends SquareChannel {
-    private sweepPeriod: number = 0;
-    private sweepNegate: boolean = false;
-    private sweepShift: number = 0;
+    private sweepPeriod = 0;
+    private sweepNegate = false;
+    private sweepShift = 0;
 
 
     protected override readSweepRegister() {

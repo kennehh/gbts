@@ -156,7 +156,6 @@ export class Ppu {
             case PpuStatus.Drawing: this.handleDrawing(); break;
             case PpuStatus.HBlank: this.handleHBlank(); break;
             case PpuStatus.VBlank: this.handleVBlank(); break;
-            default: throw new Error(`Invalid PPU status: ${this.state.status}`);
         }
 
         if (this.state.pendingLcdStatInterrupt) {

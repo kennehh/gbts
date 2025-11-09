@@ -1,29 +1,31 @@
 import { GameBoyState } from "../gameboy-state";
 
-export type RamSave = {
+export interface RamSave {
     cartId: number;
     timestamp: Date;
     data: Uint8Array;
-};
+}
 
-export type SaveState = {
+export interface SaveState {
     cartId: number;
     slot: number;
     timestamp: Date;
     data: GameBoyState;
-};
+}
 
 export class MockSaveStore implements ISaveStore {
-    async saveRam(_save: RamSave): Promise<void> {}
-
-    async loadRam(_cartId: number): Promise<RamSave | null> {
-        return null;
+    saveRam(_save: RamSave): Promise<void> {
+        return Promise.resolve();
     }
 
-    async saveState(_save: SaveState): Promise<void> {}
+    loadRam(_cartId: number): Promise<RamSave | null> {
+        return Promise.resolve(null);
+    }
 
-    async loadState(_cartId: number, _slot: number): Promise<SaveState | null> {
-        return null;
+    saveState(_save: SaveState): Promise<void> {}
+
+    loadState(_cartId: number, _slot: number): Promise<SaveState | null> {
+        return Promise.resolve(null);
     }
 }
 

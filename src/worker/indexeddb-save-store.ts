@@ -12,7 +12,7 @@ export class IndexedDBSaveStore implements ISaveStore {
         return new Promise<IndexedDBSaveStore>((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(request.error!);
             request.onsuccess = () => {
                 const instance = new IndexedDBSaveStore();
                 instance.db = request.result;
@@ -60,7 +60,7 @@ export class IndexedDBSaveStore implements ISaveStore {
 
         return new Promise((resolve, reject) => {
             transaction.oncomplete = () => resolve();
-            transaction.onerror = () => reject(transaction.error);
+            transaction.onerror = () => reject(transaction.error!);
             transaction.onabort = () => reject(new Error("Transaction aborted"));
         });
     }
@@ -76,7 +76,7 @@ export class IndexedDBSaveStore implements ISaveStore {
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => resolve(request.result);
-            transaction.onerror = () => reject(transaction.error);
+            transaction.onerror = () => reject(transaction.error!);
             transaction.onabort = () => reject(new Error("Transaction aborted"));
         });
     }

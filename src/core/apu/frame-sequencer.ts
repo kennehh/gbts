@@ -3,7 +3,7 @@ export class FrameSequencer {
         return this.step;
     }
 
-    private step: number = 0;
+    private step = 0;
     private cycles = 0;
 
     tick4() {

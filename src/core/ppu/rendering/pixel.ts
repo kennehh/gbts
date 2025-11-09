@@ -1,4 +1,4 @@
-export type Pixel = {
+export interface Pixel {
     color: number;
     isSprite: boolean;
     spriteBgHasPriority?: boolean;

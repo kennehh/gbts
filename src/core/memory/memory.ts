@@ -1,23 +1,26 @@
-export const enum MemorySize {
-    KB = 1024,
-    MB = KB * 1024,
-    Size2KB = 2 * KB,
-    Size4KB = 4 * KB,
-    Size8KB = 8 * KB,
-    Size16KB = 16 * KB,
-    Size32KB = 32 * KB,
-    Size64KB = 64 * KB,
-    Size128KB = 128 * KB,
-    Size256KB = 256 * KB,
-    Size512KB = 512 * KB,
-    Size1MB = 1 * MB,
-    Size2MB = 2 * MB,
-    Size4MB = 4 * MB,
-    Size8MB = 8 * MB,
-    Size1_1MB = 1.1 * MB,
-    Size1_2MB = 1.2 * MB,
-    Size1_5MB = 1.5 * MB
-}
+const kb = 1024;
+const mb = kb * 1024;
+
+export const MemorySize = {
+    KB: kb,
+    MB: mb,
+    Size2KB: 2 * kb,
+    Size4KB: 4 * kb,
+    Size8KB: 8 * kb,
+    Size16KB: 16 * kb,
+    Size32KB: 32 * kb,
+    Size64KB: 64 * kb,
+    Size128KB: 128 * kb,
+    Size256KB: 256 * kb,
+    Size512KB: 512 * kb,
+    Size1MB: 1 * mb,
+    Size2MB: 2 * mb,
+    Size4MB: 4 * mb,
+    Size8MB: 8 * mb,
+    Size1_1MB: 1.1 * mb,
+    Size1_2MB: 1.2 * mb,
+    Size1_5MB: 1.5 * mb
+} as const;
 
 export class Memory {
     private data: Uint8Array;

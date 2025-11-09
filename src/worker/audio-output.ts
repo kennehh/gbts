@@ -37,13 +37,13 @@ export class AudioOutput implements IAudioOutput {
             this.writePosition++;
 
             if (this.writePosition === this.bufferSize) {                
-                self.postMessage(<FromWorkerMessage>{
+                self.postMessage(({
                     type: "AUDIO_BUFFER",
                     payload: {
                         left: this.leftBuffer,
                         right: this.rightBuffer
                     }
-                });
+                } as FromWorkerMessage));
 
                 this.writePosition = 0;
             }

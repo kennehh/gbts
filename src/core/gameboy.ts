@@ -23,7 +23,7 @@ const MAX_CYCLES_TO_CATCH_UP = CYCLES_PER_FRAME * 2;
 const MAX_CYCLES_TO_CATCH_UP_TURBO = CYCLES_PER_FRAME * 5;
 
 export class GameBoy {
-    turbo: boolean = false;
+    turbo = false;
 
     readonly cpu: Cpu;
     readonly mmu: Mmu;
@@ -37,9 +37,9 @@ export class GameBoy {
     private readonly saveManager: SaveManager;
     
     // Timing state
-    private running: boolean = false;
-    private lastTimestamp: number = 0;
-    private cyclesPending: number = 0;
+    private running = false;
+    private lastTimestamp = 0;
+    private cyclesPending = 0;
 
     constructor(
         display: IDisplay = new MockDisplay(),

@@ -46,7 +46,7 @@ export class CanvasDisplay implements IDisplay {
         this.dirty = false;
     }
 
-    setPalette(palette: Array<[number, number, number]>): void {
+    setPalette(palette: [number, number, number][]): void {
         let i = 0;
         for (const [r, g, b] of palette) {
             this.colorBuffer[i++] = r;

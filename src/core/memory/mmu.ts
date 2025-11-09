@@ -24,7 +24,7 @@ export interface IMmu {
 }
 
 export class Mmu implements IMmu {
-    private _bootRomLoaded: boolean = false;
+    private _bootRomLoaded = false;
     private cartridge: ICartridge = EmptyCartridge.getInstance();
     private bootRom: Memory | null = null;
     private readonly wram: Memory = new Memory(0x2000);
@@ -80,7 +80,7 @@ export class Mmu implements IMmu {
         return this.read(address, true);
     }
 
-    read(address: number, dma: boolean = false): number {
+    read(address: number, dma = false): number {
         address &= 0xFFFF;
 
         if (this.ppu.state.dmaActive && !dma) {
@@ -140,7 +140,7 @@ export class Mmu implements IMmu {
         this.write(address, value, true);
     }
 
-    write(address: number, value: number, dma: boolean = true): void {
+    write(address: number, value: number, dma = true): void {
         address &= 0xFFFF;
         value &= 0xFF;
 
