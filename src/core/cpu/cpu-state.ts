@@ -1,20 +1,14 @@
-export const enum RegisterFlag {
-    Zero = 1 << 7,
-    Subtract = 1 << 6,
-    HalfCarry = 1 << 5,
-    Carry = 1 << 4,
-}
+import { 
+    type CpuStatusValue,
+    CpuStatus,
+    type RegisterFlagValue,
+    RegisterFlag
+} from "./types";
 
-export const enum CpuStatus {
-    Running,
-    Halted,
-    Stopped,
-}
-
-export class CpuState {
+export default class CpuState {
     private static readonly SERIALIZED_SIZE = 15;
     
-    status: CpuStatus = CpuStatus.Running;
+    status: CpuStatusValue = CpuStatus.Running;
     haltBugTriggered = false;
     eiPending = false;
 
@@ -100,8 +94,8 @@ export class CpuState {
     get pc() { return this._pc; }
     set pc(value: number) { this._pc = value & 0xFFFF; }
 
-    hasFlag(flag: RegisterFlag) {
-        return (this.f & flag) === (flag as number);
+    hasFlag(flag: RegisterFlagValue) {
+        return (this.f & flag) === flag;
     }
 
     serialize(): Uint8Array {

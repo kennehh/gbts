@@ -1,5 +1,5 @@
-import { FromWorkerMessage } from "../common/types";
-import { IAudioOutput } from "../core/apu/audio-output";
+import type { FromWorkerMessage } from "../common/types";
+import type { IAudioOutput } from "../core/apu";
 
 const GB_CYCLE_RATE = 1048576; // GB cycles per second (4194304 / 4)
 

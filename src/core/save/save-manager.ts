@@ -1,8 +1,8 @@
-import { CartridgeHeader } from "../cartridge/cartridge-header";
-import { GameBoyState } from "../gameboy-state";
-import { ISaveStore } from "./save-store";
+import type { CartridgeHeader } from "../cartridge/header";
+import type { GameBoyState } from "../types";
+import type { ISaveStore } from "./types";
 
-export class SaveManager {
+export default class SaveManager {
     private currentRamSavePromise: Promise<void> | null = null;
 
     constructor(private readonly storage: ISaveStore) { }

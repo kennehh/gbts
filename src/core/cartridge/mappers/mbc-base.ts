@@ -23,7 +23,8 @@ export abstract class MbcBase extends Mapper {
         }
     }
 
-    writeRom(_address: number, _value: number): void { }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    writeRom(_address: number, _value: number): void { /* empty */ }
 
     readRam(address: number): number {
         if (this.canAccessRam) {

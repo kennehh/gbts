@@ -1,6 +1,6 @@
-import { CpuState } from "./cpu/cpu-state"
-import { PpuState } from "./ppu/ppu-state"
-import { Timer } from "./timer/timer"
+import type { CpuState } from "./cpu";
+import type { PpuState } from "./ppu/ppu-state";
+import type Timer from "./timer";
 
 export interface GameBoyState {
     cpu: CpuState,

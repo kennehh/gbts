@@ -1,4 +1,4 @@
-export class SerialController {
+export default class SerialController {
     private sb = 0xff;
     private sc = 0x7e;
 

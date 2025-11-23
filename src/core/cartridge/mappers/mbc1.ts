@@ -1,5 +1,5 @@
-import { CartridgeHeader } from "../cartridge-header";
-import { MemorySize } from "../../memory/memory";
+import { CartridgeHeader } from "../header/cartridge-header";
+import { MemorySize } from "../../memory";
 import { MbcBase } from "./mbc-base";
 
 export class Mbc1 extends MbcBase {

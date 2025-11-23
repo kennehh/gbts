@@ -1,4 +1,4 @@
-import { Pixel } from "./pixel";
+import type { Pixel } from "./types";
 
 export class BgFifo {
     protected buffer: Uint8Array = new Uint8Array(8).fill(0);

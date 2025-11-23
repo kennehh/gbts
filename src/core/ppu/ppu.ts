@@ -1,14 +1,21 @@
-import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
-import { Memory } from "../memory/memory";
-import { IDisplay } from "./rendering/display";
-import { OamScanner } from "./oam/oam-scanner";
-import { BgFetcher } from "./rendering/bg-fetcher";
-import { PixelRenderer } from "./rendering/pixel-renderer";
-import { PpuState, PpuStatus, StatInterruptSourceFlag } from "./ppu-state";
-import { SpriteFetcher } from "./rendering/sprite-fetcher";
-import { BgFifo } from "./rendering/bg-fifo";
-import { SpriteFifo } from "./rendering/sprite-fifo";
-import { JoypadController } from "../joypad/joypad-controller";
+import { InterruptFlag, type InterruptManager } from "../cpu";
+import type { JoypadController } from "../joypad";
+import { Memory } from "../memory";
+import { OamScanner } from "./oam";
+import { PpuState } from "./ppu-state";
+import {
+    BgFetcher,
+    BgFifo,
+    PixelRenderer,
+    SpriteFetcher,
+    SpriteFifo,
+    type IDisplay
+} from "./rendering";
+import {
+    PpuStatus,
+    StatInterruptSourceFlag,
+    type StatInterruptSourceFlagValue
+} from "./types";
 
 export class Ppu {
     readonly state = new PpuState();
@@ -186,7 +193,7 @@ export class Ppu {
         this.previousEnableLcd = this.state.lcdEnabled;
     }
 
-    private checkStatInterrupt(flag: StatInterruptSourceFlag) {
+    private checkStatInterrupt(flag: StatInterruptSourceFlagValue) {
         if ((this.state.statInterruptSource & flag) !== 0) {
             this.state.pendingLcdStatInterrupt = true;
         }

@@ -1,15 +1,9 @@
-import { SaveManager } from "../save/save-manager";
-import { CartridgeHeader } from "./cartridge-header";
+import { SaveManager } from "../save";
+import { EmptyCartridge } from "./empty-cartridge";
+import { CartridgeHeader } from "./header/cartridge-header";
+import createMapper from "./mappers";
 import { Mapper } from "./mappers/mapper";
-import { MapperFactory } from "./mappers/mapper-factory";
-
-export interface ICartridge {
-    readRom(address: number): number;
-    writeRom(address: number, value: number): void;
-    readRam(address: number): number;
-    writeRam(address: number, value: number): void;
-    reset(): void;
-}
+import type { ICartridge } from "./types";
 
 export class Cartridge implements ICartridge {
     private constructor(
@@ -21,8 +15,12 @@ export class Cartridge implements ICartridge {
     static async create(rom: Uint8Array, saveManager: SaveManager): Promise<Cartridge> {
         const header = await CartridgeHeader.fromRom(rom);
         const ram = await saveManager.loadRam(header);
-        const mapper = MapperFactory.create(header, rom, ram);
+        const mapper = createMapper(header, rom, ram);
         return new Cartridge(header, mapper, saveManager);
+    }
+
+    static get emptyCartridge() {
+        return EmptyCartridge.getInstance();
     }
 
     readRom(address: number) {

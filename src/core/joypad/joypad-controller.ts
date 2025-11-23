@@ -1,6 +1,6 @@
-import { JoypadButton } from '../../common/enums';
-import { InterruptFlag, InterruptManager } from '../cpu/interrupt-manager';
-import { IJoypadHandler } from './joypad-handler';
+import { JoypadButton, type JoypadButtonValue } from '../../common/enums';
+import { InterruptFlag, InterruptManager } from '../cpu';
+import type { IJoypadHandler } from './types';
 
 const enum JoypadRegisterFlag {
     DefaultState = 0b1100_1111,
@@ -13,12 +13,12 @@ const enum JoypadRegisterFlag {
     RightOrAReleased = 1 << 0,
 }
 
-export class JoypadController {
+export default class JoypadController {
     private register = JoypadRegisterFlag.DefaultState;
     private lastRegister = JoypadRegisterFlag.DefaultState;
     private selectActionSelected = true;
     private selectDirectionSelected = true;
-    private lastPressedButtons = JoypadButton.None;
+    private lastPressedButtons: JoypadButtonValue = JoypadButton.None;
 
     constructor(
         private readonly handler: IJoypadHandler,

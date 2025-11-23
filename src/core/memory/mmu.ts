@@ -1,31 +1,17 @@
-import { ICartridge } from "../cartridge/cartridge";
-import { InterruptManager } from "../cpu/interrupt-manager";
+import type { Apu } from "../apu";
+import { type ICartridge, Cartridge } from "../cartridge";
+import type { InterruptManager } from "../cpu";
+import type { JoypadController } from "../joypad";
+import type { Ppu } from "../ppu/ppu";
+import type { SerialController } from "../serial";
+import type Timer from "../timer";
+import DmaController from "./dma-controller";
 import { Memory } from "./memory";
-import { Ppu } from "../ppu/ppu";
-import { Timer } from "../timer/timer";
-import { EmptyCartridge } from "../cartridge/empty-cartridge";
-import { DmaController } from "./dma-controller";
-import { JoypadController } from "../joypad/joypad-controller";
-import { SerialController } from "../serial/serial-controller";
-import { Apu } from "../apu/apu";
-
-export interface IMmu {
-    get bootRomLoaded(): boolean;
-    tick(): void;
-    tick4(): void;
-    read(address: number): number;
-    readDma(address: number): number;
-    write(address: number, value: number): void;
-    writeDma(address: number, value: number): void;
-    reset(): void;
-    loadBootRom(rom: Memory): void;
-    loadCartridge(cart: ICartridge): void;
-    triggerOamBug(address: number): void;
-}
+import type { IMmu } from "./types";
 
 export class Mmu implements IMmu {
     private _bootRomLoaded = false;
-    private cartridge: ICartridge = EmptyCartridge.getInstance();
+    private cartridge: ICartridge = Cartridge.emptyCartridge;
     private bootRom: Memory | null = null;
     private readonly wram: Memory = new Memory(0x2000);
     private readonly hram: Memory = new Memory(0x80);

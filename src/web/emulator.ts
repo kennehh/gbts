@@ -1,10 +1,8 @@
-import { JoypadButton } from '../common/enums';
-import { FromWorkerMessage, ToWorkerMessage } from '../common/types';
-// eslint-disable-next-line import-x/default
-import Worker from '../worker/emulator-worker?worker&inline';
-import { unzipSync } from 'fflate';
+import { JoypadButton, type JoypadButtonValue } from '../common/enums';
+import type { FromWorkerMessage, ToWorkerMessage } from '../common/types';
+import unzipRom from './unzip-rom';
 
-const KeyMap = new Map<string, JoypadButton>([
+const KeyMap = new Map<string, JoypadButtonValue>([
     ['ArrowUp',     JoypadButton.Up],
     ['ArrowDown',   JoypadButton.Down],
     ['ArrowLeft',   JoypadButton.Left],
@@ -16,8 +14,10 @@ const KeyMap = new Map<string, JoypadButton>([
 ]);
 
 export class Emulator {
-    private worker = new Worker();
     private audioContext?: AudioContext;
+    private worker = new Worker(new URL('../worker/emulator-worker.ts', import.meta.url), {
+        type: 'module',
+    });
 
     constructor(parent: HTMLElement, scale = 4) {
         if (!parent) throw new Error('Parent element not found');
@@ -49,20 +49,11 @@ export class Emulator {
     }
 
     async loadRom(romFile: File) {
-        const buffer = await romFile.arrayBuffer();
-        let data = new Uint8Array(buffer);
+        const buffer = romFile.name.endsWith('.zip')
+            ? await unzipRom(romFile)
+            : await romFile.arrayBuffer()
 
-        if (romFile.name.endsWith('.zip')) {
-            const unzipped = unzipSync(data, {
-                filter: (file) => file.name.endsWith('.gb')// || file.name.endsWith('.gbc'),
-            })
-
-            data = Object.entries(unzipped)[0]?.[1].slice(0);
-            if (!data) {
-                throw new Error('No ROM found in ZIP file');
-            }
-        }
-
+        const data = new Uint8Array(buffer);
         this.postMessage({ type: 'LOAD_ROM', payload: { rom: data } }, [data.buffer]);
     }
 

@@ -1,4 +1,4 @@
-import { InterruptFlag, InterruptManager } from "../cpu/interrupt-manager";
+import { InterruptFlag, type InterruptManager } from "../cpu";
 
 const enum TimaReloadState {
     None = 0,

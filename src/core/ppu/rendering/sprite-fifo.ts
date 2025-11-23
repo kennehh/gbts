@@ -1,5 +1,5 @@
-import { OamSprite } from "../oam/oam-scanner";
-import { Pixel } from "./pixel";
+import type { OamSprite } from "../oam/types";
+import type { Pixel } from "./types";
 
 const SPRITE_PIXEL_ZERO: Pixel = { color: 0, isSprite: true } as const;
 

@@ -1,19 +1,14 @@
-// gameboy.ts
-
-import { Cartridge } from "./cartridge/cartridge";
-import { Cpu } from "./cpu/cpu";
-import { InterruptManager } from "./cpu/interrupt-manager";
-import { JoypadController } from "./joypad/joypad-controller";
-import { IJoypadHandler, MockJoypadHandler } from "./joypad/joypad-handler";
-import { SerialController } from "./serial/serial-controller";
+import { Apu } from "./apu";
+import { type IAudioOutput } from "./apu";
+import { Cartridge } from "./cartridge";
+import { Cpu, InterruptManager } from "./cpu";
+import { JoypadController, type IJoypadHandler } from "./joypad";
 import { Mmu } from "./memory/mmu";
-import { IDisplay, MockDisplay } from "./ppu/rendering/display";
 import { Ppu } from "./ppu/ppu";
-import { Timer } from "./timer/timer";
-import { Apu } from "./apu/apu";
-import { ISaveStore, MockSaveStore } from "./save/save-store";
-import { SaveManager } from "./save/save-manager";
-import { IAudioOutput, MockAudioOutput } from "./apu/audio-output";
+import { SaveManager, type ISaveStore } from "./save";
+import { SerialController } from "./serial";
+import Timer from "./timer";
+import type { IDisplay } from "./ppu/rendering/types";
 
 const GB_CLOCK_SPEED = 4_194_304; // Hz
 const CYCLES_PER_MS = GB_CLOCK_SPEED / 1000;
@@ -42,10 +37,10 @@ export class GameBoy {
     private cyclesPending = 0;
 
     constructor(
-        display: IDisplay = new MockDisplay(),
-        joypadHandler: IJoypadHandler = new MockJoypadHandler(),
-        saveStore: ISaveStore = new MockSaveStore(),
-        audioOutput: IAudioOutput = new MockAudioOutput()
+        display: IDisplay,
+        joypadHandler: IJoypadHandler,
+        saveStore: ISaveStore,
+        audioOutput: IAudioOutput
     ) {
         this.display = display;
         this.serialController = new SerialController();

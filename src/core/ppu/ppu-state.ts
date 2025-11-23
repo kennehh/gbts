@@ -1,17 +1,9 @@
-export const enum PpuStatus {
-    HBlank = 0,
-    VBlank = 1,
-    OamScan = 2,
-    Drawing = 3,
-}
-
-export const enum StatInterruptSourceFlag {
-    None = 0,
-    HBlank = 1 << 3,
-    VBlank = 1 << 4,
-    Oam = 1 << 5,
-    Lcdc = 1 << 6,
-}
+import {
+    type StatInterruptSourceFlagValue,
+    StatInterruptSourceFlag,
+    type PpuStatusValue,
+    PpuStatus
+} from "./types";
 
 export class PpuState {
     // Registers
@@ -56,9 +48,9 @@ export class PpuState {
     set dma(value: number) { this._dma = value & 0xff; }
 
     // STAT register
-    statInterruptSource: StatInterruptSourceFlag = StatInterruptSourceFlag.None;
+    statInterruptSource: StatInterruptSourceFlagValue = StatInterruptSourceFlag.None;
     pendingLcdStatInterrupt = false;
-    status: PpuStatus = PpuStatus.HBlank;
+    status: PpuStatusValue = PpuStatus.HBlank;
 
     get lyCoincidence(): boolean {
         return this.ly === this.lyc;
@@ -118,7 +110,7 @@ export class PpuState {
     drawingInitialScanlineDelay = 0;
     firstFrameAfterLcdEnable = false;
 
-    previousStatus: PpuStatus = PpuStatus.HBlank;
+    previousStatus: PpuStatusValue = PpuStatus.HBlank;
     dmaActive = false;
 
     scanlineReachedWindow = false;

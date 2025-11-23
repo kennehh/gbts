@@ -1,4 +1,4 @@
-import { ISaveStore, RamSave, SaveState } from "../core/save/save-store";
+import type { ISaveStore, RamSave, SaveState } from "@/core/save";
 
 const DB_NAME = "gameboy-saves";
 const DB_VERSION = 1;
@@ -6,7 +6,7 @@ const DB_VERSION = 1;
 export class IndexedDBSaveStore implements ISaveStore {
     private db: IDBDatabase | null = null;
 
-    private constructor() {}
+    private constructor() { /* empty */ }
 
     static create() {
         return new Promise<IndexedDBSaveStore>((resolve, reject) => {

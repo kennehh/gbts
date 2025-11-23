@@ -31,6 +31,7 @@ export default defineConfig([
             "@typescript-eslint/no-unused-vars": "warn",
             "@typescript-eslint/no-empty-function": "warn",
             "@typescript-eslint/class-literal-property-style": "warn",
+            "@typescript-eslint/no-unsafe-enum-comparison": "off"
         }
     },
     eslintConfigPrettier,

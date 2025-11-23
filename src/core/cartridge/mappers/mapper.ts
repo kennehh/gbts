@@ -1,4 +1,4 @@
-import { CartridgeHeader } from "../cartridge-header";
+import { CartridgeHeader } from "../header/cartridge-header";
 import { Memory } from "../../memory/memory";
 
 export abstract class Mapper {

@@ -1,8 +1,8 @@
 import { Memory } from "./memory";
-import { IMmu } from "./mmu";
 import { PpuState } from "../ppu/ppu-state";
+import type { IMmu } from "./types";
 
-export class DmaController {
+export default class DmaController {
     private sourceBaseAddress = 0;
     private currentByte = 0;
     private initialDelay = false;

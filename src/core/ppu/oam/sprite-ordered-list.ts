@@ -1,8 +1,8 @@
-import { OamSprite } from "./oam-scanner";
+import type { OamSprite } from "./types";
 
-export class SpriteNode {
-    constructor(public sprite: OamSprite) {}
-    next: SpriteNode | null = null;
+interface SpriteNode {
+    sprite: OamSprite;
+    next: SpriteNode | null;   
 }
 
 export class SpriteOrderedList {
@@ -19,7 +19,7 @@ export class SpriteOrderedList {
     }    
 
     push(sprite: OamSprite) {
-        const node = new SpriteNode(sprite);
+        const node: SpriteNode = { sprite, next: null };
         this.size++;
 
         if (this.head === null || this.compare(sprite, this.head.sprite) <= 0) {

@@ -1,16 +1,4 @@
-export const enum InterruptFlag {
-    None = 0,
-    VBlank = 1 << 0,
-    LcdStat = 1 << 1,
-    Timer = 1 << 2,
-    Serial = 1 << 3,
-    Joypad = 1 << 4,
-}
-
-export interface InterruptWithVector {
-    readonly interrupt: InterruptFlag;
-    readonly vector: number;
-}
+import { InterruptFlag, type InterruptFlagValue, type InterruptWithVector } from "./types";
 
 const INTERRUPT_VECTORS = {
     [InterruptFlag.None]:    null,
@@ -21,10 +9,10 @@ const INTERRUPT_VECTORS = {
     [InterruptFlag.Joypad]:  { interrupt: InterruptFlag.Joypad,  vector: 0x60 },
 } as const;
 
-export class InterruptManager {
+export default class InterruptManager {
     ime = false;
-    private _ie: InterruptFlag = InterruptFlag.None;
-    private _if: InterruptFlag = InterruptFlag.None;
+    private _ie: InterruptFlagValue = InterruptFlag.None;
+    private _if: InterruptFlagValue = InterruptFlag.None;
 
     constructor() {
         this.reset();
@@ -52,7 +40,7 @@ export class InterruptManager {
         this._if = value & 0x1f;
     }
 
-    get currentInterrupt(): InterruptFlag {
+    get currentInterrupt(): InterruptFlagValue {
         const activeInterrupts = this.if & this.ie & 0x1f;
         return activeInterrupts & -activeInterrupts;
     }
@@ -65,11 +53,11 @@ export class InterruptManager {
         return (this.if & this.ie & 0x1f) !== 0;
     }
 
-    requestInterrupt(interrupt: InterruptFlag) {
+    requestInterrupt(interrupt: InterruptFlagValue) {
         this._if |= interrupt;
     }
 
-    clearInterrupt(interrupt: InterruptFlag) {
+    clearInterrupt(interrupt: InterruptFlagValue) {
         this._if &= ~interrupt;
     }
 }

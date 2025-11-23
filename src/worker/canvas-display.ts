@@ -1,4 +1,4 @@
-import { IDisplay } from '../core/ppu/rendering/display';
+import type { IDisplay } from "@/core/ppu/rendering";
 
 export class CanvasDisplay implements IDisplay {
     private readonly ctx: OffscreenCanvasRenderingContext2D;

@@ -8,9 +8,7 @@ export class Mbc2 extends MbcBase {
         return this._currentRomBank;
     }
 
-    protected get currentRamBank(): number {
-        return 0;
-    }
+    protected readonly currentRamBank = 0;
 
     protected get ramEnabled(): boolean {
         return this._ramEnabled;

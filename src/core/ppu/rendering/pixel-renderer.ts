@@ -1,8 +1,7 @@
-import { IDisplay } from "./display";
 import { PpuState } from "../ppu-state";
 import { BgFifo } from "./bg-fifo";
 import { SpriteFifo } from "./sprite-fifo";
-import { Pixel } from "./pixel";
+import type { IDisplay, Pixel } from "./types";
 
 const PIXEL_BG0: Pixel = { color: 0, isSprite: false } as const;
 

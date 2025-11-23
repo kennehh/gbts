@@ -1,6 +1,7 @@
-import { IMmu } from "../memory/mmu";
-import { CpuState, CpuStatus, RegisterFlag } from "./cpu-state";
-import { InterruptManager } from "./interrupt-manager";
+import type { IMmu } from "../memory";
+import CpuState from "./cpu-state";
+import { CpuStatus, RegisterFlag, type RegisterFlagValue } from "./types";
+import InterruptManager from "./interrupt-manager";
 
 const enum Operand8Bit {
     B = 0,
@@ -30,7 +31,7 @@ const enum Operand16Bit {
     IndirectImmediate = 7
 }
 
-export class Cpu {
+export default class Cpu {
     readonly state: CpuState = new CpuState();
 
     constructor(
@@ -886,7 +887,7 @@ export class Cpu {
         this.tick4();
     }
 
-    private jr_i8_cond(flag: RegisterFlag, condition: boolean) {
+    private jr_i8_cond(flag: RegisterFlagValue, condition: boolean) {
         if (this.state.hasFlag(flag) === condition) {
             this.jr_i8();
         } else {
@@ -901,7 +902,7 @@ export class Cpu {
         this.tick4();
     }
 
-    private jp_i16_cond(flag: RegisterFlag, condition: boolean) {
+    private jp_i16_cond(flag: RegisterFlagValue, condition: boolean) {
         if (this.state.hasFlag(flag) === condition) {
             this.jp_i16();
         } else {
@@ -922,7 +923,7 @@ export class Cpu {
         this.state.pc = pc;
     }
 
-    private call_i16_cond(flag: RegisterFlag, condition: boolean) {
+    private call_i16_cond(flag: RegisterFlagValue, condition: boolean) {
         if (this.state.hasFlag(flag) === condition) {
             this.call_i16();
         } else {
@@ -938,7 +939,7 @@ export class Cpu {
         this.tick4();
     }
 
-    private ret_cond(flag: RegisterFlag, condition: boolean) {
+    private ret_cond(flag: RegisterFlagValue, condition: boolean) {
         this.tick4();
         if (this.state.hasFlag(flag) === condition) {
             this.ret();

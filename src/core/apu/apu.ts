@@ -1,10 +1,10 @@
-import { IAudioOutput } from "./audio-output";
 import { NoiseChannel } from "./channels/noise-channel";
 import { SquareChannel } from "./channels/square-channel";
 import { SquareWithSweepChannel } from "./channels/square-with-sweep-channel";
 import { WaveChannel } from "./channels/wave-channel";
 import { FrameSequencer } from "./frame-sequencer";
 import { Mixer } from "./mixer";
+import type { IAudioOutput } from "./types";
 
 export class Apu {
     private audioEnabled = true;

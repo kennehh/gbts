@@ -1,16 +1,14 @@
 // emulator.worker.ts
 /// <reference lib="webworker" />
 
-import { ToWorkerMessage } from '../common/types';
-import { IAudioOutput, MockAudioOutput } from '../core/apu/audio-output';
+import type { IDisplay } from '@/core/ppu/rendering';
+import type { ToWorkerMessage } from '../common/types';
 import { GameBoy } from '../core/gameboy';
-import { IDisplay } from '../core/ppu/rendering/display';
-import { ISaveStore } from '../core/save/save-store';
-import { AudioOutput } from './audio-output';
-import { CanvasDisplay } from './canvas-display';
 import { IndexedDBSaveStore } from './indexeddb-save-store';
 import { JoypadHandler } from './joypad-handler';
-import { WebGLDisplay } from './webgl-display';
+import type { ISaveStore } from '@/core/save';
+import type { IAudioOutput } from '@/core/apu';
+import { MockAudioOutput } from '../mocks/audio-output';
 
 let display: IDisplay;
 let gameboy: GameBoy;
@@ -24,9 +22,11 @@ self.onmessage = async (e: MessageEvent<ToWorkerMessage>) => {
     switch (message?.type) {
         case 'INIT':
             try {
+                const { WebGLDisplay } = await import("./webgl-display");
                 display = new WebGLDisplay(message.payload.canvas);
             } catch {
                 console.warn('WebGL not supported, falling back to Canvas2D');
+                const { CanvasDisplay } = await import("./canvas-display");
                 display = new CanvasDisplay(message.payload.canvas);
             }
             saveStore = await IndexedDBSaveStore.create();
@@ -56,5 +56,3 @@ self.onmessage = async (e: MessageEvent<ToWorkerMessage>) => {
             break;
     }
 };
-
-export {};

@@ -1,18 +1,18 @@
-import { JoypadButton } from "../common/enums";
-import { IJoypadHandler } from "../core/joypad/joypad-handler";
+import { JoypadButton, type JoypadButtonValue } from "../common/enums";
+import type { IJoypadHandler } from "../core/joypad";
 
 export class JoypadHandler implements IJoypadHandler {
     pressedButtons = JoypadButton.None;
 
-    getPressedButtons(): JoypadButton {
+    getPressedButtons(): JoypadButtonValue {
         return this.pressedButtons;
     }
 
-    buttonDown(button: JoypadButton) {
+    buttonDown(button: JoypadButtonValue) {
         this.pressedButtons |= button;
     }
 
-    buttonUp(button: JoypadButton) {
+    buttonUp(button: JoypadButtonValue) {
         this.pressedButtons &= ~button;
     }
 }

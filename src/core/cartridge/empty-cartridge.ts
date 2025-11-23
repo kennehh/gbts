@@ -1,9 +1,10 @@
-import { ICartridge } from "./cartridge";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { ICartridge } from "./types";
 
 export class EmptyCartridge implements ICartridge {
     private static instance: EmptyCartridge;
 
-    private constructor() {}
+    private constructor() { /* empty */ }
 
     static getInstance(): EmptyCartridge {
         if (!EmptyCartridge.instance) {
