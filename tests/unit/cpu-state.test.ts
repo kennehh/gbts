@@ -1,5 +1,5 @@
+import { CpuState } from '@/core/cpu';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CpuState } from '../../src/core/cpu/cpu-state';
 
 describe.concurrent('CpuState', () => {
     let state: CpuState;

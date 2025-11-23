@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
-import { GameBoy } from "../../src/core/gameboy";
-import { IDisplay } from "../../src/core/ppu/rendering/display";
 import sharp from "sharp";
+import type { IDisplay } from "@/core/ppu/rendering";
+import { createMockGameBoy } from "@/mocks/gameboy";
 
 const romDirectory = 'tests/__fixtures__/roms/mealybug-tearoom-tests';
 
@@ -75,7 +75,7 @@ async function testRom(romPath: string, screenshotPath: string) {
     const screenshotBufferPromise = sharp(screenshotPath).raw().toBuffer();
     const romBuffer = readFileSync(romPath);
     const display = new TestDisplay();
-    const gb = new GameBoy(display);
+    const gb = createMockGameBoy(display);
     await gb.loadRom(romBuffer);
 
     const start = Date.now();

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { InterruptManager, InterruptFlag } from '../../src/core/cpu/interrupt-manager';
+import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
+import { InterruptFlag } from '@/core/cpu';
 
 describe('InterruptManager', () => {
     it('should initialize with default values', () => {

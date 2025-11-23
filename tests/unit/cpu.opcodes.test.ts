@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
-import { CpuStatus, RegisterFlag } from '../../src/core/cpu/cpu-state';
 import { Cpu } from '../../src/core/cpu/cpu';
-import { IMmu } from '../../src/core/memory/mmu';
 import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
-import { ICartridge } from '../../src/core/cartridge/cartridge';
 import { Memory } from '../../src/core/memory/memory'
+import type { IMmu } from '@/core/memory';
+import type { ICartridge } from '@/core/cartridge';
+import { RegisterFlag, CpuStatus } from '@/core/cpu/types';
 
 const testDataDirectory = 'tests/__fixtures__/opcodes';
 
@@ -38,20 +39,21 @@ class MmuMock implements IMmu {
 
     private static readonly MEMORY_SIZE = 0x10000;
 
+    readonly bootRomLoaded = false;
+
     constructor() {
         this.buffer = new ArrayBuffer(MmuMock.MEMORY_SIZE);
         this.view = new DataView(this.buffer);
     }
+
+    readDma(_address: number): number { return 0xff; }
+    writeDma(_address: number, _value: number): void { /* empty */ }
     
-    get bootRomLoaded(): boolean {
-        return false;
-    }
+    tick(): void { /* empty */ }
+    tick4(): void { /* empty */ }
 
-    tick(): void {}
-    tick4(): void {}
-
-    loadBootRom(_rom: Memory): void {}
-    loadCartridge(_cart: ICartridge): void {}
+    loadBootRom(_rom: Memory): void { /* empty */ }
+    loadCartridge(_cart: ICartridge): void { /* empty */ }
 
     reset() {
         new Uint8Array(this.buffer).fill(0);
@@ -65,7 +67,7 @@ class MmuMock implements IMmu {
         this.view.setUint8(address, value);
     }
 
-    triggerOamBug(): void {}
+    triggerOamBug(): void { /* empty */ }
 }
 
 function getDebugState(cpu: Cpu, mmu: IMmu, test: CpuTest): string {
@@ -100,8 +102,7 @@ ${test.initial.ram.map(([addr, val]) => `  [0x${addr.toString(16).padStart(4, '0
 }
 
 function getFlagState(value: number): string {
-    return Object.keys(RegisterFlag).filter(x => isNaN(parseInt(x))).map(flag => {
-        const flagValue = RegisterFlag[flag];
+    return Object.entries(RegisterFlag).map(([flag, flagValue]) => {
         const flagState = (value & flagValue) === flagValue ? '1' : '0';
         return `${flag}:${flagState}`;
     }).join(' ');
@@ -179,7 +180,8 @@ describe ('Cpu', () => {
                         const cycles = cpu.step();
                         assertCpuState(cpu, mmu, cycles, test);
                     } catch (error) {
-                        throw new Error(`Failed at test case ${test.name} (${index + 1}):\n\n${error.message}`);
+                        const message = (error as Error)?.message;
+                        throw new Error(`Failed at test case ${test.name} (${index + 1}):\n\n${message}`);
                     }
                 });
             });

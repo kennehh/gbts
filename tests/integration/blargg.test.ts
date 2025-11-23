@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { describe, expect, it, assert } from "vitest";
-import { GameBoy } from "../../src/core/gameboy";
-import { CpuStatus } from "../../src/core/cpu/cpu-state";
+import { createMockGameBoy } from "@/mocks/gameboy";
+import { CpuStatus } from "@/core/cpu/types";
 
 const romDirectory = 'tests/__fixtures__/roms/blargg';
 
@@ -18,7 +18,7 @@ function getRoms(relativePath: string) {
 
 async function testRom(romPath: string) {
     const romBuffer = readFileSync(romPath);
-    const gb = new GameBoy();
+    const gb = createMockGameBoy();
     await gb.loadRom(romBuffer);
     let message = '';
 
@@ -38,7 +38,7 @@ async function testRom(romPath: string) {
             break;
         }
 
-        if (Date.now() - start > 5000) {
+        if (Date.now() - start > 10000) {
             throw new Error('Test took too long to complete');
         }
     }

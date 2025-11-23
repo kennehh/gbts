@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
-import { GameBoy } from "../../src/core/gameboy";
+import { createMockGameBoy } from "@/mocks/gameboy";
 
 const romDirectory = 'tests/__fixtures__/roms/mooneye-test-suite';
 
@@ -17,7 +17,7 @@ function getRoms(relativePath: string) {
 
 async function testRom(romPath: string) {
     const romBuffer = readFileSync(romPath);
-    const gb = new GameBoy();
+    const gb = createMockGameBoy();
     await gb.loadRom(romBuffer);
 
     const start = Date.now();

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Timer } from '../../src/core/timer/timer';
-import { InterruptManager, InterruptFlag } from '../../src/core/cpu/interrupt-manager';
+import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
+import { InterruptFlag } from '@/core/cpu';
 
 describe('Timer', () => {
     let interruptManager: InterruptManager;

@@ -1,7 +1,7 @@
 import type { IMmu } from "../memory";
-import CpuState from "./cpu-state";
+import { CpuState } from "./cpu-state";
 import { CpuStatus, RegisterFlag, type RegisterFlagValue } from "./types";
-import InterruptManager from "./interrupt-manager";
+import { InterruptManager } from "./interrupt-manager";
 
 const enum Operand8Bit {
     B = 0,
@@ -31,7 +31,7 @@ const enum Operand16Bit {
     IndirectImmediate = 7
 }
 
-export default class Cpu {
+export class Cpu {
     readonly state: CpuState = new CpuState();
 
     constructor(

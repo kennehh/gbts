@@ -9,7 +9,7 @@ const INTERRUPT_VECTORS = {
     [InterruptFlag.Joypad]:  { interrupt: InterruptFlag.Joypad,  vector: 0x60 },
 } as const;
 
-export default class InterruptManager {
+export class InterruptManager {
     ime = false;
     private _ie: InterruptFlagValue = InterruptFlag.None;
     private _if: InterruptFlagValue = InterruptFlag.None;
