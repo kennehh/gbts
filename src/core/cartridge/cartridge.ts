@@ -2,20 +2,20 @@ import { SaveManager } from "../save";
 import { EmptyCartridge } from "./empty-cartridge";
 import { CartridgeHeader } from "./header/cartridge-header";
 import createMapper from "./mappers";
-import { Mapper } from "./mappers/mapper";
+import type { IMapper } from "./mappers/types";
 import type { ICartridge } from "./types";
 
 export class Cartridge implements ICartridge {
     private constructor(
         readonly header: CartridgeHeader,
-        readonly mapper: Mapper,
+        readonly mapper: IMapper,
         private readonly saveManager: SaveManager
     ) {}
 
     static async create(rom: Uint8Array, saveManager: SaveManager): Promise<Cartridge> {
         const header = await CartridgeHeader.fromRom(rom);
         const ram = await saveManager.loadRam(header);
-        const mapper = createMapper(header, rom, ram);
+        const mapper = await createMapper(header, rom, ram);
         return new Cartridge(header, mapper, saveManager);
     }
 

@@ -1,7 +1,8 @@
 import { CartridgeHeader } from "../header/cartridge-header";
 import { Memory } from "../../memory/memory";
+import type { IMapper } from "./types";
 
-export abstract class Mapper {
+export abstract class Mapper implements IMapper {
     protected readonly cartHeader: CartridgeHeader;
     readonly rom: Memory;
     readonly ram: Memory;
@@ -22,4 +23,3 @@ export abstract class Mapper {
     abstract readRam(address: number): number;
     abstract writeRam(address: number, value: number): void;
 }
-
