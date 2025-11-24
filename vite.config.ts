@@ -6,7 +6,21 @@ export default defineConfig({
     base: '/gbts/',
     build: {
         target: 'esnext',        
-        minify: 'terser'
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: true,
+                drop_debugger: true,
+                booleans_as_integers: true,
+                ecma: 2020,
+                keep_fargs: false,
+                module: true,
+                passes: 3,
+                pure_getters: true,
+                pure_new: true
+            },
+            mangle: true
+        }
     },
     resolve: {
         alias: {
