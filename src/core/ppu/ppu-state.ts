@@ -155,32 +155,25 @@ export class PpuState {
         this.isDoubleSpeed = false;
     }
 
-    // When BGP/OBP0/OBP1 change:
     private updateBgp(bgp: number) {
-        if (this._bgp === bgp) {
-            return;
-        }
+        this.updatePaletteLookup(this.bgpLookup, this._bgp, bgp);
         this._bgp = bgp;
-        for (let i = 0; i < 4; i++) {
-            this.bgpLookup[i] = (bgp >> (i << 1)) & 0b11;
-        }
     }
     private updateObp0(obp0: number) {
-        if (this._obp0 === obp0) {
-            return;
-        }
+        this.updatePaletteLookup(this.obp0Lookup, this._obp0, obp0);
         this._obp0 = obp0;
-        for (let i = 0; i < 4; i++) {
-            this.obp0Lookup[i] = (obp0 >> (i << 1)) & 0b11;
-        }
     }
     private updateObp1(obp1: number) {
-        if (this._obp1 === obp1) {
+        this.updatePaletteLookup(this.obp1Lookup, this._obp1, obp1);
+        this._obp1 = obp1;
+    }
+
+    private updatePaletteLookup(lookup: Uint8Array, oldValue: number, newValue: number) {
+        if (oldValue === newValue) {
             return;
         }
-        this._obp1 = obp1;
         for (let i = 0; i < 4; i++) {
-            this.obp1Lookup[i] = (obp1 >> (i << 1)) & 0b11;
+            lookup[i] = (newValue >> (i << 1)) & 0b11;
         }
     }
 }
