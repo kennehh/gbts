@@ -34,11 +34,11 @@ export class Mmu implements IMmu {
         return this._bootRomLoaded;
     }
 
-    tick(): void {
-        this.ppu.tick();
-    }
-
     tick4(): void {
+        this.ppu.tick();
+        this.ppu.tick();
+        this.ppu.tick();
+        this.ppu.tick();
         this.timer.tick4();
         this.dmaController.tick4();
         this.apu.tick4();
@@ -54,8 +54,8 @@ export class Mmu implements IMmu {
     }
 
     reset(): void {
-        this.wram.randomize();
-        this.hram.randomize();
+        this.wram.randomise();
+        this.hram.randomise();
         this.ioRegisters.fill(0);
         this._bootRomLoaded = false;
         this.dmaController.reset();
@@ -197,13 +197,13 @@ export class Mmu implements IMmu {
         if (address >= 0xfe00 && address < 0xff00) {
             const oamIndex = this.ppu.getCurrentOamIndexBeingScanned();
             if (oamIndex >= 8) {
-                const a = this.ppu.oam.readDirect16(oamIndex);
+                const a = this.ppu.oam.read16(oamIndex);
                 const b = this.ppu.oam.readDirect16(oamIndex - 4);
                 const c = this.ppu.oam.readDirect16(oamIndex - 2);
-                this.ppu.oam.writeDirect16(oamIndex, this.bitwiseGlitch(a, b, c));
+                this.ppu.oam.write16(oamIndex, this.bitwiseGlitch(a, b, c));
 
                 for (let i = 2; i < 8; i++) {
-                    this.ppu.oam.writeDirect(oamIndex + i, this.ppu.oam.readDirect(oamIndex - 8 + i));
+                    this.ppu.oam.write(oamIndex + i, this.ppu.oam.readDirect(oamIndex - 8 + i));
                 }
             }
         }

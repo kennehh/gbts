@@ -9,10 +9,10 @@ export class BgFifo {
         return this.size;
     }
 
-    shift(): Pixel {
+    shift(): number {
         const color = this.buffer[this.head++];
         this.size--;
-        return { color, isSprite: false };
+        return color;
     }
 
     clear() {

@@ -115,7 +115,7 @@ export class Mbc3 extends MbcBase {
     }  
 
     private readRtcRegister(): number {
-        if (this.latchedRtc == null) {
+        if (this.latchedRtc === null) {
             return 0xff;
         }
 

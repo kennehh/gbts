@@ -39,7 +39,7 @@ export class SpriteFetcher {
 
         const sprite = this.sprites!.findNext(pixelX);
 
-        if (sprite != null) {
+        if (sprite !== null) {
             this.currentSprite = sprite;
             this.state = PixelFetcherState.FetchTileNumber0;
             return true;

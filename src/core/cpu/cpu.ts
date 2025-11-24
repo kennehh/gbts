@@ -336,20 +336,9 @@ export class Cpu {
         }
     }
 
-    private tick() {
-        this.state.currentInstructionCycles++;
-        this.state.totalCycles++;
-        this.mmu.tick();
-    }
-
-    private tick2() {
-        this.tick();
-        this.tick();
-    }
-
     private tick4() {
-        this.tick2();
-        this.tick2();
+        this.state.currentInstructionCycles += 4;
+        this.state.totalCycles += 4;
         this.mmu.tick4();
     }
 

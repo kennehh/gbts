@@ -51,7 +51,7 @@ export class Ppu {
 
     reset() {
         this.state.reset();
-        this.oam.randomize();
+        this.oam.randomise();
         this.vram.fill(0);
         this.oamScanner.reset();
         this.bgFetcher.reset();
@@ -137,14 +137,14 @@ export class Ppu {
         if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
             return 0xFF;
         }
-        return this.oam.read(address);
+        return this.oam.readDirect(address - 0xfe00);
     }
 
     writeOam(address: number, value: number): void {
         if (this.state.status === PpuStatus.Drawing || this.state.status === PpuStatus.OamScan) {
             return;
         }
-        this.oam.write(address, value);
+        this.oam.writeDirect(address - 0xfe00, value);
     }    
     
     tick() {        

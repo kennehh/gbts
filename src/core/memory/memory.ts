@@ -64,7 +64,7 @@ export class Memory {
         this.data.set(data);
     }
 
-    randomize(): void {
+    randomise(): void {
         for (let i = 0; i < this.data.length; i++) {
             this.data[i] = Math.floor(Math.random() * 0x100);
         }

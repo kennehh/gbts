@@ -6,7 +6,7 @@ export interface IDisplay {
 
 export interface Pixel {
     color: number;
-    isSprite: boolean;
+    isSprite?: boolean;
     spriteBgHasPriority?: boolean;
     spritePalette?: number;
 }

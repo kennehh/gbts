@@ -12,15 +12,24 @@ export class SpriteFifo {
         return this.size;
     }
 
-    shift(): Pixel {
+    shift(): number {
         if (this.size === 0) {
-            return SPRITE_PIXEL_ZERO;
+            return 0;
         }
 
         const pixel = this.buffer[this.head];
         this.head = (this.head + 1) & 7;
         this.size--;
-        return this.unpackPixel(pixel);
+        return pixel;
+    }
+
+    discard() {
+        if (this.size === 0) {
+            return 0;
+        }
+
+        this.head = (this.head + 1) & 7;
+        this.size--;
     }
 
     clear() {
@@ -100,12 +109,16 @@ export class SpriteFifo {
         return color | (sprite.dmgPalette << 2) | (priority << 3);
     }
 
-    private unpackPixel(pixel: number): Pixel {
+    static unpackPixel(pixel: number): Pixel {
         return {
             color: pixel & 0b11,
             isSprite: true,
             spritePalette: (pixel >> 2) & 1,
             spriteBgHasPriority: pixel >> 3 === 1,
         };
+    }
+
+    static getBgPriority(pixel: number){
+        return pixel >> 3 === 1;
     }
 }

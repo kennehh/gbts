@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
-import { GameBoy } from "./src/core/gameboy";
-import { CpuStatus } from "./src/core/cpu/cpu-state";
+import { createMockGameBoy } from "./src/mocks/gameboy";
+import { CpuStatus } from "./src/core/cpu/types";
 
 // Original Game Boy CPU speed in Hz
 const GAMEBOY_CLOCK_SPEED = 4_194_304;
@@ -16,7 +16,7 @@ interface BenchmarkResult {
 
 async function benchmarkRom(romPath: string): Promise<BenchmarkResult> {
     const romBuffer = readFileSync(romPath);
-    const gb = new GameBoy();
+    const gb = createMockGameBoy();
     await gb.loadRom(romBuffer);
 
     const startTime = process.hrtime.bigint();
@@ -63,7 +63,7 @@ function getEmulationTimeOnRealGameBoy(cycles: number): number {
     return (cycles / GAMEBOY_CLOCK_SPEED) * 1000; // Convert to milliseconds
 }
 
-async function runBenchmarks(romPath: string, iterations: number = 5) {
+async function runBenchmarks(romPath: string, iterations = 5) {
     console.log(`Running ${iterations} benchmarks for ${romPath}`);
     console.log('----------------------------------------');
     console.log(`Original Game Boy Clock Speed: ${(GAMEBOY_CLOCK_SPEED / 1_000_000).toFixed(2)} MHz`);
@@ -107,4 +107,4 @@ async function runBenchmarks(romPath: string, iterations: number = 5) {
 
 // Run the benchmark
 const romPath = 'tests/__fixtures__/roms/blargg/cpu_instrs/individual/09-op r,r.gb';
-runBenchmarks(romPath);
+void runBenchmarks(romPath);

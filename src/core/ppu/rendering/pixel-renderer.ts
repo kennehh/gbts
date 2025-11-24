@@ -29,11 +29,18 @@ export class PixelRenderer {
     }
 
     tick() {
-        const bgPixel = this.bgPixelFifo.shift();
-        const spritePixel = this.spritePixelFifo.shift();
-        
         let color = 0;
+
         if (!this.ppuState.firstFrameAfterLcdEnable) {
+            const bgPixel = this.bgPixelFifo.shift();
+            let spritePixel = 0;
+
+            if (!this.ppuState.spriteEnable) {
+                this.spritePixelFifo.discard();
+            } else {
+                spritePixel = this.spritePixelFifo.shift();
+            }
+
             const pixel = this.mixPixels(bgPixel, spritePixel);
             color = this.getFinalPixel(pixel);
         }
@@ -46,17 +53,23 @@ export class PixelRenderer {
         return false;
     }
 
-    private mixPixels(bgPixel: Pixel, spritePixel: Pixel): Pixel {
-        if (!this.ppuState.spriteEnable || spritePixel.color === 0 || (spritePixel.spriteBgHasPriority && bgPixel.color !== 0)) {
-            return this.ppuState.bgWindowEnable ? bgPixel : PIXEL_BG0;
+    private mixPixels(bgPixel: number, spritePixel: number): Pixel {
+        if (spritePixel === 0) {
+            return this.ppuState.bgWindowEnable ? { color: bgPixel } : PIXEL_BG0;
         }
-        return spritePixel;
+
+        if (SpriteFifo.getBgPriority(spritePixel) && bgPixel !== 0) {
+            return this.ppuState.bgWindowEnable ? { color: bgPixel } : PIXEL_BG0;
+        }
+
+        return SpriteFifo.unpackPixel(spritePixel);
     }
 
     private getFinalPixel(pixel: Pixel): number {
-        const palette = pixel.isSprite ? 
-            (pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0) :
-            this.ppuState.bgp;
+        let palette = this.ppuState.bgp;
+        if (pixel.isSprite) {
+            palette = pixel.spritePalette ? this.ppuState.obp1 : this.ppuState.obp0;
+        }
         return (palette >> (pixel.color << 1)) & 0b11;
     }
 }
