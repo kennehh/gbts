@@ -33,19 +33,23 @@ export class PpuState {
 
     private _bgp = 0;
     get bgp() { return this._bgp; }
-    set bgp(value: number) { this._bgp = value & 0xff; }
+    set bgp(value: number) { this.updateBgp(value & 0xff); }
 
     private _obp0 = 0;
     get obp0() { return this._obp0; }
-    set obp0(value: number) { this._obp0 = value & 0xff; }
+    set obp0(value: number) { this.updateObp0(value & 0xff) }
 
     private _obp1 = 0;
     get obp1() { return this._obp1; }
-    set obp1(value: number) { this._obp1 = value & 0xff; }
+    set obp1(value: number) { this.updateObp1(value & 0xff); }
 
     private _dma = 0;
     get dma() { return this._dma; }
     set dma(value: number) { this._dma = value & 0xff; }
+
+    readonly bgpLookup = new Uint8Array(4);
+    readonly obp0Lookup = new Uint8Array(4);
+    readonly obp1Lookup = new Uint8Array(4);
 
     // STAT register
     statInterruptSource: StatInterruptSourceFlagValue = StatInterruptSourceFlag.None;
@@ -149,5 +153,34 @@ export class PpuState {
 
         this.isCgb = false;
         this.isDoubleSpeed = false;
+    }
+
+    // When BGP/OBP0/OBP1 change:
+    private updateBgp(bgp: number) {
+        if (this._bgp === bgp) {
+            return;
+        }
+        this._bgp = bgp;
+        for (let i = 0; i < 4; i++) {
+            this.bgpLookup[i] = (bgp >> (i << 1)) & 0b11;
+        }
+    }
+    private updateObp0(obp0: number) {
+        if (this._obp0 === obp0) {
+            return;
+        }
+        this._obp0 = obp0;
+        for (let i = 0; i < 4; i++) {
+            this.obp0Lookup[i] = (obp0 >> (i << 1)) & 0b11;
+        }
+    }
+    private updateObp1(obp1: number) {
+        if (this._obp1 === obp1) {
+            return;
+        }
+        this._obp1 = obp1;
+        for (let i = 0; i < 4; i++) {
+            this.obp1Lookup[i] = (obp1 >> (i << 1)) & 0b11;
+        }
     }
 }

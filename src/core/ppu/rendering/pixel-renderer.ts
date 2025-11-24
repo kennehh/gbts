@@ -41,17 +41,17 @@ export class PixelRenderer {
             }
 
             let color = 0;
-            let palette = 0;
+            let palette: Uint8Array;
 
             if (spritePixel === 0 || (getSpriteBgHasPriority(spritePixel) && bgPixel !== 0)) {
                 color = this.ppuState.bgWindowEnable ? bgPixel : 0;
-                palette = this.ppuState.bgp;
+                palette = this.ppuState.bgpLookup;
             } else {
                 color = getSpriteColor(spritePixel);
-                palette = getSpritePalette(spritePixel) ? this.ppuState.obp1 : this.ppuState.obp0;
+                palette = getSpritePalette(spritePixel) ? this.ppuState.obp1Lookup : this.ppuState.obp0Lookup;
             }
 
-            finalColor = (palette >> (color << 1)) & 0b11;
+            finalColor = palette[color];
         }
 
         this.display.setPixel(this.ppuState.scanline, this._pixelX++, finalColor);
