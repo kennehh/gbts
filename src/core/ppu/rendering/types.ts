@@ -3,10 +3,3 @@ export interface IDisplay {
     renderFrame(): void;
     clear(): void;
 }
-
-export interface Pixel {
-    color: number;
-    isSprite?: boolean;
-    spriteBgHasPriority?: boolean;
-    spritePalette?: number;
-}

@@ -1,7 +1,5 @@
 import type { OamSprite } from "../oam/types";
-import type { Pixel } from "./types";
-
-const SPRITE_PIXEL_ZERO: Pixel = { color: 0, isSprite: true } as const;
+import { packSpritePixel } from "./sprite-utils";
 
 export class SpriteFifo {
     protected buffer: Uint8Array = new Uint8Array(8);
@@ -85,40 +83,21 @@ export class SpriteFifo {
         const color = (colorBit1 << 1) | colorBit0;
         const physicalIndex = (this.head + index) & 7;
 
-        if (this.size > index) {
-            if (color === 0) {
-                return;
-            }
-                
-            const existingPixel = this.buffer[physicalIndex];
-            const existingColor = existingPixel & 0b11;
-            const existingBgHasPriority = (existingPixel >> 3) === 1;
-
-            if (existingColor === 0 || (existingBgHasPriority && !sprite.bgHasPriority)) {
-                this.buffer[physicalIndex] = this.packPixel(sprite, color);
-            }
-            return;
+        if (this.size <= index) {
+            this.buffer[physicalIndex] = packSpritePixel(sprite, color);
+            this.size++;
         }
 
-        this.buffer[physicalIndex] = this.packPixel(sprite, color);
-        this.size++;
-    }
+        if (color === 0) {
+            return;
+        }
+            
+        const existingPixel = this.buffer[physicalIndex];
+        const existingColor = existingPixel & 0b11;
+        const existingBgHasPriority = (existingPixel >> 3) === 1;
 
-    private packPixel(sprite: OamSprite, color: number): number {
-        const priority = sprite.bgHasPriority ? 1 : 0;
-        return color | (sprite.dmgPalette << 2) | (priority << 3);
-    }
-
-    static unpackPixel(pixel: number): Pixel {
-        return {
-            color: pixel & 0b11,
-            isSprite: true,
-            spritePalette: (pixel >> 2) & 1,
-            spriteBgHasPriority: pixel >> 3 === 1,
-        };
-    }
-
-    static getBgPriority(pixel: number){
-        return pixel >> 3 === 1;
+        if (existingColor === 0 || (existingBgHasPriority && !sprite.bgHasPriority)) {
+            this.buffer[physicalIndex] = packSpritePixel(sprite, color);
+        }
     }
 }
