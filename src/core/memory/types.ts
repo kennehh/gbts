@@ -3,7 +3,6 @@ import type { Memory } from "./memory";
 
 export interface IMmu {
     get bootRomLoaded(): boolean;
-    tick(): void;
     tick4(): void;
     read(address: number): number;
     readDma(address: number): number;
