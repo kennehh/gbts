@@ -79,8 +79,9 @@ export class SpriteFifo {
         const physicalIndex = (this.head + index) & 7;
 
         if (this.size <= index) {
-            this.buffer[physicalIndex] = this.packSpritePixel(sprite, color);
+            this.buffer[physicalIndex] = this.packPixel(sprite, color);
             this.size++;
+            return;
         }
 
         if (color === 0) {
@@ -91,12 +92,12 @@ export class SpriteFifo {
         const existingColor = existingPixel & 0b11;
         const existingBgHasPriority = (existingPixel >> 3) === 1;
 
-        if (existingColor === 0 || (existingBgHasPriority && !sprite.bgHasPriority)) {
-            this.buffer[physicalIndex] = this.packSpritePixel(sprite, color);
+        if (existingColor === 0 && existingBgHasPriority && !sprite.bgHasPriority) {
+            this.buffer[physicalIndex] = this.packPixel(sprite, color);
         }
     }
 
-    private packSpritePixel(sprite: OamSprite, color: number): number {
+    private packPixel(sprite: OamSprite, color: number): number {
         const priority = sprite.bgHasPriority ? 1 : 0;
         return color | (sprite.dmgPalette << 2) | (priority << 3);
     }

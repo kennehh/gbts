@@ -9,6 +9,11 @@ export class BgFifo {
         return color;
     }
 
+    discard() {
+        this.head++;
+        this.size--;
+    }
+
     clear() {
         this.head = 0;
         this.size = 0;

@@ -27,35 +27,35 @@ export class PixelRenderer {
         let finalColor = 0;
 
         if (!this.ppuState.firstFrameAfterLcdEnable) {
-            const bgPixel = this.bgPixelFifo.shift();
-            let spritePixel = 0;
+            let color = 0;
+            let palette = this.ppuState.bgpLookup;
 
-            if (this.ppuState.spriteEnable) {
-                spritePixel = this.spritePixelFifo.shift();
+            if (this.ppuState.bgWindowEnable) {
+                color = this.bgPixelFifo.shift();
             } else {
-                this.spritePixelFifo.discard();
+                this.bgPixelFifo.discard();
             }
 
-            let color = 0;
-            let palette: Uint8Array;
+            if (this.ppuState.spriteEnable) {
+                const spritePixel = this.spritePixelFifo.shift();
+                const spriteColor = spritePixel & 0b11;
 
-            if (spritePixel === 0 || ((spritePixel >> 3) === 1 && bgPixel !== 0)) {
-                // blank pixel or BG has priority
-                color = this.ppuState.bgWindowEnable ? bgPixel : 0;
-                palette = this.ppuState.bgpLookup;
+                if (spriteColor !== 0 && (color === 0 || (spritePixel >> 3) === 0)) {
+                    // bg doesn't have priority
+                    color = spriteColor;
+                    const obp = (spritePixel >> 2) & 1;
+                    palette = obp === 1 ? this.ppuState.obp1Lookup : this.ppuState.obp0Lookup;
+                }
             } else {
-                color = spritePixel & 0b11;
-                palette = (spritePixel >> 2) & 1 ? this.ppuState.obp1Lookup : this.ppuState.obp0Lookup;
+                this.spritePixelFifo.discard();
             }
 
             finalColor = palette[color];
         }
 
         this.display.setPixel(this.ppuState.scanline, this.pixelX++, finalColor);
-        
-        if (this.pixelX === 160) {
-            return true;
-        }
-        return false;
+
+        const scanlineFinished = this.pixelX === 160
+        return scanlineFinished;
     }
 }
