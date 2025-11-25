@@ -63,7 +63,7 @@ function getEmulationTimeOnRealGameBoy(cycles: number): number {
     return (cycles / GAMEBOY_CLOCK_SPEED) * 1000; // Convert to milliseconds
 }
 
-async function runBenchmarks(romPath: string, iterations = 5) {
+async function runBenchmarks(romPath: string, iterations = 10) {
     console.log(`Running ${iterations} benchmarks for ${romPath}`);
     console.log('----------------------------------------');
     console.log(`Original Game Boy Clock Speed: ${(GAMEBOY_CLOCK_SPEED / 1_000_000).toFixed(2)} MHz`);

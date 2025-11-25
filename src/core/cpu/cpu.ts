@@ -344,13 +344,13 @@ export class Cpu {
 
     private readValue8Bit(operand: Operand8Bit) {
         switch (operand) {
-            case Operand8Bit.A: return this.state.a;
-            case Operand8Bit.B: return this.state.b;
-            case Operand8Bit.C: return this.state.c;
-            case Operand8Bit.D: return this.state.d;
-            case Operand8Bit.E: return this.state.e;
-            case Operand8Bit.H: return this.state.h;
-            case Operand8Bit.L: return this.state.l;
+            case Operand8Bit.A: return this.state.a & 0xff;
+            case Operand8Bit.B: return this.state.b & 0xff;
+            case Operand8Bit.C: return this.state.c & 0xff;
+            case Operand8Bit.D: return this.state.d & 0xff;
+            case Operand8Bit.E: return this.state.e & 0xff;
+            case Operand8Bit.H: return this.state.h & 0xff;
+            case Operand8Bit.L: return this.state.l & 0xff;
             case Operand8Bit.IndirectHL: return this.readMemory8Bit(this.state.hl);
             case Operand8Bit.IndirectBC: return this.readMemory8Bit(this.state.bc);
             case Operand8Bit.IndirectDE: return this.readMemory8Bit(this.state.de);
@@ -446,7 +446,7 @@ export class Cpu {
         if (this.state.haltBugTriggered) {
             this.state.haltBugTriggered = false;
         } else {
-            this.state.pc++;
+            this.incrementPC();
         }
         return val;
     }
@@ -457,7 +457,7 @@ export class Cpu {
 
     private readImmediate16Bit() {
         const val = this.readMemory16Bit(this.state.pc);
-        this.state.pc += 2;
+        this.incrementPC(2);
         return val;
     }
 
@@ -763,18 +763,22 @@ export class Cpu {
         if (!this.state.hasFlag(RegisterFlag.Subtract)) {
             if (carryFlag || this.state.a > 0x99) {
                 this.state.a += 0x60;
+                this.state.a &= 0xff;
                 setCarry = true;
             }
             if (halfCarryFlag || (this.state.a & 0x0F) > 0x09) {
                 this.state.a += 0x06;
+                this.state.a &= 0xff;
             }
         } else {
             if (carryFlag) {
                 this.state.a -= 0x60;
+                this.state.a &= 0xff;
                 setCarry = true;
             }
             if (halfCarryFlag) {
                 this.state.a -= 0x06;
+                this.state.a &= 0xff;
             }
         }
        
@@ -793,6 +797,7 @@ export class Cpu {
 
     private cpl() {
         this.state.a = ~this.state.a;
+        this.state.a &= 0xff;
         this.state.f |= RegisterFlag.HalfCarry | RegisterFlag.Subtract;
     }
 
@@ -876,7 +881,8 @@ export class Cpu {
 
     private jr_i8() {
         const increment = this.readImmediate8BitSigned();
-        this.state.pc = this.readValue16Bit(Operand16Bit.PC) + increment;
+        this.state.pc = this.readValue16Bit(Operand16Bit.PC);
+        this.incrementPC(increment);
         this.tick4();
     }
 
@@ -885,7 +891,7 @@ export class Cpu {
             this.jr_i8();
         } else {
             // simulate an immediate read
-            this.state.pc++;
+            this.incrementPC();
             this.tick4();
         }
     }
@@ -900,7 +906,7 @@ export class Cpu {
             this.jp_i16();
         } else {
             // simulate an immediate read
-            this.state.pc += 2;
+            this.incrementPC(2);
             this.tick4();
             this.tick4();
         }
@@ -921,7 +927,7 @@ export class Cpu {
             this.call_i16();
         } else {
             // simulate an immediate read
-            this.state.pc += 2;
+            this.incrementPC(2);
             this.tick4();
             this.tick4();
         }
@@ -997,5 +1003,10 @@ export class Cpu {
 
     private triggerOamBugAtAddress(address: number) {
         this.mmu.triggerOamBug(address);
+    }
+
+    private incrementPC(inc = 1) {
+        this.state.pc += inc;
+        this.state.pc &= 0xffff;
     }
 }

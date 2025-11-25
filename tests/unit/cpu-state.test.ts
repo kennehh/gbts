@@ -103,13 +103,23 @@ describe.concurrent('CpuState', () => {
         it('should serialize and deserialize correctly', () => {
             state.af = 0x1234;
             state.bc = 0x5678;
+            state.de = 0x9abc;
+            state.hl = 0xdef0;
+            state.pc = 0xfedc;
+            state.sp = 0xba98;
+            state.haltBugTriggered = true;
 
             const data = state.serialize();
             const newState = new CpuState();
             newState.deserialize(data);
 
-            expect(newState.af).toBe(0x1234);
-            expect(newState.bc).toBe(0x5678);
+            expect(newState.af).toBe(state.af);
+            expect(newState.bc).toBe(state.bc);
+            expect(newState.de).toBe(state.de);
+            expect(newState.hl).toBe(state.hl);
+            expect(newState.pc).toBe(state.pc);
+            expect(newState.sp).toBe(state.sp);
+            expect(newState.haltBugTriggered).toBe(state.haltBugTriggered);
         });
     });
 });
