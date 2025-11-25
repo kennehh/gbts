@@ -33,7 +33,7 @@ export class SpriteFetcher {
     ) { }
 
     foundSpriteAt(pixelX: number) {
-        if (!this.ppuState.spriteEnable || this.sprites!.length === 0 || this.state !== PixelFetcherState.Sleep) {
+        if (!this.ppuState.spriteEnable || this.sprites!.size === 0 || this.state !== PixelFetcherState.Sleep) {
             return false;
         }
 

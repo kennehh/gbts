@@ -7,11 +7,7 @@ interface SpriteNode {
 
 export class SpriteOrderedList {
     private head: SpriteNode | null = null;
-    private size = 0;
-
-    get length() {
-        return this.size;
-    }
+    size = 0;
 
     clear() {
         this.head = null;

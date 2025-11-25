@@ -7,46 +7,18 @@ import {
 
 export class PpuState {
     // Registers
-    private _ly = 0;
-    get ly() { return this._ly; }
-    set ly(value: number) { this._ly = value & 0xff; }
+    ly = 0;
+    lyc = 0;
+    scx = 0;
+    scy = 0;
+    wx = 0;
+    wy = 0;
+    bgp = 0;
+    obp0 = 0;
+    obp1 = 0;
+    dma = 0;
 
-    private _lyc = 0;
-    get lyc() { return this._lyc; }
-    set lyc(value: number) { this._lyc = value & 0xff; }
-
-    private _scx = 0;
-    get scx() { return this._scx; }
-    set scx(value: number) { this._scx = value & 0xff; }
-
-    private _scy = 0;
-    get scy() { return this._scy; }
-    set scy(value: number) { this._scy = value & 0xff; }
-
-    private _wx = 0;
-    get wx() { return this._wx; }
-    set wx(value: number) { this._wx = value & 0xff; }
-
-    private _wy = 0;
-    get wy() { return this._wy; }
-    set wy(value: number) { this._wy = value & 0xff; }
-
-    private _bgp = 0;
-    get bgp() { return this._bgp; }
-    set bgp(value: number) { this.updateBgp(value & 0xff); }
-
-    private _obp0 = 0;
-    get obp0() { return this._obp0; }
-    set obp0(value: number) { this.updateObp0(value & 0xff) }
-
-    private _obp1 = 0;
-    get obp1() { return this._obp1; }
-    set obp1(value: number) { this.updateObp1(value & 0xff); }
-
-    private _dma = 0;
-    get dma() { return this._dma; }
-    set dma(value: number) { this._dma = value & 0xff; }
-
+    // Palette lookups
     readonly bgpLookup = new Uint8Array(4);
     readonly obp0Lookup = new Uint8Array(4);
     readonly obp1Lookup = new Uint8Array(4);
@@ -75,39 +47,24 @@ export class PpuState {
     get lcdc(): number { return this._lcdc; }
     set lcdc(value: number) {
         this._lcdc = value & 0xff;
-        this._bgWindowEnable =               (value & 0b0000_0001) !== 0;
-        this._spriteEnable =                 (value & 0b0000_0010) !== 0;
-        this._spriteHeight =                 (value & 0b0000_0100) !== 0 ? 16 : 8;
-        this._bgTileMapAddress =             (value & 0b0000_1000) !== 0 ? 0x9C00 : 0x9800;
-        this._useBgWindow8000AdressingMode = (value & 0b0001_0000) !== 0;
-        this._windowEnabled =                (value & 0b0010_0000) !== 0;
-        this._windowTileMapAddress =         (value & 0b0100_0000) !== 0 ? 0x9C00 : 0x9800;
-        this._lcdEnabled =                   (value & 0b1000_0000) !== 0;
+        this.bgWindowEnable =               (value & 0b0000_0001) !== 0;
+        this.spriteEnable =                 (value & 0b0000_0010) !== 0;
+        this.spriteHeight =                 (value & 0b0000_0100) !== 0 ? 16 : 8;
+        this.bgTileMapAddress =             (value & 0b0000_1000) !== 0 ? 0x9C00 : 0x9800;
+        this.useBgWindow8000AdressingMode = (value & 0b0001_0000) !== 0;
+        this.windowEnabled =                (value & 0b0010_0000) !== 0;
+        this.windowTileMapAddress =         (value & 0b0100_0000) !== 0 ? 0x9C00 : 0x9800;
+        this.lcdEnabled =                   (value & 0b1000_0000) !== 0;
     }
 
-    private _bgWindowEnable = false;
-    get bgWindowEnable(): boolean { return this._bgWindowEnable; }
-
-    private _spriteEnable = false;
-    get spriteEnable(): boolean { return this._spriteEnable; }
-
-    private _spriteHeight = 8;
-    get spriteHeight(): number { return this._spriteHeight; }
-
-    private _bgTileMapAddress = 0x9800;
-    get bgTileMapAddress(): number { return this._bgTileMapAddress; }
-
-    private _useBgWindow8000AdressingMode = false;
-    get useBgWindow8000AdressingMode(): boolean { return this._useBgWindow8000AdressingMode; }
-
-    private _windowEnabled = false;
-    get windowEnabled(): boolean { return this._windowEnabled }
-
-    private _windowTileMapAddress = 0x9800;
-    get windowTileMapAddress(): number { return this._windowTileMapAddress; }
-
-    private _lcdEnabled = false;
-    get lcdEnabled(): boolean { return this._lcdEnabled; }
+    bgWindowEnable = false;
+    spriteEnable = false;
+    spriteHeight = 8;
+    bgTileMapAddress = 0x9800;
+    useBgWindow8000AdressingMode = false;
+    windowEnabled = false;
+    windowTileMapAddress = 0x9800;
+    lcdEnabled = false;
 
     // Internal states
 
@@ -155,17 +112,17 @@ export class PpuState {
         this.isDoubleSpeed = false;
     }
 
-    private updateBgp(bgp: number) {
-        this.updatePaletteLookup(this.bgpLookup, this._bgp, bgp);
-        this._bgp = bgp;
+    updateBgp(bgp: number) {
+        this.updatePaletteLookup(this.bgpLookup, this.bgp, bgp);
+        this.bgp = bgp;
     }
-    private updateObp0(obp0: number) {
-        this.updatePaletteLookup(this.obp0Lookup, this._obp0, obp0);
-        this._obp0 = obp0;
+    updateObp0(obp0: number) {
+        this.updatePaletteLookup(this.obp0Lookup, this.obp0, obp0);
+        this.obp0 = obp0;
     }
-    private updateObp1(obp1: number) {
-        this.updatePaletteLookup(this.obp1Lookup, this._obp1, obp1);
-        this._obp1 = obp1;
+    updateObp1(obp1: number) {
+        this.updatePaletteLookup(this.obp1Lookup, this.obp1, obp1);
+        this.obp1 = obp1;
     }
 
     private updatePaletteLookup(lookup: Uint8Array, oldValue: number, newValue: number) {

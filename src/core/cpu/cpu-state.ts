@@ -15,17 +15,17 @@ export class CpuState {
     currentInstructionCycles = 0;
     totalCycles = 0;
 
-    private _a = 0;
-    private _b = 0;
-    private _c = 0;
-    private _d = 0;
-    private _e = 0;
-    private _f = 0;
-    private _h = 0;
-    private _l = 0;
+    a = 0;
+    b = 0;
+    c = 0;
+    d = 0;
+    e = 0;
+    f = 0;
+    h = 0;
+    l = 0;
 
-    private _pc = 0;
-    private _sp = 0;
+    pc = 0;
+    sp = 0;
 
     reset(bootRomLoaded = false) {
         if (!bootRomLoaded) {
@@ -48,22 +48,6 @@ export class CpuState {
         this.haltBugTriggered = false;
     }
 
-    get a() { return this._a; }
-    set a(value: number) { this._a = value & 0xFF; }
-    get b() { return this._b; }
-    set b(value: number) { this._b = value & 0xFF; }
-    get c() { return this._c; }
-    set c(value: number) { this._c = value & 0xFF; }
-    get d() { return this._d; }
-    set d(value: number) { this._d = value & 0xFF; }
-    get e() { return this._e; }
-    set e(value: number) { this._e = value & 0xFF; }
-    get f() { return this._f & 0xFF; }
-    set f(value: number) { this._f = value & 0xFF; }
-    get h() { return this._h; }
-    set h(value: number) { this._h = value & 0xFF; }
-    get l() { return this._l; }
-    set l(value: number) { this._l = value & 0xFF; }
 
     get af() { return (this.a << 8) | this.f; }
     set af(value: number) {
@@ -88,11 +72,6 @@ export class CpuState {
         this.h = value >> 8;
         this.l = value & 0xFF;
     }
-
-    get sp() { return this._sp; }
-    set sp(value: number) { this._sp = value & 0xFFFF; }
-    get pc() { return this._pc; }
-    set pc(value: number) { this._pc = value & 0xFFFF; }
 
     hasFlag(flag: RegisterFlagValue) {
         return (this.f & flag) === flag;

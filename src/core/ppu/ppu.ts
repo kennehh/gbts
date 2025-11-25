@@ -93,6 +93,8 @@ export class Ppu {
     }
 
     writeRegister(address: number, value: number): void {
+        value &= 0xff;
+
         switch (address) {
             case 0xFF40: this.state.lcdc = value; break;
             case 0xFF41: this.state.stat = value; break;
@@ -101,9 +103,9 @@ export class Ppu {
             case 0xFF44: break; // ly is read-only
             case 0xFF45: this.state.lyc = value; break;
             case 0xFF46: this.state.dma = value; break;
-            case 0xFF47: this.state.bgp = value; break;
-            case 0xFF48: this.state.obp0 = value; break;
-            case 0xFF49: this.state.obp1 = value; break;
+            case 0xFF47: this.state.updateBgp(value); break;
+            case 0xFF48: this.state.updateObp0(value); break;
+            case 0xFF49: this.state.updateObp1(value); break;
             case 0xFF4A: this.state.wy = value; break;
             case 0xFF4B: this.state.wx = value; break;
             case 0xFF4F:
@@ -253,7 +255,7 @@ export class Ppu {
 
         this.bgFetcher.tick();
 
-        if (this.bgPixelFifo.length === 0) {
+        if (this.bgPixelFifo.size === 0) {
             return;
         }
 

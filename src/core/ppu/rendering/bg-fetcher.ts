@@ -15,6 +15,7 @@ const enum PixelFetcherState {
 
 export class BgFetcher {
     pixelsToDiscard = 0;
+    windowMode = false;
 
     private state = PixelFetcherState.FetchTileNumber0;
 
@@ -22,12 +23,6 @@ export class BgFetcher {
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
     private fetcherTileX = 0;
-    
-    private _windowMode = false;
-
-    get windowMode() {
-        return this._windowMode;
-    }
     
     constructor(
         private readonly ppuState: PpuState,
@@ -67,7 +62,7 @@ export class BgFetcher {
     reset(windowMode = false) {
         this.fetcherTileX = 0;
         this.state = PixelFetcherState.FetchTileNumber0;
-        this._windowMode = windowMode;
+        this.windowMode = windowMode;
     }
 
     pause() {
@@ -95,7 +90,7 @@ export class BgFetcher {
         let tileMapBaseAddress: number;
         let offset = this.fetcherTileX;
 
-        if (this._windowMode) {
+        if (this.windowMode) {
             tileMapBaseAddress = this.ppuState.windowTileMapAddress;
             offset += (this.ppuState.windowLineCounter >> 3) << 5;
         } else {
@@ -123,7 +118,7 @@ export class BgFetcher {
     private getTileDataAddress() {
         let offset: number, tileId: number, tileDataBaseAddress: number;
 
-        if (this._windowMode) {
+        if (this.windowMode) {
             offset = (this.ppuState.windowLineCounter & 0x7) << 1;
         } else {
             offset = ((this.ppuState.scanline + this.ppuState.scy) & 0x7) << 1;
@@ -143,7 +138,7 @@ export class BgFetcher {
 
     private pushBgToFifo() {
         // Only push if FIFO is empty
-        if (this.fifo.length > 0) {
+        if (this.fifo.size > 0) {
             return false;
         }
 

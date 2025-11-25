@@ -1,38 +1,11 @@
 import type { IDisplay } from "@/core/ppu/rendering";
+import vertShader from "./webgl.vert?raw";
+import fragShader from "./webgl.frag?raw";
 
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
 const COLORS_PER_PALETTE = 4;
 const COLOR_COMPONENTS = 3;
-
-const VERTEX_SHADER = `#version 300 es
-    in vec2 a_position;
-    in vec2 a_texCoord;
-    out vec2 v_texCoord;
-    
-    void main() {
-        gl_Position = vec4(a_position, 0, 1);
-        v_texCoord = a_texCoord;
-    }
-`;
-
-const FRAGMENT_SHADER = `#version 300 es
-    precision lowp float;
-    
-    uniform sampler2D u_image;
-    uniform vec3 u_palette[4];
-    
-    in vec2 v_texCoord;
-    out vec4 fragColor;
-    
-    void main() {
-        float colorIndex = texture(u_image, v_texCoord).r;
-        int index = int(colorIndex * 255.0);
-        
-        vec3 color = u_palette[index];
-        fragColor = vec4(color, 1.0);
-    }
-`;
 
 interface WebGLResources {
     program: WebGLProgram;
@@ -42,10 +15,11 @@ interface WebGLResources {
 }
 
 export class WebGLDisplay implements IDisplay {
+    private readonly frameData = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
+    private readonly palette = new Float32Array(COLORS_PER_PALETTE * COLOR_COMPONENTS);
+    private yOffsetLookup = new Uint16Array(SCREEN_HEIGHT);
     private readonly gl: WebGL2RenderingContext;
     private readonly resources: WebGLResources;
-    private readonly frameData: Uint8Array;
-    private readonly palette: Float32Array;
     private dirty = false;
 
     constructor(canvas: OffscreenCanvas) {
@@ -62,24 +36,22 @@ export class WebGLDisplay implements IDisplay {
         
         this.gl = gl;
         this.resources = this.initializeWebGLResources();
-        this.frameData = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
-        this.palette = new Float32Array(COLORS_PER_PALETTE * COLOR_COMPONENTS);
         
         // Set default palette
         this.setPalette([
             [255, 255, 255],  // Lightest
             [170, 170, 170],  // Light
-            [85, 85, 85],    // Dark
-            [0, 0, 0]     // Darkest
+            [85, 85,    85],  // Dark
+            [0,   0,     0]   // Darkest
         ]);
+
+        for (let i = 0; i < SCREEN_HEIGHT; ++i) {
+            this.yOffsetLookup[i] = i * SCREEN_WIDTH;
+        }
     }
 
     setPixel(y: number, x: number, colorId: number): void {
-        // Assume x and y are within bounds
-        // if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
-        //     return;
-        // }
-        const offset = y * SCREEN_WIDTH + x;
+        const offset = this.yOffsetLookup[y] + x;
         if (this.frameData[offset] !== colorId) {
             this.frameData[offset] = colorId;
             this.dirty = true;
@@ -160,8 +132,8 @@ export class WebGLDisplay implements IDisplay {
     }
 
     private createProgram(): WebGLProgram {
-        const vertexShader = this.createShader(this.gl.VERTEX_SHADER, VERTEX_SHADER);
-        const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
+        const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertShader);
+        const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragShader);
         
         if (!vertexShader || !fragmentShader) {
             throw new Error('Failed to create shaders');

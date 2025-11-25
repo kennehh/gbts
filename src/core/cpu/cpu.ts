@@ -362,6 +362,8 @@ export class Cpu {
     }
 
     private writeValue8Bit(operand: Operand8Bit, value: number) {
+        value &= 0xff;
+
         switch (operand) {
             case Operand8Bit.A: this.state.a = value; break;
             case Operand8Bit.B: this.state.b = value; break;
@@ -394,6 +396,8 @@ export class Cpu {
     }
 
     private writeValue16Bit(operand: Operand16Bit, value: number) {
+        value &= 0xffff;
+
         switch (operand) {
             case Operand16Bit.AF: this.state.af = value; break;
             case Operand16Bit.BC: this.state.bc = value; break;

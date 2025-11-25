@@ -3,30 +3,23 @@ import { PpuState } from "../ppu-state";
 import { SpriteOrderedList } from "./sprite-ordered-list";
 
 export class OamScanner {
+    currentOamIndex = 0;
+    spritesFoundOnScanline = false;
+
     readonly sprites = new SpriteOrderedList();
     private doEvaluate = false;
-
-    private _currentOamIndex = 0;
-    get currentOamIndex() {
-        return this._currentOamIndex;
-    }
-    
-    private _spritesFoundOnScanline = false;
-    get spritesFoundOnScanline() {
-        return this._spritesFoundOnScanline;
-    }
 
     constructor(private readonly state: PpuState, private readonly oam: Memory) { }
 
     reset() {
         this.sprites.clear();
-        this._currentOamIndex = 0;
-        this._spritesFoundOnScanline = false;
+        this.currentOamIndex = 0;
+        this.spritesFoundOnScanline = false;
         this.doEvaluate = false;
     }
 
     tick() {
-        if (this.sprites.length < 10) {
+        if (this.sprites.size < 10) {
             // Only evaluate sprites every other cycle (we evaluate 40 sprites in 80 t-cycles)
             if (this.doEvaluate) {
                 this.evaluateSprite();
@@ -36,8 +29,8 @@ export class OamScanner {
     }
 
     private evaluateSprite() {
-        const oamIndex = this._currentOamIndex;
-        this._currentOamIndex += 4;
+        const oamIndex = this.currentOamIndex;
+        this.currentOamIndex += 4;
 
         if (this.state.dmaActive) {
             return;
@@ -68,7 +61,7 @@ export class OamScanner {
                 oamIndex
             });
 
-            this._spritesFoundOnScanline = true;
+            this.spritesFoundOnScanline = true;
         }     
     }
 }

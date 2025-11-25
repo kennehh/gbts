@@ -2,13 +2,9 @@ import type { OamSprite } from "../oam/types";
 import { packSpritePixel } from "./sprite-utils";
 
 export class SpriteFifo {
-    protected buffer: Uint8Array = new Uint8Array(8);
-    protected head = 0;
-    protected size = 0;
-
-    get length() {
-        return this.size;
-    }
+    private buffer: Uint8Array = new Uint8Array(8);
+    private head = 0;
+    size = 0;
 
     shift(): number {
         if (this.size === 0) {

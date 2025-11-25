@@ -5,10 +5,7 @@ import { getSpriteBgHasPriority, getSpriteColor, getSpritePalette } from "./spri
 import type { IDisplay } from "./types";
 
 export class PixelRenderer {
-    private _pixelX = 0;
-    get pixelX() {
-        return this._pixelX;
-    }
+    pixelX = 0;
 
     constructor(
         private readonly ppuState: PpuState,
@@ -18,13 +15,13 @@ export class PixelRenderer {
     ) { }
 
     reset() {
-        this._pixelX = 0;
+        this.pixelX = 0;
     }
 
     checkWindowTrigger() {
         return  this.ppuState.windowEnabled && 
                 this.ppuState.scanlineReachedWindow && 
-               (this._pixelX >= this.ppuState.wx - 7);
+               (this.pixelX >= this.ppuState.wx - 7);
     }
 
     tick() {
@@ -54,9 +51,9 @@ export class PixelRenderer {
             finalColor = palette[color];
         }
 
-        this.display.setPixel(this.ppuState.scanline, this._pixelX++, finalColor);
+        this.display.setPixel(this.ppuState.scanline, this.pixelX++, finalColor);
         
-        if (this._pixelX === 160) {
+        if (this.pixelX === 160) {
             return true;
         }
         return false;
