@@ -4,8 +4,7 @@ import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
 import { Cpu } from '../../src/core/cpu/cpu';
 import { InterruptManager } from '../../src/core/cpu/interrupt-manager';
-import { Memory } from '../../src/core/memory/memory'
-import type { IMmu } from '@/core/memory';
+import type { IMmu, Memory } from '@/core/memory';
 import type { ICartridge } from '@/core/cartridge';
 import { RegisterFlag, CpuStatus } from '@/core/cpu/types';
 

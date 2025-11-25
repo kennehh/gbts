@@ -1,7 +1,6 @@
 import { PpuState } from "../ppu-state";
 import { BgFifo } from "./bg-fifo";
 import { SpriteFifo } from "./sprite-fifo";
-import { getSpriteBgHasPriority, getSpriteColor, getSpritePalette } from "./sprite-utils";
 import type { IDisplay } from "./types";
 
 export class PixelRenderer {
@@ -40,12 +39,13 @@ export class PixelRenderer {
             let color = 0;
             let palette: Uint8Array;
 
-            if (spritePixel === 0 || (getSpriteBgHasPriority(spritePixel) && bgPixel !== 0)) {
+            if (spritePixel === 0 || ((spritePixel >> 3) === 1 && bgPixel !== 0)) {
+                // blank pixel or BG has priority
                 color = this.ppuState.bgWindowEnable ? bgPixel : 0;
                 palette = this.ppuState.bgpLookup;
             } else {
-                color = getSpriteColor(spritePixel);
-                palette = getSpritePalette(spritePixel) ? this.ppuState.obp1Lookup : this.ppuState.obp0Lookup;
+                color = spritePixel & 0b11;
+                palette = (spritePixel >> 2) & 1 ? this.ppuState.obp1Lookup : this.ppuState.obp0Lookup;
             }
 
             finalColor = palette[color];

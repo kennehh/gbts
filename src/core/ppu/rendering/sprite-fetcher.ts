@@ -1,8 +1,8 @@
-import { Memory } from "../../memory/memory";
 import { PpuState } from "../ppu-state";
 import { SpriteOrderedList } from "../oam/sprite-ordered-list";
 import { SpriteFifo } from "./sprite-fifo";
 import type { OamSprite } from "../oam/types";
+import type { Memory } from "@/core/memory";
 
 const enum PixelFetcherState {
     Sleep = 0,

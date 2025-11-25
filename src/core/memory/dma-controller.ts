@@ -1,6 +1,5 @@
-import { Memory } from "./memory";
 import { PpuState } from "../ppu/ppu-state";
-import type { IMmu } from "./types";
+import type { IMmu, Memory } from "./types";
 
 export default class DmaController {
     private sourceBaseAddress = 0;

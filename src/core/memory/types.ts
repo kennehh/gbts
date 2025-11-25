@@ -1,8 +1,7 @@
 import type { ICartridge } from "../cartridge";
-import type { Memory } from "./memory";
 
 export interface IMmu {
-    get bootRomLoaded(): boolean;
+    readonly bootRomLoaded: boolean;
     tick4(): void;
     read(address: number): number;
     readDma(address: number): number;
@@ -12,6 +11,22 @@ export interface IMmu {
     loadBootRom(rom: Memory): void;
     loadCartridge(cart: ICartridge): void;
     triggerOamBug(address: number): void;
+}
+
+export interface Memory {
+    readonly bytes: Uint8Array;
+    readonly length: number;    
+    read(address: number): number;
+    write(address: number, value: number): void;
+    readDirect(address: number): number;
+    writeDirect(address: number, value: number): void;
+    read16(address: number): number;
+    write16(address: number, value: number): void;
+    readDirect16(address: number): number;
+    writeDirect16(address: number, value: number): void;
+    fill(value: number): void;
+    set(data: Uint8Array): void;
+    randomise(): void;
 }
 
 const kb = 1024;

@@ -1,5 +1,4 @@
 import type { OamSprite } from "../oam/types";
-import { packSpritePixel } from "./sprite-utils";
 
 export class SpriteFifo {
     private buffer: Uint8Array = new Uint8Array(8);
@@ -80,7 +79,7 @@ export class SpriteFifo {
         const physicalIndex = (this.head + index) & 7;
 
         if (this.size <= index) {
-            this.buffer[physicalIndex] = packSpritePixel(sprite, color);
+            this.buffer[physicalIndex] = this.packSpritePixel(sprite, color);
             this.size++;
         }
 
@@ -93,7 +92,12 @@ export class SpriteFifo {
         const existingBgHasPriority = (existingPixel >> 3) === 1;
 
         if (existingColor === 0 || (existingBgHasPriority && !sprite.bgHasPriority)) {
-            this.buffer[physicalIndex] = packSpritePixel(sprite, color);
+            this.buffer[physicalIndex] = this.packSpritePixel(sprite, color);
         }
+    }
+
+    private packSpritePixel(sprite: OamSprite, color: number): number {
+        const priority = sprite.bgHasPriority ? 1 : 0;
+        return color | (sprite.dmgPalette << 2) | (priority << 3);
     }
 }

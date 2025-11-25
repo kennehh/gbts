@@ -1,34 +1,21 @@
-const isPowerOfTwo = (value: number) => (value & (value - 1)) === 0;
-
-export class Memory {
-    private data: Uint8Array;
-    private getWrappedAddress: (address: number) => number;
+abstract class MemoryBase {
+    protected data: Uint8Array;
 
     get bytes(): Uint8Array {
         return this.data;
     }
 
-    constructor(param: Uint8Array | number) {
-        this.data = param instanceof Uint8Array ? param : new Uint8Array(param);
-
-        if (isPowerOfTwo(this.data.length)) {
-            this.getWrappedAddress = address => address & (this.data.length - 1);
-        } else {
-            this.getWrappedAddress = address => address % this.data.length;
-        }
+    constructor(data: Uint8Array) {
+        this.data = data;
     }
 
     get length(): number {
         return this.data.length;
     }
 
-    read(address: number): number {
-        return this.data[this.getWrappedAddress(address)];
-    }
+    abstract read(address: number): number;
 
-    write(address: number, value: number): void {
-        this.data[this.getWrappedAddress(address)] = value;
-    }
+    abstract write(address: number, value: number): void;
 
     readDirect(address: number): number {
         return this.data[address];
@@ -68,5 +55,36 @@ export class Memory {
         for (let i = 0; i < this.data.length; i++) {
             this.data[i] = Math.floor(Math.random() * 0x100);
         }
+    }
+}
+
+class MemorySlowWrap extends MemoryBase {
+    read(address: number): number {
+        return this.data[address % this.data.length];
+    }
+
+    write(address: number, value: number): void {
+        this.data[address % this.data.length] = value;
+    }
+}
+
+class MemoryFastWrap extends MemoryBase {
+    read(address: number): number {
+        return this.data[address & (this.data.length - 1)];
+    }
+
+    write(address: number, value: number): void {
+        this.data[address & (this.data.length - 1)] = value;
+    }
+}
+
+export function createMemory(param: Uint8Array | number) {
+    const data = param instanceof Uint8Array ? param : new Uint8Array(param);
+
+    const isPowerOfTwo = (data.length & (data.length - 1)) === 0;
+    if (isPowerOfTwo) {
+        return new MemoryFastWrap(data);
+    } else {
+        return new MemorySlowWrap(data);
     }
 }

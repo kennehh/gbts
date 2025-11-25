@@ -1,6 +1,7 @@
 import { CartridgeHeader } from "../header/cartridge-header";
-import { Memory } from "../../memory/memory";
+import { createMemory } from "../../memory/memory";
 import type { IMapper } from "./types";
+import type { Memory } from "@/core/memory";
 
 export abstract class Mapper implements IMapper {
     protected readonly cartHeader: CartridgeHeader;
@@ -8,12 +9,12 @@ export abstract class Mapper implements IMapper {
     readonly ram: Memory;
 
     constructor(cartHeader: CartridgeHeader, rom: Uint8Array, ram: Uint8Array | null) {
-        this.rom = new Memory(rom);
+        this.rom = createMemory(rom);
         if (ram === null) {
-            this.ram = new Memory(cartHeader.ram.size);
+            this.ram = createMemory(cartHeader.ram.size);
             this.ram.fill(0xff);
         } else {
-            this.ram = new Memory(ram);
+            this.ram = createMemory(ram);
         }
         this.cartHeader = cartHeader;
     }

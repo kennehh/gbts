@@ -1,4 +1,4 @@
-import { Memory } from "../../memory/memory";
+import type { Memory } from "@/core/memory";
 import { PpuState } from "../ppu-state";
 import { BgFifo } from "./bg-fifo";
 

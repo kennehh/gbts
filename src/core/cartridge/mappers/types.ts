@@ -1,4 +1,4 @@
-import { Memory } from "../../memory/memory";
+import type { Memory } from "@/core/memory";
 
 export interface IMapper {
     readonly rom: Memory;

@@ -1,6 +1,6 @@
 import { InterruptFlag, type InterruptManager } from "../cpu";
 import type { JoypadController } from "../joypad";
-import { Memory } from "../memory";
+import { createMemory, type Memory } from "../memory";
 import { OamScanner } from "./oam";
 import { PpuState } from "./ppu-state";
 import {
@@ -20,8 +20,8 @@ import {
 export class Ppu {
     readonly state = new PpuState();
     
-    readonly vram: Memory = new Memory(0x2000);
-    readonly oam: Memory = new Memory(0xA0);
+    readonly vram: Memory = createMemory(0x2000);
+    readonly oam: Memory = createMemory(0xA0);
 
     private readonly oamScanner: OamScanner;
     private readonly bgFetcher: BgFetcher;

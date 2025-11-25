@@ -6,16 +6,16 @@ import type { Ppu } from "../ppu/ppu";
 import type { SerialController } from "../serial";
 import type Timer from "../timer";
 import DmaController from "./dma-controller";
-import { Memory } from "./memory";
-import type { IMmu } from "./types";
+import { createMemory } from "./memory";
+import type { IMmu, Memory } from "./types";
 
 export class Mmu implements IMmu {
     private _bootRomLoaded = false;
     private cartridge: ICartridge = Cartridge.emptyCartridge;
     private bootRom: Memory | null = null;
-    private readonly wram: Memory = new Memory(0x2000);
-    private readonly hram: Memory = new Memory(0x80);
-    private readonly ioRegisters: Memory = new Memory(0x80);
+    private readonly wram: Memory = createMemory(0x2000);
+    private readonly hram: Memory = createMemory(0x80);
+    private readonly ioRegisters: Memory = createMemory(0x80);
     private readonly dmaController: DmaController;
 
     constructor(
