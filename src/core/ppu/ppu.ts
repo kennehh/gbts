@@ -56,7 +56,7 @@ export class Ppu {
         this.oamScanner.reset();
         this.bgFetcher.reset();
         this.spriteFetcher.reset();
-        this.pixelRenderer.reset();
+        this.pixelRenderer.newLine();
         this.display.clear();
         this.previousEnableLcd = false;
     }
@@ -220,7 +220,7 @@ export class Ppu {
 
     private handleDrawing() {
         if (this.state.previousStatus !== PpuStatus.Drawing) {
-            this.pixelRenderer.reset();
+            this.pixelRenderer.newLine();
             this.bgFetcher.reset();
             this.spriteFetcher.reset();
             this.bgPixelFifo.clear();
@@ -286,7 +286,7 @@ export class Ppu {
         if (this.state.previousStatus !== PpuStatus.VBlank) {
             this.interruptManager.requestInterrupt(InterruptFlag.VBlank);
             this.checkStatInterrupt(StatInterruptSourceFlag.VBlank);
-            this.display.renderFrame();
+            this.pixelRenderer.renderFrame();
             this.state.previousStatus = PpuStatus.VBlank;
         }
 

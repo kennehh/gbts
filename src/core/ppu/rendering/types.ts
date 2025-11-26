@@ -1,5 +1,4 @@
 export interface IDisplay {
-    setPixel(x: number, y: number, color: number): void;
-    renderFrame(): void;
+    renderFrame(frameData: Uint8Array): void;
     clear(): void;
 }

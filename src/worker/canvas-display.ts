@@ -5,7 +5,6 @@ export class CanvasDisplay implements IDisplay {
     private readonly imageData: ImageData;
     private readonly frameBuffer: Uint8ClampedArray;
     private readonly colorBuffer: Uint8Array;
-    private dirty = false;
 
     constructor(canvas: OffscreenCanvas) {
         this.ctx = canvas.getContext('2d')!;
@@ -22,28 +21,19 @@ export class CanvasDisplay implements IDisplay {
             [15, 56, 15]     // Darkest
         ]);
     }
-    
-    setPixel(y: number, x: number, colorId: number): void {
-        if (x < 0 || x >= 160 || y < 0 || y >= 144) {
-            return;
-        }
 
-        const offset = ((y * 160) << 2) + (x << 2);
-        const colorOffset = colorId * 3;
-        this.frameBuffer[offset] = this.colorBuffer[colorOffset];
-        this.frameBuffer[offset + 1] = this.colorBuffer[colorOffset + 1];
-        this.frameBuffer[offset + 2] = this.colorBuffer[colorOffset + 2];
-        this.frameBuffer[offset + 3] = 255;
-        this.dirty = true;
-    }
-
-    renderFrame(): void {
-        if (!this.dirty) {
-            return;
+    renderFrame(frameData: Uint8Array): void {
+        for (let x = 0; x < 160; x++) {
+            for (let y = 0; y < 144; y++) {
+                const offset = ((y * 160) << 2) + (x << 2);
+                const colorOffset = frameData[y * 160 + x] * 3;
+                this.frameBuffer[offset] = this.colorBuffer[colorOffset];
+                this.frameBuffer[offset + 1] = this.colorBuffer[colorOffset + 1];
+                this.frameBuffer[offset + 2] = this.colorBuffer[colorOffset + 2];
+                this.frameBuffer[offset + 3] = 255;
+            }
         }
-        
         this.ctx.putImageData(this.imageData, 0, 0);
-        this.dirty = false;
     }
 
     setPalette(palette: [number, number, number][]): void {
@@ -56,12 +46,6 @@ export class CanvasDisplay implements IDisplay {
     }
 
     clear(): void {
-        for (let y = 0; y < 144; y++) {
-            for (let x = 0; x < 160; x++) {
-                this.setPixel(y, x, 0);
-            }
-        }
-        this.ctx.putImageData(this.imageData, 0, 0);
-        this.dirty = false;
+        this.renderFrame(new Uint8Array(160*144));
     }
 }

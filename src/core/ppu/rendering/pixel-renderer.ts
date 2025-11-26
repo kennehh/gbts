@@ -3,17 +3,26 @@ import { BgFifo } from "./bg-fifo";
 import { SpriteFifo } from "./sprite-fifo";
 import type { IDisplay } from "./types";
 
+const SCREEN_WIDTH = 160;
+const SCREEN_HEIGHT = 144;
+
+const Y_OFFSETS = new Uint16Array(SCREEN_HEIGHT);
+
+for (let i = 0; i < SCREEN_HEIGHT; ++i) {
+    Y_OFFSETS[i] = i * SCREEN_WIDTH;
+}
 export class PixelRenderer {
     pixelX = 0;
+    private frameData = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
 
     constructor(
         private readonly ppuState: PpuState,
         private readonly display: IDisplay,
         private readonly bgPixelFifo: BgFifo,
-        private readonly spritePixelFifo: SpriteFifo
+        private readonly spritePixelFifo: SpriteFifo,
     ) { }
 
-    reset() {
+    newLine() {
         this.pixelX = 0;
     }
 
@@ -53,9 +62,16 @@ export class PixelRenderer {
             finalColor = palette[color];
         }
 
-        this.display.setPixel(this.ppuState.scanline, this.pixelX++, finalColor);
+        const y = this.ppuState.scanline;
+        const offset = Y_OFFSETS[y] + this.pixelX;
+        this.frameData[offset] = finalColor;
+        this.pixelX++;
 
         const scanlineFinished = this.pixelX === 160
         return scanlineFinished;
+    }
+
+    renderFrame() {
+        this.display.renderFrame(this.frameData);
     }
 }

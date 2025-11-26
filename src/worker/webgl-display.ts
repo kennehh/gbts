@@ -15,12 +15,9 @@ interface WebGLResources {
 }
 
 export class WebGLDisplay implements IDisplay {
-    private readonly frameData = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
     private readonly palette = new Float32Array(COLORS_PER_PALETTE * COLOR_COMPONENTS);
-    private yOffsetLookup = new Uint16Array(SCREEN_HEIGHT);
     private readonly gl: WebGL2RenderingContext;
     private readonly resources: WebGLResources;
-    private dirty = false;
 
     constructor(canvas: OffscreenCanvas) {
         const gl = canvas.getContext('webgl2', {
@@ -39,30 +36,14 @@ export class WebGLDisplay implements IDisplay {
         
         // Set default palette
         this.setPalette([
-            [255, 255, 255],  // Lightest
-            [170, 170, 170],  // Light
-            [85, 85,    85],  // Dark
-            [0,   0,     0]   // Darkest
+            [155, 188, 15],  // Lightest
+            [139, 172, 15],  // Light
+            [ 48,  98, 48],  // Dark
+            [ 15,  56, 15]   // Darkest
         ]);
-
-        for (let i = 0; i < SCREEN_HEIGHT; ++i) {
-            this.yOffsetLookup[i] = i * SCREEN_WIDTH;
-        }
     }
 
-    setPixel(y: number, x: number, colorId: number): void {
-        const offset = this.yOffsetLookup[y] + x;
-        if (this.frameData[offset] !== colorId) {
-            this.frameData[offset] = colorId;
-            this.dirty = true;
-        }
-    }
-
-    renderFrame(): void {
-        if (!this.dirty) {
-            return;
-        }
-
+    renderFrame(frameData: Uint8Array): void {
         const { program, frameTexture } = this.resources;
         this.gl.useProgram(program);
 
@@ -77,7 +58,7 @@ export class WebGLDisplay implements IDisplay {
             0,
             this.gl.RED,
             this.gl.UNSIGNED_BYTE,
-            this.frameData
+            frameData
         );
 
         // Set palette uniform
@@ -86,8 +67,6 @@ export class WebGLDisplay implements IDisplay {
 
         // Draw
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-        
-        this.dirty = false;
     }
 
     setPalette(palette: [number, number, number][]): void {
@@ -104,9 +83,7 @@ export class WebGLDisplay implements IDisplay {
     }
 
     clear(): void {
-        this.frameData.fill(0);
-        this.dirty = true;
-        this.renderFrame();
+        this.renderFrame(new Uint8Array(160*144));
     }
 
     dispose(): void {
