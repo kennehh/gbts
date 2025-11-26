@@ -23,6 +23,7 @@ export class BgFetcher {
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
     private fetcherTileX = 0;
+    private tileDataAddress = 0;
     
     constructor(
         private readonly ppuState: PpuState,
@@ -106,13 +107,12 @@ export class BgFetcher {
     }
 
     private fetchTileDataLow() {
-        const tileDataAddress = this.getTileDataAddress();
-        this.fetchedTileDataLow = this.vram.read(tileDataAddress);
+        this.tileDataAddress = this.getTileDataAddress();
+        this.fetchedTileDataLow = this.vram.read(this.tileDataAddress);
     }
 
     private fetchTileDataHigh() {
-        const tileDataAddress = this.getTileDataAddress() + 1;
-        this.fetchedTileDataHigh = this.vram.read(tileDataAddress);
+        this.fetchedTileDataHigh = this.vram.read(this.tileDataAddress + 1);
     }
 
     private getTileDataAddress() {

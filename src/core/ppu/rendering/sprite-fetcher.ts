@@ -23,6 +23,7 @@ export class SpriteFetcher {
     private fetchedTileId = 0;
     private fetchedTileDataLow = 0;
     private fetchedTileDataHigh = 0;
+    private tileDataAddress = 0;
 
     private currentSprite: OamSprite | null = null;
 
@@ -110,13 +111,12 @@ export class SpriteFetcher {
     }
 
     private fetchTileDataLow() {
-        const tileDataAddress = this.getSpriteTileDataAddress();
-        this.fetchedTileDataLow = this.vram.read(tileDataAddress);
+        this.tileDataAddress = this.getSpriteTileDataAddress();
+        this.fetchedTileDataLow = this.vram.read(this.tileDataAddress);
     }
 
     private fetchTileDataHigh() {
-        const tileDataAddress = this.getSpriteTileDataAddress() + 1;
-        this.fetchedTileDataHigh = this.vram.read(tileDataAddress);
+        this.fetchedTileDataHigh = this.vram.read(this.tileDataAddress + 1);
     }
 
     private getSpriteTileDataAddress() {
